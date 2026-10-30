@@ -1,4 +1,4 @@
-name: Build Huzur iOS IPA (With Real WidgetExtension)
+name: Build Huzur iOS IPA (Liquid Glass + WidgetKit)
 
 on:
   push:
@@ -12,38 +12,113 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Flutter SDK
+      - name: Setup Flutter SDK (Latest Stable)
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           cache: true
 
-      - name: Install Dependencies
-        run: flutter pub get
-
-      - name: Inject HuzurWidgetExtension Target into Xcode Project
+      - name: Configure Flutter iOS & Pods
         run: |
-          gem install xcodeproj --no-document
-          ruby ios/add_widget_target.rb
+          flutter pub get
+          flutter build ios --config-only --release --no-codesign
+          cd ios
+          pod install
 
-      - name: Build iOS Release Unsigned App & WidgetExtension
+      - name: Inject WidgetKit Target (Without Embed Cycle)
         run: |
-          flutter build ios --release --no-codesign
-          echo "Verifying embedded WidgetExtension inside Runner.app/PlugIns:"
-          ls -la build/ios/iphoneos/Runner.app/PlugIns || true
+          gem install xcodeproj
+          cat << 'RUBYEOF' > ios/fix_and_add_widget.rb
+          require 'xcodeproj'
+          project_path = 'ios/Runner.xcodeproj'
+          project = Xcodeproj::Project.open(project_path)
+          
+          runner_target = project.targets.find { |t| t.name == 'Runner' }
+          
+          # Eğer önceki scriptten kalan döngü yaratan Embed/Copy phase varsa temizle
+          runner_target.copy_files_build_phases.each do |phase|
+            if phase.name&.include?('Embed') || phase.dst_subfolder_spec == "13"
+              phase.remove_from_project
+            end
+          end
 
-      - name: Package Unsigned IPA
+          # HuzurWidgetExtension hedefi yoksa oluştur, varsa yapılandır
+          widget_target = project.targets.find { |t| t.name == 'HuzurWidgetExtension' }
+          unless widget_target
+            widget_target = project.new_target(:app_extension, 'HuzurWidgetExtension', :ios, '16.0')
+            group = project.main_group.find_subpath('HuzurWidget', true)
+            group.set_source_tree('<group>')
+            
+            swift_path = File.exist?('ios/HuzurWidget/HuzurWidget.swift') ? 'ios/HuzurWidget/HuzurWidget.swift' : nil
+            if swift_path
+              file_ref = group.new_reference('HuzurWidget/HuzurWidget.swift')
+              widget_target.source_build_phase.add_file_reference(file_ref, true)
+            end
+          end
+
+          runner_bundle_id = 'com.ilahi.tefekkur'
+          runner_target.build_configurations.each do |config|
+            b_id = config.build_settings['PRODUCT_BUNDLE_IDENTIFIER']
+            runner_bundle_id = b_id if b_id && !b_id.empty?
+            config.build_settings['INFOPLIST_KEY_CFBundleDisplayName'] = 'Huzur'
+          end
+
+          widget_target.build_configurations.each do |config|
+            config.build_settings['PRODUCT_NAME'] = 'HuzurWidgetExtension'
+            config.build_settings['PRODUCT_BUNDLE_IDENTIFIER'] = "#{runner_bundle_id}.HuzurWidget"
+            config.build_settings['INFOPLIST_FILE'] = 'HuzurWidget/Info.plist'
+            config.build_settings['SWIFT_VERSION'] = '5.0'
+            config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.0'
+            config.build_settings['SKIP_INSTALL'] = 'NO'
+            config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
+            config.build_settings['CODE_SIGNING_REQUIRED'] = 'NO'
+          end
+
+          project.save
+          puts "✅ HuzurWidgetExtension döngüsüz olarak hazırlandı!"
+          RUBYEOF
+          ruby ios/fix_and_add_widget.rb
+
+      - name: Build Runner & WidgetExtension Separately (Zero Cycle)
         run: |
-          cd build/ios/iphoneos
+          cd ios
+          # 1. Ana Uygulamayı (Runner) derle
+          xcodebuild -workspace Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES \
+            COMPILER_INDEX_STORE_ENABLE=NO
+
+          # 2. HuzurWidgetExtension hedefini derle
+          xcodebuild -project Runner.xcodeproj \
+            -target HuzurWidgetExtension \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES \
+            COMPILER_INDEX_STORE_ENABLE=NO
+
+      - name: Embed Widget into Runner.app & Package Huzur.ipa
+        run: |
+          cd ios
+          mkdir -p build/Build/Products/Release-iphoneos/Runner.app/PlugIns
+          cp -r build/Build/Products/Release-iphoneos/HuzurWidgetExtension.appex build/Build/Products/Release-iphoneos/Runner.app/PlugIns/
           mkdir -p Payload
-          cp -R Runner.app Payload/
-          zip -r Huzur-Release.ipa Payload
-          mkdir -p ../../../output_ipa
-          cp Huzur-Release.ipa ../../../output_ipa/IlahiTefekkur-Release.ipa
-          cp Huzur-Release.ipa ../../../output_ipa/Huzur-Release.ipa
+          cp -r build/Build/Products/Release-iphoneos/Runner.app Payload/
+          zip -qq -r Huzur-Release.ipa Payload
+          mkdir -p $GITHUB_WORKSPACE/output_ipa
+          mv Huzur-Release.ipa $GITHUB_WORKSPACE/output_ipa/
 
       - name: Upload Huzur IPA Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Huzur-iOS-Release-IPA
+          name: Huzur-Release-IPA
           path: output_ipa/Huzur-Release.ipa
