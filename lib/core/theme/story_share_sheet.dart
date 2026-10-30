@@ -122,12 +122,12 @@ class _HuzurStoryShareSheetState extends State<HuzurStoryShareSheet> {
             child:Container(padding:const EdgeInsets.symmetric(horizontal:12,vertical:8),decoration:BoxDecoration(color:_themes[index],borderRadius:BorderRadius.circular(13),border:Border.all(color:_selectedTheme==index?const Color(0xFF64FFDA):Colors.white24,width:_selectedTheme==index?2:1)),child:Text(_themeNames[index],style:const TextStyle(fontSize:11,fontWeight:FontWeight.w700,color:Colors.white))),
           ))),
           const SizedBox(height:12),
-          Center(child(RepaintBoundary(
+          Center(child: RepaintBoundary(
             key:_storyCanvasKey,
             child:AspectRatio(aspectRatio:9/16,child:Container(
               width:double.infinity,padding:const EdgeInsets.all(18),
               decoration:BoxDecoration(color:_themes[_selectedTheme],borderRadius:BorderRadius.circular(25),gradient:RadialGradient(center:Alignment.topCenter,radius:1.25,colors:[Color.lerp(_themes[_selectedTheme],const Color(0xFF16443D),0.35)!,_themes[_selectedTheme]])),
-              child:Center(child(Container(width:double.infinity,padding:const EdgeInsets.all(17),decoration:BoxDecoration(color:Colors.white.withOpacity(0.055),borderRadius:BorderRadius.circular(19),border:Border.all(color:Colors.white.withOpacity(0.18))),child:Column(mainAxisSize:MainAxisSize.min,crossAxisAlignment:CrossAxisAlignment.start,children:[
+              child:Center(child: Container(width:double.infinity,padding:const EdgeInsets.all(17),decoration:BoxDecoration(color:Colors.white.withOpacity(0.055),borderRadius:BorderRadius.circular(19),border:Border.all(color:Colors.white.withOpacity(0.18))),child:Column(mainAxisSize:MainAxisSize.min,crossAxisAlignment:CrossAxisAlignment.start,children:[
                 Row(children:[Container(width:34,height:34,decoration:const BoxDecoration(shape:BoxShape.circle,color:Color(0xFF0D3030)),child:const Icon(Icons.nightlight_round,color:Color(0xFFFFE082),size:19)),const SizedBox(width:9),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[const Text('Huzur',style:TextStyle(fontSize:14,fontWeight:FontWeight.w800,color:Colors.white)),Text(widget.bookCategory,style:const TextStyle(fontSize:9,color:Colors.white60))])),const Icon(Icons.verified,color:Color(0xFF64FFDA),size:16)]),
                 const SizedBox(height:17),
                 if(widget.arabicText.trim().isNotEmpty) ...[Align(alignment:Alignment.centerRight,child:Text(widget.arabicText,textAlign:TextAlign.right,style:const TextStyle(fontSize:20,height:1.55,fontWeight:FontWeight.w700,color:Color(0xFFFFF8E1)))),const SizedBox(height:12)],

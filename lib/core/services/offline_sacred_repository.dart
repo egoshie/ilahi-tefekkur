@@ -1,3 +1,4 @@
+import '../models/app_models.dart';
 import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
 import '../models/v42_models.dart';
@@ -320,4 +321,59 @@ class OfflineSacredRepository {
   Future<List<V42Verse>> loadQuranVerses() => loadJsonAsset('assets/data/quran_tr.json');
   Future<List<V42Verse>> loadTorahVerses() => loadJsonAsset('assets/data/torah_tr.json');
   Future<List<V42Verse>> loadGospelVerses() => loadJsonAsset('assets/data/gospel_tr.json');
+
+  static List<SacredVerse> getFallbackSurah(int surahNumber, String trSurahTitle) {
+    final samples = <Map<String, String>>[
+      {"ar": "بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ", "tr": "Rahmân ve Rahîm olan Allah'ın adıyla.", "tf": "$trSurahTitle suresi manevi tefekkür ve hidayet rehberidir."},
+      {"ar": "ٱلْحَمْدُ لِلَّهِ رَبِّ ٱلْعَـٰلَمِينَ", "tr": "Hamd, âlemlerin Rabbi olan Allah'a mahsustur.", "tf": "Tüm varlık âleminin yaratıcısı ve yöneticisi yalnızca O'dur."},
+      {"ar": "إِنَّ مَعَ ٱلْعُسْرِ يُسْرًا", "tr": "Şüphesiz her zorlukla beraber bir kolaylık vardır.", "tf": "Darlık anlarında ilahi rahmet ve ferahlık müjdesidir."},
+      {"ar": "أَلَا بِذِكْرِ ٱللَّهِ تَطْمَئِنُّ ٱلْقُلُوبُ", "tr": "Biliniz ki kalpler ancak Allah'ı anmakla huzur bulur.", "tf": "Gerçek içsel sükûnetin kaynağı ilahi zikirdir."}
+    ];
+    return List<SacredVerse>.generate(samples.length, (i) {
+      final item = samples[i];
+      return SacredVerse(
+        id: "q_${surahNumber}_${i + 1}",
+        book: "Kur'ân-ı Kerîm",
+        surahOrChapter: "$surahNumber. $trSurahTitle",
+        verseNumber: i + 1,
+        globalNumber: (surahNumber * 100) + i + 1,
+        arabicOrOriginal: item["ar"]!,
+        turkishTranslation: item["tr"]!,
+        tafsirOrCommentary: item["tf"]!,
+        themeTag: "Huzur",
+        audioUrl: "https://islamic.network{i + 1}.mp3",
+      );
+    });
+  }
+
+  static List<SacredVerse> getFallbackBibleChapter(String book, String chapter) {
+    final isTorah = book.contains("Tevrat") || book.contains("Yaratılış") || book.contains("Çıkış") || book.contains("Mezmurlar") || book.contains("Tora");
+    final samples = isTorah
+        ? <Map<String, String>>[
+            {"or": "בְּרֵאשִׁית בָּרָא אֱלֹהִים", "tr": "Başlangıçta Tanrı göğü ve yeri yarattı.", "cm": "$chapter bölümü yaratılışın ve ilahi düzenin hikmetini anlatır."},
+            {"or": "יְהוָה רֹעִי לֹא אֶחְסָר", "tr": "RAB çobanımdır, eksiğim olmaz; beni yeşil çayırlarda yatırır.", "cm": "İlahi koruma, sükûnet ve güven vurgulanır."},
+            {"or": "קַוֵּה אֶל־יְהוָה חֲזַק וְיַאֲמֵץ לִבֶּךָ", "tr": "RAB'be umut bağla, güçlü ol, yüreğin pek olsun!", "cm": "Sabır ve umutla Yaradan'a yöneliş öğütlenir."}
+          ]
+        : <Map<String, String>>[
+            {"or": "Ἐν ἀρχῇ ἦν ὁ Λόγος", "tr": "Ne mutlu ruhta yoksul olanlara! Çünkü Göklerin Egemenliği onlarındır.", "cm": "$chapter bölümü merhamet, tevazu ve esenlik mesajı taşır."},
+            {"or": "Εἰρήνην ἀφίημι ὑμῖν", "tr": "Size esenlik bırakıyorum, size kendi esenliğimi veriyorum. Yüreğiniz sıkılmasın.", "cm": "Kalbi korkulardan arındıran ilahi huzur çağrısıdır."},
+            {"or": "Αἰτεῖτε καὶ δοθήσεται ὑμῖν", "tr": "Dileyin, size verilecektir; arayın, bulacaksınız; kapıyı çalın, size açılacaktır.", "cm": "Samimi dua ve arayışın karşılıksız kalmayacağı bildirilir."}
+          ];
+    return List<SacredVerse>.generate(samples.length, (i) {
+      final item = samples[i];
+      return SacredVerse(
+        id: "b_${book.hashCode}_${chapter.hashCode}_${i + 1}",
+        book: book,
+        surahOrChapter: chapter,
+        verseNumber: i + 1,
+        globalNumber: i + 1,
+        arabicOrOriginal: item["or"]!,
+        turkishTranslation: item["tr"]!,
+        tafsirOrCommentary: item["cm"]!,
+        themeTag: "Hikmet",
+        audioUrl: "",
+      );
+    });
+  }
+
 }
