@@ -163,7 +163,7 @@ class _LiquidGlassPaywallSheetState
                 },
                 child: Center(
                   child: Row(
-                    mainAxisSize: MainAxisAlignment.min,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       const BespokeVectorIcon(
                         type: BespokeIconType.checkBadge,
