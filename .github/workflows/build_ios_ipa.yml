@@ -1,68 +1,49 @@
 name: Build Huzur iOS IPA V4.1
 on:
-push:
-branches: [ "main", "master" ]
-workflow_dispatch:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
 jobs:
-build-ipa:
-runs-on: macos-latest
-steps:
-- name: Checkout Repository
-uses: actions/checkout@v4
-- name: Setup Flutter SDK
-uses: subosito/flutter-action@v2
-with:
-channel: 'stable'
-cache: true
-- name: Configure Flutter iOS & Pods
-run: |
-flutter pub get
-flutter build ios --config-only --release --no-codesign
-cd ios
-pod install
-- name: Inject HuzurWidgetExtension into Xcode Project
-run: |
-gem install xcodeproj --no-document
-cd ios
-ruby fix_and_add_widget.rb
-- name: Build Runner & WidgetExtension Separately (Zero Cycle)
-run: |
-cd ios
-xcodebuild -workspace Runner.xcworkspace 
--scheme Runner 
--configuration Release 
--sdk iphoneos 
--derivedDataPath "$PWD/build_runner" 
-CODE_SIGN_IDENTITY="" 
-CODE_SIGNING_REQUIRED=NO 
-CODE_SIGNING_ALLOWED=NO 
-AD_HOC_CODE_SIGNING_ALLOWED=YES 
-COMPILER_INDEX_STORE_ENABLE=NO
-xcodebuild -project Runner.xcodeproj 
--target HuzurWidgetExtension 
--configuration Release 
--sdk iphoneos 
-SYMROOT="$PWD/build_widget" 
-OBJROOT="$PWD/build_widget/obj" 
-CODE_SIGN_IDENTITY="" 
-CODE_SIGNING_REQUIRED=NO 
-CODE_SIGNING_ALLOWED=NO 
-AD_HOC_CODE_SIGNING_ALLOWED=YES 
-COMPILER_INDEX_STORE_ENABLE=NO
-- name: Embed Widget into Runner.app & Package Huzur-Release.ipa
-run: |
-cd ios
-RUNNER_APP="$PWD/build_runner/Build/Products/Release-iphoneos/Runner.app"
-WIDGET_APPEX="$PWD/build_widget/Release-iphoneos/HuzurWidgetExtension.appex"
-mkdir -p "$RUNNER_APP/PlugIns"
-cp -r "$WIDGET_APPEX" "$RUNNER_APP/PlugIns/"
-mkdir -p Payload
-cp -r "$RUNNER_APP" Payload/
-zip -qq -r Huzur-V4.1-Release.ipa Payload
-mkdir -p $GITHUB_WORKSPACE/output_ipa
-mv Huzur-V4.1-Release.ipa $GITHUB_WORKSPACE/output_ipa/Huzur-Release.ipa
-- name: Upload Huzur IPA Artifact
-uses: actions/upload-artifact@v4
-with:
-name: Huzur-iOS-V4.1-Release-IPA
-path: output_ipa/Huzur-Release.ipa
+  build-ipa:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Setup Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Configure Flutter iOS & Pods
+        run: |
+          flutter pub get
+          flutter build ios --config-only --release --no-codesign
+          cd ios
+          pod install
+      - name: Inject HuzurWidgetExtension into Xcode Project
+        run: |
+          gem install xcodeproj --no-document
+          cd ios
+          ruby fix_and_add_widget.rb
+      - name: Build Runner & WidgetExtension Separately
+        run: |
+          cd ios
+          xcodebuild -workspace Runner.xcworkspace -scheme Runner -configuration Release -sdk iphoneos -derivedDataPath "$PWD/build_runner" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO AD_HOC_CODE_SIGNING_ALLOWED=YES COMPILER_INDEX_STORE_ENABLE=NO
+          xcodebuild -project Runner.xcodeproj -target HuzurWidgetExtension -configuration Release -sdk iphoneos SYMROOT="$PWD/build_widget" OBJROOT="$PWD/build_widget/obj" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO AD_HOC_CODE_SIGNING_ALLOWED=YES COMPILER_INDEX_STORE_ENABLE=NO
+      - name: Embed Widget into Runner.app & Package Huzur-Release.ipa
+        run: |
+          cd ios
+          RUNNER_APP="$PWD/build_runner/Build/Products/Release-iphoneos/Runner.app"
+          WIDGET_APPEX="$PWD/build_widget/Release-iphoneos/HuzurWidgetExtension.appex"
+          mkdir -p "$RUNNER_APP/PlugIns"
+          cp -r "$WIDGET_APPEX" "$RUNNER_APP/PlugIns/"
+          mkdir -p Payload
+          cp -r "$RUNNER_APP" Payload/
+          zip -qq -r Huzur-V4.1-Release.ipa Payload
+          mkdir -p $GITHUB_WORKSPACE/output_ipa
+          mv Huzur-V4.1-Release.ipa $GITHUB_WORKSPACE/output_ipa/Huzur-Release.ipa
+      - name: Upload Huzur IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Huzur-iOS-V4.1-Release-IPA
+          path: output_ipa/Huzur-Release.ipa
