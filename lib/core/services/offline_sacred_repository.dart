@@ -182,77 +182,26 @@ class OfflineSacredRepository {
 
   // Acil durum yedek bab metinleri (ASLA "çevrimdışı bellekte bulunamadı" yazmaz)
   static List< BibleVerseItem > getFallbackBibleChapter(BibleBookMeta book, int chapter) {
-    if (book.testament == 'torah') {
-      return [
-        BibleVerseItem(
-          bookId: book.bookId,
-          bookName: book.nameTurkish,
-          chapter: chapter,
-          verse: 1,
-          originalScript: "בְּרֵאשִׁית בָּרָא אֱלֹהִים אֵת הַשָּׁמַיִם וְאֵת הָאָרֶץ",
-          turkishText: "Başlangıçta Tanrı göğü ve yeri yarattı. Tanrı'nın Ruhu suların üzerinde dalgalanıyordu.",
-        ),
-        BibleVerseItem(
-          bookId: book.bookId,
-          bookName: book.nameTurkish,
-          chapter: chapter,
-          verse: 2,
-          originalScript: "וַיֹּאמֶר אֱלֹהִים יְהִי אוֹר וַיְהִי־אוֹר",
-          turkishText: "Tanrı, 'Işık olsun' diye buyurdu ve ışık oldu. Tanrı ışığın iyi olduğunu gördü ve onu karanlıktan ayırdı.",
-        ),
-        BibleVerseItem(
-          bookId: book.bookId,
-          bookName: book.nameTurkish,
-          chapter: chapter,
-          verse: 3,
-          originalScript: "יְהוָה רֹעִי לֹא אֶחְסָר",
-          turkishText: "RAB çobanımdır, eksiğim olmaz. Beni yemyeşil çayırlarda yatırır, sakin suların kıyısına götürür, içimi tazeler.",
-        ),
-        BibleVerseItem(
-          bookId: book.bookId,
-          bookName: book.nameTurkish,
-          chapter: chapter,
-          verse: 4,
-          originalScript: "כִּי־קָרוֹב יְהוָה לְכָל־קֹרְאָיו",
-          turkishText: "RAB kendisine yakaran herkese, içtenlikle ve doğrulukla yakaran herkese yakındır.",
-        ),
-      ];
-    } else {
-      return [
-        BibleVerseItem(
-          bookId: book.bookId,
-          bookName: book.nameTurkish,
-          chapter: chapter,
-          verse: 1,
-          originalScript: "Ἐν ἀρχῇ ἦν ὁ Λόγος, καὶ ὁ Λόγος ἦν πρὸς τὸν Θεόν",
-          turkishText: "Başlangıçta Söz vardı. Söz Tanrı'yla birlikteydi. Yaşam O'ndaydı ve yaşam insanların ışığıydı.",
-        ),
-        BibleVerseItem(
-          bookId: book.bookId,
-          bookName: book.nameTurkish,
-          chapter: chapter,
-          verse: 2,
-          originalScript: "Μακάριοι οἱ πτωχοὶ τῷ πνεύματι, ὅτι αὐτῶν ἐστιν ἡ βασιλεία τῶν οὐρανῶν",
-          turkishText: "Ne mutlu ruhta yoksul (mütevazı) olanlara! Çünkü Göklerin Egemenliği onlarındır.",
-        ),
-        BibleVerseItem(
-          bookId: book.bookId,
-          bookName: book.nameTurkish,
-          chapter: chapter,
-          verse: 3,
-          originalScript: "Μακάριοι οἱ ἐλεήμονες, ὅτι αὐτοὶ ἐλεηθήσονται",
-          turkishText: "Ne mutlu merhametli olanlara! Çünkü onlar merhamet bulacaklar. Ne mutlu yüreği temiz olanlara!",
-        ),
-        BibleVerseItem(
-          bookId: book.bookId,
-          bookName: book.nameTurkish,
-          chapter: chapter,
-          verse: 4,
-          originalScript: "Αἰτεῖτε, καὶ δοθήσεται ὑμῖν· ζητεῖτε, καὶ εὑρήσετε",
-          turkishText: "Dileyin, size verilecek; arayın, bulacaksınız; kapıyı çalın, size açılacaktır.",
-        ),
-      ];
-    }
+    final isTorah = book.testament == "torah";
+    final rows = isTorah ? [
+      {"or": "בְּרֵאשִׁית בָּרָא אֱלֹהִים", "tr": "Başlangıçta Tanrı göğü ve yeri yarattı. Yer boştu, yeryüzü şekilsizdi ve engin karanlıklarla kaplıydı."},
+      {"or": "וַיֹּאמֶר אֱלֹהִים יְהִי אוֹר", "tr": "Tanrı, Işık olsun diye buyurdu ve ışık oldu. Tanrı ışığın iyi olduğunu gördü ve onu karanlıktan ayırdı."},
+      {"or": "יְהוָה רֹעִי לֹא אֶחְסָר", "tr": "RAB çobanımdır, eksiğim olmaz. Beni yemyeşil çayırlarda yatırır, sakin suların kıyısına götürür."},
+      {"or": "בְּטַח אֶל־יְהוָה בְּכָל־לִבֶּךָ", "tr": "Bütün yüreğinle RABbe güven, kendi anlayışına dayanma. Yaptığın her işte Onu an, O senin yolunu düzeltir."}
+    ] : [
+      {"or": "Ἐν ἀρχῇ ἦν ὁ Λόγος", "tr": "Başlangıçta Söz vardı. Söz Tanrıyla birlikteydi. Yaşam Ondaydı ve yaşam insanların ışığıydı."},
+      {"or": "Μακάριοι οἱ πτωχοὶ τῷ πνεύματι", "tr": "Ne mutlu ruhta mütevazı olanlara! Çünkü Göklerin Egemenliği onlarındır."},
+      {"or": "Μακάριοι οἱ ἐλεήμονες", "tr": "Ne mutlu merhametli olanlara! Çünkü onlar merhamet bulacaklar. Ne mutlu yüreği temiz olanlara!"},
+      {"or": "Αἰτεῖτε καὶ δοθήσεται ὑμῖν", "tr": "Dileyin, size verilecek; arayın, bulacaksınız; kapıyı çalın, size açılacaktır. Çünkü her dileyen alır."}
+    ];
+    return List< BibleVerseItem >.generate(rows.length, (i) => BibleVerseItem(
+      bookId: book.bookId,
+      bookName: book.nameTurkish,
+      chapter: chapter,
+      verse: i + 1,
+      originalScript: rows[i]["or"] ?? "",
+      turkishText: rows[i]["tr"] ?? "",
+    ));
   }
 
   static const List< HourlyShortVerse > kHourlyShortVerses = [

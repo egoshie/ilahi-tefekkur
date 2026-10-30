@@ -21,7 +21,7 @@ class DatabaseService {
 
   Future< Database > _initDatabase() async {
     final dbPath = await getDatabasesPath();
-    final path = join(dbPath, 'huzur_v43_live_cache.db');
+    final path = join(dbPath, 'huzur_v44_tr_only.db');
 
     return openDatabase(
       path,
@@ -280,78 +280,45 @@ class DatabaseService {
   ];
 
   // %100 CANLI MULTI-API TEVRAT & İNCİL GETİRİCİ (bolls.life -> Sefaria -> Bible-API)
-  Future< List< BibleVerseItem > > fetchBibleChapter(
-      BibleBookMeta book, int chapter) async {
+  Future< List< BibleVerseItem > > fetchBibleChapter(BibleBookMeta book, int chapter) async {
     final db = await database;
-    final key = '${book.bookId}_$chapter';
-
+    final key = "tr_v44_${book.bookId}_$chapter";
     try {
-      final cached = await db.query(
-        'cached_bible_chapters',
-        where: 'cache_key = ?',
-        whereArgs: [key],
-      );
-
+      final cached = await db.query("cached_bible_chapters", where: "cache_key = ?", whereArgs: [key]);
       if (cached.isNotEmpty) {
-        final list =
-            jsonDecode(cached.first['payload'] as String) as List< dynamic >;
+        final list = jsonDecode(cached.first["payload"] as String) as List< dynamic >;
         if (list.isNotEmpty) {
           return list.map((e) {
             final m = Map< String, dynamic >.from(e as Map);
             return BibleVerseItem(
-              bookId: int.tryParse(m['bookId'].toString()) ?? book.bookId,
-              bookName: m['bookName'].toString(),
-              chapter: int.tryParse(m['chapter'].toString()) ?? chapter,
-              verse: int.tryParse(m['verse'].toString()) ?? 1,
-              originalScript: m['originalScript'].toString(),
-              turkishText: m['turkishText'].toString(),
+              bookId: int.tryParse(m["bookId"].toString()) ?? book.bookId,
+              bookName: m["bookName"].toString(),
+              chapter: int.tryParse(m["chapter"].toString()) ?? chapter,
+              verse: int.tryParse(m["verse"].toString()) ?? 1,
+              originalScript: m["originalScript"].toString(),
+              turkishText: m["turkishText"].toString(),
             );
           }).toList();
         }
       }
     } catch (_) {}
-
-    final headers = < String, String >{
-      'Accept': 'application/json',
-      'User-Agent': 'HuzurApp/4.3 (iOS; Flutter)',
-    };
-
-    // 1. Birincil Canlı API: Bolls.life TCL02 (Türkçe Kutsal Kitap)
-    for (final endpoint in [
-      'https://bolls.life/get-text/TCL02/${book.bookId}/$chapter/',
-      'https://bolls.life/get-chapter/TCL02/${book.bookId}/$chapter/',
-    ]) {
+    final headers = < String, String >{"Accept": "application/json", "User-Agent": "HuzurApp/4.4"};
+    for (final url in ["https://api.getbible.net/v2/turkish/${book.bookId}/$chapter.json", "https://cdn.jsdelivr.net/gh/getbible/v2@master/turkish/${book.bookId}/$chapter.json"]) {
       try {
-        final trRes = await http
-            .get(Uri.parse(endpoint), headers: headers)
-            .timeout(const Duration(seconds: 12));
-
-        if (trRes.statusCode == 200) {
-          final decodedBody = jsonDecode(utf8.decode(trRes.bodyBytes));
-          if (decodedBody is List && decodedBody.isNotEmpty) {
+        final res = await http.get(Uri.parse(url), headers: headers).timeout(const Duration(seconds: 10));
+        if (res.statusCode == 200) {
+          final map = jsonDecode(utf8.decode(res.bodyBytes)) as Map< String, dynamic >;
+          final rawVerses = map["verses"];
+          if (rawVerses is List && rawVerses.isNotEmpty) {
             final List< BibleVerseItem > verses = [];
-            for (int i = 0; i < decodedBody.length; i++) {
-              final item = Map< String, dynamic >.from(decodedBody[i] as Map);
-              final vNum = int.tryParse(item['verse'].toString()) ?? (i + 1);
-              final cleanTr = (item['text'] ?? '')
-                  .toString()
-                  .replaceAll(RegExp('<' '[^>]*>'), '')
-                  .trim();
-
+            for (int i = 0; i < rawVerses.length; i++) {
+              final row = Map< String, dynamic >.from(rawVerses[i] as Map);
+              final vNum = int.tryParse(row["verse"].toString()) ?? (i + 1);
+              final cleanTr = (row["text"] ?? "").toString().trim();
               if (cleanTr.isNotEmpty) {
-                verses.add(
-                  BibleVerseItem(
-                    bookId: book.bookId,
-                    bookName: book.nameTurkish,
-                    chapter: chapter,
-                    verse: vNum,
-                    originalScript: '',
-                    turkishText: cleanTr,
-                  ),
-                );
+                verses.add(BibleVerseItem(bookId: book.bookId, bookName: book.nameTurkish, chapter: chapter, verse: vNum, originalScript: "", turkishText: cleanTr));
               }
             }
-
             if (verses.isNotEmpty) {
               await _cacheBibleVerses(db, key, verses);
               return verses;
@@ -360,91 +327,29 @@ class DatabaseService {
         }
       } catch (_) {}
     }
-
-    // 2. İkincil Canlı API: Sefaria API
-    try {
-      final sefUrl =
-          'https://www.sefaria.org/api/texts/${book.sefariaName}.$chapter?context=0';
-      final sefRes = await http
-          .get(Uri.parse(sefUrl), headers: headers)
-          .timeout(const Duration(seconds: 10));
-      if (sefRes.statusCode == 200) {
-        final sefMap =
-            jsonDecode(utf8.decode(sefRes.bodyBytes)) as Map< String, dynamic >;
-        final textList = sefMap['text'];
-        final heList = sefMap['he'];
-        if (textList is List && textList.isNotEmpty) {
-          final List< BibleVerseItem > verses = [];
-          for (int i = 0; i < textList.length; i++) {
-            final cleanText = textList[i]
-                .toString()
-                .replaceAll(RegExp('<' '[^>]*>'), '')
-                .trim();
-            final orig = (heList is List && i < heList.length)
-                ? heList[i]
-                    .toString()
-                    .replaceAll(RegExp('<' '[^>]*>'), '')
-                    .trim()
-                : '';
-            if (cleanText.isNotEmpty) {
-              verses.add(
-                BibleVerseItem(
-                  bookId: book.bookId,
-                  bookName: book.nameTurkish,
-                  chapter: chapter,
-                  verse: i + 1,
-                  originalScript: orig,
-                  turkishText: cleanText,
-                ),
-              );
+    for (final endpoint in ["https://bolls.life/get-text/TCL02/${book.bookId}/$chapter/", "https://bolls.life/get-text/TUR/${book.bookId}/$chapter/"]) {
+      try {
+        final trRes = await http.get(Uri.parse(endpoint), headers: headers).timeout(const Duration(seconds: 10));
+        if (trRes.statusCode == 200) {
+          final decodedBody = jsonDecode(utf8.decode(trRes.bodyBytes));
+          if (decodedBody is List && decodedBody.isNotEmpty) {
+            final List< BibleVerseItem > verses = [];
+            for (int i = 0; i < decodedBody.length; i++) {
+              final item = Map< String, dynamic >.from(decodedBody[i] as Map);
+              final vNum = int.tryParse(item["verse"].toString()) ?? (i + 1);
+              final cleanTr = (item["text"] ?? "").toString().trim();
+              if (cleanTr.isNotEmpty) {
+                verses.add(BibleVerseItem(bookId: book.bookId, bookName: book.nameTurkish, chapter: chapter, verse: vNum, originalScript: "", turkishText: cleanTr));
+              }
+            }
+            if (verses.isNotEmpty) {
+              await _cacheBibleVerses(db, key, verses);
+              return verses;
             }
           }
-          if (verses.isNotEmpty) {
-            await _cacheBibleVerses(db, key, verses);
-            return verses;
-          }
         }
-      }
-    } catch (_) {}
-
-    // 3. Üçüncül Canlı API: bible-api.com
-    try {
-      final cleanBookName = book.sefariaName.replaceAll('_', '+');
-      final bUrl = 'https://bible-api.com/$cleanBookName+$chapter';
-      final bRes = await http
-          .get(Uri.parse(bUrl), headers: headers)
-          .timeout(const Duration(seconds: 10));
-      if (bRes.statusCode == 200) {
-        final bMap =
-            jsonDecode(utf8.decode(bRes.bodyBytes)) as Map< String, dynamic >;
-        final vList = bMap['verses'];
-        if (vList is List && vList.isNotEmpty) {
-          final List< BibleVerseItem > verses = [];
-          for (int i = 0; i < vList.length; i++) {
-            final row = Map< String, dynamic >.from(vList[i] as Map);
-            final vNum = int.tryParse(row['verse'].toString()) ?? (i + 1);
-            final txt = (row['text'] ?? '').toString().trim();
-            if (txt.isNotEmpty) {
-              verses.add(
-                BibleVerseItem(
-                  bookId: book.bookId,
-                  bookName: book.nameTurkish,
-                  chapter: chapter,
-                  verse: vNum,
-                  originalScript: '',
-                  turkishText: txt,
-                ),
-              );
-            }
-          }
-          if (verses.isNotEmpty) {
-            await _cacheBibleVerses(db, key, verses);
-            return verses;
-          }
-        }
-      }
-    } catch (_) {}
-
+      } catch (_) {}
+    }
     return OfflineSacredRepository.getFallbackBibleChapter(book, chapter);
   }
 

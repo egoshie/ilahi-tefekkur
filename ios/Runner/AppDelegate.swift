@@ -41,6 +41,11 @@ class PhotoSaveCallbackTarget: NSObject {
         }
 
         configureBackgroundAudioSession()
+        if #available(iOS 14.0, *) {
+            #if canImport(WidgetKit)
+            WidgetCenter.shared.reloadAllTimelines()
+            #endif
+        }
 
         if let controller = window?.rootViewController as? FlutterViewController {
             let bridgeChannel = FlutterMethodChannel(
