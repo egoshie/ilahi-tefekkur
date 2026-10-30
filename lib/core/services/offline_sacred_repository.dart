@@ -10,7 +10,7 @@ class OfflineSacredRepository {
           .entries
           .map(
             (e) => LiveAyahItem(
-              globalNumber: (surahNumber * 100) + e.key + 1,
+              globalNumber: ((surahNumber * 100) + e.key + 1).toInt(),
               numberInSurah: e.key + 1,
               surahNumber: surahNumber,
               surahName: surahName,
@@ -63,7 +63,7 @@ class OfflineSacredRepository {
     ];
   }
 
-  static final Map<int, List>> _embeddedSurahs = {
+  static final Map<int, List<dynamic>> _embeddedSurahs = {
     1: [
       {
         "ar": "بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ",
