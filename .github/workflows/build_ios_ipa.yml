@@ -1,4 +1,4 @@
-name: Build iOS IPA (Release)
+name: Build Huzur iOS IPA (With Real WidgetExtension)
 
 on:
   push:
@@ -12,40 +12,38 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Flutter SDK (Latest Stable)
+      - name: Setup Flutter SDK
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           cache: true
 
-      - name: Configure Flutter iOS & Install Pods
-        run: |
-          flutter pub get
-          flutter build ios --config-only --release --no-codesign
-          cd ios
-          pod install
+      - name: Install Dependencies
+        run: flutter pub get
 
-      - name: Build iOS Release Unsigned IPA
+      - name: Inject HuzurWidgetExtension Target into Xcode Project
         run: |
-          cd ios
-          xcodebuild -workspace Runner.xcworkspace \
-            -scheme Runner \
-            -configuration Release \
-            -sdk iphoneos \
-            -derivedDataPath build \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO \
-            AD_HOC_CODE_SIGNING_ALLOWED=YES \
-            COMPILER_INDEX_STORE_ENABLE=NO
+          gem install xcodeproj --no-document
+          ruby ios/add_widget_target.rb
+
+      - name: Build iOS Release Unsigned App & WidgetExtension
+        run: |
+          flutter build ios --release --no-codesign
+          echo "Verifying embedded WidgetExtension inside Runner.app/PlugIns:"
+          ls -la build/ios/iphoneos/Runner.app/PlugIns || true
+
+      - name: Package Unsigned IPA
+        run: |
+          cd build/ios/iphoneos
           mkdir -p Payload
-          cp -r build/Build/Products/Release-iphoneos/Runner.app Payload/
-          zip -qq -r IlahiTefekkur-Release.ipa Payload
-          mkdir -p $GITHUB_WORKSPACE/output_ipa
-          mv IlahiTefekkur-Release.ipa $GITHUB_WORKSPACE/output_ipa/
+          cp -R Runner.app Payload/
+          zip -r Huzur-Release.ipa Payload
+          mkdir -p ../../../output_ipa
+          cp Huzur-Release.ipa ../../../output_ipa/IlahiTefekkur-Release.ipa
+          cp Huzur-Release.ipa ../../../output_ipa/Huzur-Release.ipa
 
-      - name: Upload IPA Artifact
+      - name: Upload Huzur IPA Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: IlahiTefekkur-Release-IPA
-          path: output_ipa/IlahiTefekkur-Release.ipa
+          name: Huzur-iOS-Release-IPA
+          path: output_ipa/Huzur-Release.ipa

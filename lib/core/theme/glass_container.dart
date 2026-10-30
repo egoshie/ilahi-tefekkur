@@ -20,7 +20,7 @@ class GlassContainer extends StatelessWidget {
     this.padding = const EdgeInsets.all(18),
     this.margin,
     this.borderRadius = 26,
-    this.blurSigma = 32,
+    this.blurSigma = 28,
     this.tintColor,
     this.goldAccentBorder = false,
     this.emeraldGlow = false,
@@ -29,28 +29,26 @@ class GlassContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final baseTint = tintColor ??
-        (emeraldGlow
-            ? const Color(0xFF00FF87)
-            : (goldAccentBorder ? const Color(0xFFFFB300) : const Color(0xFF00E5FF)));
-
-    final glowShadowColor = emeraldGlow
-        ? const Color(0xFF00FF87).withOpacity(0.24)
-        : (goldAccentBorder
-            ? const Color(0xFFFFB300).withOpacity(0.24)
-            : const Color(0xFF00E5FF).withOpacity(0.16));
-
     final content = Container(
       margin: margin,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(borderRadius),
         boxShadow: [
           BoxShadow(
-            color: glowShadowColor,
-            blurRadius: 20,
-            spreadRadius: -2,
-            offset: const Offset(0, 6),
+            color: Colors.black.withOpacity(0.32),
+            blurRadius: 24,
+            spreadRadius: -4,
+            offset: const Offset(0, 10),
           ),
+          if (emeraldGlow || goldAccentBorder)
+            BoxShadow(
+              color: (goldAccentBorder
+                      ? const Color(0xFFFFD54F)
+                      : const Color(0xFF64FFDA))
+                  .withOpacity(0.10),
+              blurRadius: 18,
+              spreadRadius: -2,
+            ),
         ],
       ),
       child: ClipRRect(
@@ -58,7 +56,7 @@ class GlassContainer extends StatelessWidget {
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: blurSigma, sigmaY: blurSigma),
           child: CustomPaint(
-            foregroundPainter: _HyperSpecularBorderPainter(
+            foregroundPainter: _RefractiveSpecularRimPainter(
               borderRadius: borderRadius,
               goldAccent: goldAccentBorder,
               emeraldAccent: emeraldGlow,
@@ -71,11 +69,11 @@ class GlassContainer extends StatelessWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    Colors.white.withOpacity(0.19),
-                    baseTint.withOpacity(0.11),
-                    const Color(0xFF071329).withOpacity(0.45),
+                    Colors.white.withOpacity(0.085),
+                    (tintColor ?? Colors.white).withOpacity(0.045),
+                    Colors.white.withOpacity(0.020),
                   ],
-                  stops: const [0.0, 0.52, 1.0],
+                  stops: const [0.0, 0.48, 1.0],
                 ),
               ),
               child: child,
@@ -94,12 +92,12 @@ class GlassContainer extends StatelessWidget {
   }
 }
 
-class _HyperSpecularBorderPainter extends CustomPainter {
+class _RefractiveSpecularRimPainter extends CustomPainter {
   final double borderRadius;
   final bool goldAccent;
   final bool emeraldAccent;
 
-  _HyperSpecularBorderPainter({
+  _RefractiveSpecularRimPainter({
     required this.borderRadius,
     required this.goldAccent,
     required this.emeraldAccent,
@@ -109,37 +107,55 @@ class _HyperSpecularBorderPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
     final rrect = RRect.fromRectAndRadius(
-      rect.deflate(0.6),
+      rect.deflate(0.5),
       Radius.circular(borderRadius),
     );
 
-    final topColor = emeraldAccent
-        ? const Color(0xFF00FF87)
-        : (goldAccent ? const Color(0xFFFFD54F) : Colors.white.withOpacity(0.85));
+    final topLeftRim = goldAccent
+        ? const Color(0xFFFFE082).withOpacity(0.55)
+        : Colors.white.withOpacity(0.45);
 
-    final bottomColor = emeraldAccent
-        ? const Color(0xFF00E5FF)
-        : const Color(0xFF00E5FF).withOpacity(0.65);
+    final bottomRightRim = emeraldAccent
+        ? const Color(0xFF64FFDA).withOpacity(0.35)
+        : const Color(0xFF64FFDA).withOpacity(0.28);
 
-    final paint = Paint()
+    final borderPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2
+      ..strokeWidth = 1.0
       ..shader = LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: [
-          topColor,
-          Colors.white.withOpacity(0.20),
-          bottomColor,
+          topLeftRim,
+          Colors.white.withOpacity(0.05),
+          bottomRightRim,
         ],
-        stops: const [0.0, 0.5, 1.0],
+        stops: const [0.0, 0.52, 1.0],
       ).createShader(rect);
 
-    canvas.drawRRect(rrect, paint);
+    canvas.drawRRect(rrect, borderPaint);
+
+    // 1px Üst Kristal Tavan Parlaması (Specular Ceiling Highlight)
+    final topHighlightPath = Path()
+      ..moveTo(borderRadius * 0.85, 0.9)
+      ..lineTo(size.width - borderRadius * 0.85, 0.9);
+
+    final ceilingPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.9
+      ..shader = LinearGradient(
+        colors: [
+          Colors.white.withOpacity(0.0),
+          Colors.white.withOpacity(0.48),
+          Colors.white.withOpacity(0.0),
+        ],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, 2));
+
+    canvas.drawPath(topHighlightPath, ceilingPaint);
   }
 
   @override
-  bool shouldRepaint(covariant _HyperSpecularBorderPainter oldDelegate) {
+  bool shouldRepaint(covariant _RefractiveSpecularRimPainter oldDelegate) {
     return oldDelegate.borderRadius != borderRadius ||
         oldDelegate.goldAccent != goldAccent ||
         oldDelegate.emeraldAccent != emeraldAccent;
@@ -171,7 +187,7 @@ class _SpringGlassInteractiveState extends State<SpringGlassInteractive>
     _controller = AnimationController.unbounded(vsync: this)
       ..addListener(() {
         setState(() {
-          _scale = 1.0 - (_controller.value * 0.04);
+          _scale = 1.0 - (_controller.value * 0.035);
         });
       });
   }
@@ -208,7 +224,7 @@ class _SpringGlassInteractiveState extends State<SpringGlassInteractive>
       onTapUp: _onTapUp,
       onTapCancel: _onTapCancel,
       child: Transform.scale(
-        scale: _scale.clamp(0.93, 1.04),
+        scale: _scale.clamp(0.94, 1.03),
         child: widget.child,
       ),
     );

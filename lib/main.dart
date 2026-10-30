@@ -20,11 +20,11 @@ void main() async {
     ),
   );
   await NotificationAndWidgetService.instance.initialize();
-  runApp(const ProviderScope(child: IlahiTefekkurApp()));
+  runApp(const ProviderScope(child: HuzurApp()));
 }
 
-class IlahiTefekkurApp extends ConsumerWidget {
-  const IlahiTefekkurApp({super.key});
+class HuzurApp extends ConsumerWidget {
+  const HuzurApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -32,7 +32,7 @@ class IlahiTefekkurApp extends ConsumerWidget {
     final palette = LiquidGlassPalette.forPeriod(prayerState.activePeriod);
 
     return MaterialApp(
-      title: 'İlahi Tefekkür',
+      title: 'Huzur',
       debugShowCheckedModeBanner: false,
       theme: LiquidGlassPalette.buildTheme(palette),
       home: LiquidRootShell(palette: palette),
@@ -75,25 +75,25 @@ class _LiquidRootShellState extends State<LiquidRootShell> {
       bottomNavigationBar: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+          padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
           child: GlassContainer(
             borderRadius: 30,
-            blurSigma: 36,
+            blurSigma: 30,
             emeraldGlow: true,
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             child: Row(
               children: [
                 Expanded(
-                  child: _buildNavItem(0, "Vakit & Ayet", BespokeIconType.crescentOrb),
+                  child: _buildNavItem(0, "Huzur", BespokeIconType.crescentOrb),
                 ),
                 Expanded(
-                  child: _buildNavItem(1, "Kutsal Metin", BespokeIconType.sacredScroll),
+                  child: _buildNavItem(1, "Kitaplar", BespokeIconType.sacredScroll),
                 ),
                 Expanded(
                   child: _buildNavItem(2, "Zikirmatik", BespokeIconType.tasbihRipple),
                 ),
                 Expanded(
-                  child: _buildNavItem(3, "Kıble & Mikser", BespokeIconType.qiblaStar),
+                  child: _buildNavItem(3, "Kıble & Ses", BespokeIconType.qiblaStar),
                 ),
                 const SizedBox(width: 4),
                 GestureDetector(
@@ -101,9 +101,12 @@ class _LiquidRootShellState extends State<LiquidRootShell> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFB300).withOpacity(0.22),
+                      color: Colors.white.withOpacity(0.08),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFFFB300), width: 0.9),
+                      border: Border.all(
+                        color: const Color(0xFFFFE082).withOpacity(0.55),
+                        width: 0.9,
+                      ),
                     ),
                     child: const Column(
                       mainAxisSize: MainAxisSize.min,
@@ -136,7 +139,7 @@ class _LiquidRootShellState extends State<LiquidRootShell> {
 
   Widget _buildNavItem(int index, String label, BespokeIconType iconType) {
     final selected = _currentIndex == index;
-    final color = selected ? const Color(0xFF00FF87) : Colors.white70;
+    final color = selected ? widget.palette.crystalAccent : Colors.white60;
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -148,7 +151,7 @@ class _LiquidRootShellState extends State<LiquidRootShell> {
         duration: const Duration(milliseconds: 220),
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
         decoration: BoxDecoration(
-          color: selected ? color.withOpacity(0.16) : Colors.transparent,
+          color: selected ? Colors.white.withOpacity(0.10) : Colors.transparent,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
@@ -162,7 +165,7 @@ class _LiquidRootShellState extends State<LiquidRootShell> {
                 label,
                 maxLines: 1,
                 style: TextStyle(
-                  fontSize: 10.5,
+                  fontSize: 11,
                   fontWeight: selected ? FontWeight.bold : FontWeight.w500,
                   color: color,
                 ),

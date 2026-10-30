@@ -2,10 +2,10 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hijri/hijri_calendar.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/models/app_models.dart';
-import '../../core/services/database_seeder.dart';
 import '../../core/services/notification_service.dart';
 import '../../core/services/prayer_service.dart';
 import '../../core/services/pricing_and_premium_service.dart';
@@ -25,7 +25,6 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _waveController;
   Timer? _hourlyChecker;
-  bool _lockScreenHourlyEnabled = true;
   int _manualVerseOffset = 0;
   bool _alarmConfirmed = false;
 
@@ -34,36 +33,28 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
     super.initState();
     _waveController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 4),
+      duration: const Duration(seconds: 5),
     )..repeat();
-    _initHourlyLockScreenSystem();
+    _initSilentWidgetSync();
     _hourlyChecker = Timer.periodic(const Duration(minutes: 1), (_) {
-      if (_lockScreenHourlyEnabled && mounted) {
+      if (mounted) {
         setState(() {});
-        NotificationAndWidgetService.instance.setHourlyLockScreenEnabled(
-          enabled: true,
+        NotificationAndWidgetService.instance.syncHourlyVerseToWidget(
           manualOffset: _manualVerseOffset,
         );
       }
     });
   }
 
-  Future<void> _initHourlyLockScreenSystem() async {
+  Future<void> _initSilentWidgetSync() async {
     final prefs = await SharedPreferences.getInstance();
-    final enabled = prefs.getBool('hourly_lock_screen_enabled') ?? true;
     final offset = prefs.getInt('hourly_verse_offset') ?? 0;
     if (mounted) {
-      setState(() {
-        _lockScreenHourlyEnabled = enabled;
-        _manualVerseOffset = offset;
-      });
+      setState(() => _manualVerseOffset = offset);
     }
-    if (enabled) {
-      await NotificationAndWidgetService.instance.setHourlyLockScreenEnabled(
-        enabled: true,
-        manualOffset: offset,
-      );
-    }
+    await NotificationAndWidgetService.instance.syncHourlyVerseToWidget(
+      manualOffset: offset,
+    );
   }
 
   @override
@@ -87,38 +78,47 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
     final premium = ref.watch(premiumServiceProvider);
     final palette = LiquidGlassPalette.forPeriod(prayerState.activePeriod);
     final timeFmt = DateFormat('HH:mm');
+    final hijri = HijriCalendar.now();
+    final gregorianStr = DateFormat('d MMMM yyyy').format(DateTime.now());
 
     final activeShortVerse = NotificationAndWidgetService.instance
         .getActiveHourlyVerse(offset: _manualVerseOffset);
-    final minutesToNextHour = 60 - DateTime.now().minute;
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(18, 12, 18, 130),
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 132),
       children: [
+        // 1. Üst Başlık: Huzur & Tarih/Şehir
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    palette.periodTitle,
-                    style: const TextStyle(
-                      fontSize: 20,
+                  const Text(
+                    "Huzur",
+                    style: TextStyle(
+                      fontSize: 28,
                       fontWeight: FontWeight.w800,
+                      letterSpacing: 0.4,
                     ),
                   ),
+                  const SizedBox(height: 2),
                   Text(
-                    "${prayerState.selectedCity.name} • ${palette.spiritualSubtitle}",
-                    style: const TextStyle(fontSize: 12, color: Colors.white70),
+                    "${prayerState.selectedCity.name} • ${hijri.hDay} ${hijri.longMonthName} ${hijri.hYear} ($gregorianStr)",
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.white.withOpacity(0.72),
+                    ),
                   ),
                 ],
               ),
             ),
             GlassContainer(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              borderRadius: 16,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+              borderRadius: 18,
               goldAccentBorder: true,
               onTap: () => LiquidGlassPaywallSheet.show(context),
               child: Row(
@@ -126,15 +126,15 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                 children: [
                   const BespokeVectorIcon(
                     type: BespokeIconType.crownGem,
-                    color: Color(0xFFFFB300),
+                    color: Color(0xFFFFE082),
                     size: 16,
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    premium.isPremium ? "VIP AKTİF" : "PREMIUM",
+                    premium.isPremium ? "VIP AÇIK" : "PREMIUM",
                     style: const TextStyle(
                       fontSize: 11,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w700,
                       color: Color(0xFFFFE082),
                     ),
                   ),
@@ -143,64 +143,76 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 18),
 
-        // Dairesel Su Dalgası Doluluk Efektli Liquid Glass Vakit Sayacı
+        // 2. Kesilmeyen Saf Kristal Dairesel Vakit Küresi ve 6 Vakit Çizelgesi
         GlassContainer(
-          borderRadius: 30,
+          borderRadius: 32,
           emeraldGlow: true,
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.fromLTRB(18, 24, 18, 20),
           child: Column(
             children: [
-              SizedBox(
-                width: 195,
-                height: 195,
-                child: AnimatedBuilder(
-                  animation: _waveController,
-                  builder: (context, _) {
-                    return CustomPaint(
-                      painter: _LiquidOrbGaugePainter(
-                        progress: prayerState.cycleProgress,
-                        wavePhase: _waveController.value,
-                        accentColor: palette.accentGold,
-                      ),
-                      child: Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              "${prayerState.nextPrayerName} Vaktine",
-                              style: const TextStyle(
-                                fontSize: 13,
-                                color: Colors.white70,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              _formatDuration(prayerState.timeUntilNext),
-                              style: const TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.4,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              prayerState.selectedMaqam,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: palette.accentGold,
-                              ),
-                            ),
-                          ],
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: SizedBox(
+                  width: 204,
+                  height: 204,
+                  child: AnimatedBuilder(
+                    animation: _waveController,
+                    builder: (context, _) {
+                      return CustomPaint(
+                        painter: _CrystalOrbGaugePainter(
+                          progress: prayerState.cycleProgress,
+                          wavePhase: _waveController.value,
+                          accentColor: palette.crystalAccent,
                         ),
-                      ),
-                    );
-                  },
+                        child: Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                "${prayerState.nextPrayerName} Vaktine",
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.white.withOpacity(0.78),
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                _formatDuration(prayerState.timeUntilNext),
+                                style: const TextStyle(
+                                  fontSize: 30,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 1.5,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.07),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  palette.periodTitle,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: palette.crystalAccent,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 20),
 
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -219,27 +231,27 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                       prayerState.activePeriod == PrayerPeriod.yatsi, palette),
                 ],
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
 
               Row(
                 children: [
                   Expanded(
                     child: GlassContainer(
                       padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 10),
-                      borderRadius: 14,
+                      borderRadius: 16,
                       onTap: () => _showLocationAndMethodModal(context, prayerState, prayerNotifier),
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           BespokeVectorIcon(
                             type: BespokeIconType.gpsTarget,
-                            color: Color(0xFF00E5FF),
+                            color: Color(0xFF64FFDA),
                             size: 16,
                           ),
                           SizedBox(width: 6),
                           Flexible(
                             child: Text(
-                              "Şehir & Makam",
+                              "Konum & Makam",
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                             ),
@@ -253,7 +265,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                     child: GlassContainer(
                       goldAccentBorder: true,
                       padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 10),
-                      borderRadius: 14,
+                      borderRadius: 16,
                       onTap: () async {
                         await NotificationAndWidgetService.instance
                             .scheduleExactPrayerAlarm(
@@ -274,18 +286,18 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                           BespokeVectorIcon(
                             type: BespokeIconType.checkBadge,
                             color: _alarmConfirmed
-                                ? const Color(0xFF00FF87)
-                                : const Color(0xFFFFB300),
+                                ? const Color(0xFF64FFDA)
+                                : const Color(0xFFFFE082),
                             size: 16,
                           ),
                           const SizedBox(width: 6),
                           Flexible(
                             child: Text(
-                              _alarmConfirmed ? "Ezan Alarmı Aktif" : "Sıfır Sapma Alarmı",
+                              _alarmConfirmed ? "Hatırlatıcı Açık" : "Vakit Hatırlatıcı",
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 fontSize: 12,
-                                fontWeight: FontWeight.w700,
+                                fontWeight: FontWeight.w600,
                                 color: Color(0xFFFFE082),
                               ),
                             ),
@@ -301,158 +313,119 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
         ),
         const SizedBox(height: 16),
 
-        // iOS WIDGETKIT & KİLİT EKRANI SAATLİK KISA AYET SİSTEMİ
+        // 3. Saatlik Huzur Ayeti Kartı (Doğal ve Manevi Tasarım)
         GlassContainer(
-          borderRadius: 28,
+          borderRadius: 30,
           goldAccentBorder: true,
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(22),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "iOS WIDGETKIT & KİLİT EKRANI SAATLİK AYET",
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1.0,
-                            color: Color(0xFF00FF87),
-                          ),
-                        ),
-                        SizedBox(height: 2),
-                        Text(
-                          "Her saat başı otomatik değişen 2-4 kelimelik öz ayet kartı",
-                          style: TextStyle(fontSize: 11, color: Colors.white70),
-                        ),
-                      ],
+                  const Text(
+                    "Saatlik Huzur Ayeti",
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFFFFE082),
                     ),
                   ),
-                  Switch(
-                    value: _lockScreenHourlyEnabled,
-                    activeColor: const Color(0xFF00FF87),
-                    onChanged: (val) async {
-                      setState(() => _lockScreenHourlyEnabled = val);
-                      await NotificationAndWidgetService.instance
-                          .setHourlyLockScreenEnabled(
-                        enabled: val,
-                        manualOffset: _manualVerseOffset,
-                      );
-                    },
+                  Text(
+                    activeShortVerse.reference,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF64FFDA),
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 14),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.28),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: const Color(0xFF00E5FF).withOpacity(0.45),
-                    width: 1.0,
+              const SizedBox(height: 16),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  activeShortVerse.arabicShort,
+                  textAlign: TextAlign.right,
+                  style: const TextStyle(
+                    fontSize: 26,
+                    height: 1.5,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFFFFF8E1),
                   ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      activeShortVerse.arabicShort,
-                      textAlign: TextAlign.right,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFFFFE082),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        "\"${activeShortVerse.turkishShort}\"",
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          "Sonraki otomatik değişim: $minutesToNextHour dk sonra",
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: Color(0xFF00E5FF),
-                          ),
-                        ),
-                        Text(
-                          "— ${activeShortVerse.reference}",
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF00FF87),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                "\"${activeShortVerse.turkishShort}\"",
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                  height: 1.4,
+                  color: Colors.white,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 18),
               Row(
                 children: [
                   Expanded(
                     child: GlassContainer(
-                      borderRadius: 14,
-                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      borderRadius: 16,
+                      padding: const EdgeInsets.symmetric(vertical: 11),
                       onTap: () async {
-                        setState(() {
-                          _manualVerseOffset++;
-                          _lockScreenHourlyEnabled = true;
-                        });
+                        setState(() => _manualVerseOffset++);
                         await NotificationAndWidgetService.instance
-                            .setHourlyLockScreenEnabled(
-                          enabled: true,
+                            .syncHourlyVerseToWidget(
                           manualOffset: _manualVerseOffset,
                         );
                       },
-                      child: const Center(
-                        child: Text(
-                          "Sonraki Kısa Ayete Geç",
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF00FF87),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          BespokeVectorIcon(
+                            type: BespokeIconType.refreshSpark,
+                            color: Color(0xFF64FFDA),
+                            size: 16,
                           ),
-                        ),
+                          SizedBox(width: 8),
+                          Text(
+                            "Yenile",
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF64FFDA),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: GlassContainer(
-                      borderRadius: 14,
+                      borderRadius: 16,
                       goldAccentBorder: true,
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      onTap: () => _showIosLockScreenSimulator(context, activeShortVerse, palette),
-                      child: const Center(
-                        child: Text(
-                          "Kilit Ekranı Önizleme",
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
+                      padding: const EdgeInsets.symmetric(vertical: 11),
+                      onTap: () => _showFullScreenInspiration(context, activeShortVerse, palette),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          BespokeVectorIcon(
+                            type: BespokeIconType.expandFrame,
                             color: Color(0xFFFFE082),
+                            size: 15,
                           ),
-                        ),
+                          SizedBox(width: 8),
+                          Text(
+                            "Tam Ekran",
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFFFFE082),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -463,26 +436,31 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
         ),
         const SizedBox(height: 16),
 
+        // 4. Vakit Atmosferi (Otomatik, Seher, Gün Ortası, Grup, Gece)
         GlassContainer(
-          borderRadius: 22,
-          padding: const EdgeInsets.all(14),
+          borderRadius: 24,
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                "Hyper-Vibrant Atmosfer Küreleri (Vakit Önizleme)",
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white70),
+              Text(
+                "Vakit Atmosferi",
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white.withOpacity(0.85),
+                ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: [
-                    _buildShaderChip("Canlı Vakit", null, prayerNotifier),
-                    _buildShaderChip("İmsak", PrayerPeriod.imsak, prayerNotifier),
-                    _buildShaderChip("Öğle", PrayerPeriod.ogle, prayerNotifier),
-                    _buildShaderChip("Akşam", PrayerPeriod.aksam, prayerNotifier),
-                    _buildShaderChip("Yatsı", PrayerPeriod.yatsi, prayerNotifier),
+                    _buildAtmosphereChip("Otomatik", null, prayerNotifier),
+                    _buildAtmosphereChip("Seher", PrayerPeriod.imsak, prayerNotifier),
+                    _buildAtmosphereChip("Gün Ortası", PrayerPeriod.ogle, prayerNotifier),
+                    _buildAtmosphereChip("Grup", PrayerPeriod.aksam, prayerNotifier),
+                    _buildAtmosphereChip("Gece", PrayerPeriod.yatsi, prayerNotifier),
                   ],
                 ),
               ),
@@ -493,7 +471,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
     );
   }
 
-  void _showIosLockScreenSimulator(
+  void _showFullScreenInspiration(
     BuildContext context,
     HourlyShortVerse verse,
     LiquidGlassPalette palette,
@@ -502,10 +480,10 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
     showGeneralDialog(
       context: context,
       barrierDismissible: true,
-      barrierLabel: "LockScreenPreview",
+      barrierLabel: "InspirationFullScreen",
       pageBuilder: (ctx, _, __) {
         return Scaffold(
-          backgroundColor: Colors.black,
+          backgroundColor: palette.deepCosmicStart,
           body: LiquidMeshBackground(
             palette: palette,
             child: SafeArea(
@@ -513,73 +491,63 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
                 child: Column(
                   children: [
-                    const Text(
-                      "iOS 18 WIDGETKIT KİLİT EKRANI GÖRÜNÜMÜ",
+                    Text(
+                      "Günün İlhamı",
                       style: TextStyle(
-                        fontSize: 11,
-                        letterSpacing: 1.4,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF00FF87),
+                        fontSize: 13,
+                        letterSpacing: 1.1,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white.withOpacity(0.75),
                       ),
                     ),
                     const SizedBox(height: 28),
                     Text(
                       clockFmt,
                       style: const TextStyle(
-                        fontSize: 76,
+                        fontSize: 72,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 2,
                         color: Colors.white,
                       ),
                     ),
-                    const SizedBox(height: 18),
-                    // iOS AccessoryRectangular Widget Kartı
+                    const SizedBox(height: 24),
                     GlassContainer(
-                      borderRadius: 24,
+                      borderRadius: 28,
                       emeraldGlow: true,
                       goldAccentBorder: true,
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.all(24),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            "İLAHİ TEFEKKÜR • SAATLİK KISA AYET",
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF00FF87),
-                            ),
-                          ),
-                          const SizedBox(height: 10),
                           Align(
                             alignment: Alignment.centerRight,
                             child: Text(
                               verse.arabicShort,
                               style: const TextStyle(
-                                fontSize: 26,
+                                fontSize: 28,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFFFFE082),
+                                color: Color(0xFFFFF8E1),
                               ),
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 12),
                           Text(
                             "\"${verse.turkishShort}\"",
                             style: const TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
                               color: Colors.white,
                             ),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 8),
                           Align(
                             alignment: Alignment.centerRight,
                             child: Text(
                               "— ${verse.reference}",
                               style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF00E5FF),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF64FFDA),
                               ),
                             ),
                           ),
@@ -589,13 +557,13 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                     const Spacer(),
                     GlassContainer(
                       borderRadius: 18,
-                      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 28),
+                      padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 32),
                       onTap: () => Navigator.of(ctx).pop(),
                       child: const Text(
-                        "Önizlemeyi Kapat",
+                        "Kapat",
                         style: TextStyle(
                           fontSize: 13,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w600,
                           color: Color(0xFFFFE082),
                         ),
                       ),
@@ -616,11 +584,13 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
         color: isActive
-            ? palette.accentGold.withOpacity(0.24)
-            : Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(12),
+            ? Colors.white.withOpacity(0.14)
+            : Colors.white.withOpacity(0.03),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isActive ? palette.accentGold : Colors.white12,
+          color: isActive
+              ? palette.crystalAccent.withOpacity(0.75)
+              : Colors.white.withOpacity(0.10),
           width: 0.9,
         ),
       ),
@@ -630,8 +600,8 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
             label,
             style: TextStyle(
               fontSize: 11,
-              color: isActive ? palette.accentGold : Colors.white60,
-              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+              color: isActive ? palette.crystalAccent : Colors.white60,
+              fontWeight: isActive ? FontWeight.w700 : FontWeight.normal,
             ),
           ),
           const SizedBox(height: 4),
@@ -647,7 +617,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
     );
   }
 
-  Widget _buildShaderChip(
+  Widget _buildAtmosphereChip(
     String label,
     PrayerPeriod? period,
     PrayerEngineNotifier notifier,
@@ -657,13 +627,16 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
       child: GestureDetector(
         onTap: () => notifier.setManualPeriodPreview(period),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.09),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: Colors.white24, width: 0.8),
+            color: Colors.white.withOpacity(0.06),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.white.withOpacity(0.18), width: 0.8),
           ),
-          child: Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+          child: Text(
+            label,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+          ),
         ),
       ),
     );
@@ -679,20 +652,20 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
       backgroundColor: Colors.transparent,
       builder: (_) {
         return GlassContainer(
-          borderRadius: 28,
+          borderRadius: 30,
           padding: const EdgeInsets.all(20),
           child: ListView(
             shrinkWrap: true,
             children: [
               const Text(
-                "Küresel Şehir, GPS & Makam Ayarları",
+                "Şehir ve Ezan Makamı Seçimi",
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
               GlassContainer(
-                borderRadius: 14,
+                borderRadius: 16,
                 emeraldGlow: true,
-                padding: const EdgeInsets.symmetric(vertical: 10),
+                padding: const EdgeInsets.symmetric(vertical: 11),
                 onTap: () {
                   notifier.detectGpsLocation();
                   Navigator.pop(context);
@@ -702,20 +675,23 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                   children: [
                     BespokeVectorIcon(
                       type: BespokeIconType.gpsTarget,
-                      color: Color(0xFF00FF87),
+                      color: Color(0xFF64FFDA),
                       size: 18,
                     ),
                     SizedBox(width: 8),
                     Text(
-                      "Cihaz GPS Koordinatlarını Otomatik Algıla",
-                      style: TextStyle(color: Color(0xFF00FF87), fontWeight: FontWeight.bold),
+                      "Bulunduğum Konumu Algıla",
+                      style: TextStyle(
+                        color: Color(0xFF64FFDA),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
-              const Text("Hazır Küresel Merkezler:", style: TextStyle(fontSize: 12, color: Colors.white70)),
-              const SizedBox(height: 6),
+              const SizedBox(height: 14),
+              const Text("Şehirler:", style: TextStyle(fontSize: 12, color: Colors.white70)),
+              const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
@@ -726,10 +702,11 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                       Navigator.pop(context);
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(10),
+                        color: Colors.white.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.white12),
                       ),
                       child: Text(city.name, style: const TextStyle(fontSize: 12)),
                     ),
@@ -737,8 +714,8 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                 }).toList(),
               ),
               const SizedBox(height: 14),
-              const Text("Ezan Makamı Seçimi:", style: TextStyle(fontSize: 12, color: Colors.white70)),
-              const SizedBox(height: 6),
+              const Text("Ezan Makamı:", style: TextStyle(fontSize: 12, color: Colors.white70)),
+              const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
@@ -755,10 +732,11 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                       Navigator.pop(context);
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(10),
+                        color: Colors.white.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.white12),
                       ),
                       child: Text(m, style: const TextStyle(fontSize: 12)),
                     ),
@@ -773,12 +751,12 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
   }
 }
 
-class _LiquidOrbGaugePainter extends CustomPainter {
+class _CrystalOrbGaugePainter extends CustomPainter {
   final double progress;
   final double wavePhase;
   final Color accentColor;
 
-  _LiquidOrbGaugePainter({
+  _CrystalOrbGaugePainter({
     required this.progress,
     required this.wavePhase,
     required this.accentColor,
@@ -787,20 +765,35 @@ class _LiquidOrbGaugePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2;
+    final radius = (size.width / 2) - 4;
 
-    final clipPath = Path()..addOval(Rect.fromCircle(center: center, radius: radius));
+    final clipPath = Path()
+      ..addOval(Rect.fromCircle(center: center, radius: radius));
     canvas.save();
     canvas.clipPath(clipPath);
 
-    final waterHeight = size.height * (1.0 - progress.clamp(0.14, 0.88));
+    // Saf Kristal İç Yüzey
+    final sphereBg = Paint()
+      ..shader = RadialGradient(
+        center: const Alignment(-0.35, -0.45),
+        radius: 1.1,
+        colors: [
+          Colors.white.withOpacity(0.14),
+          Colors.white.withOpacity(0.03),
+          Colors.transparent,
+        ],
+      ).createShader(Rect.fromCircle(center: center, radius: radius));
+    canvas.drawCircle(center, radius, sphereBg);
+
+    // Akışkan Kristal Su Dalgası
+    final waterHeight = size.height * (1.0 - progress.clamp(0.18, 0.84));
     final wavePath = Path()..moveTo(0, size.height);
     wavePath.lineTo(0, waterHeight);
 
-    for (double x = 0; x <= size.width; x += 6) {
+    for (double x = 0; x <= size.width; x += 5) {
       final y = waterHeight +
-          math.sin((x / size.width * 2 * math.pi) + (wavePhase * 2 * math.pi)) * 7 +
-          math.cos((x / size.width * 4 * math.pi) - (wavePhase * 2 * math.pi)) * 4;
+          math.sin((x / size.width * 2 * math.pi) + (wavePhase * 2 * math.pi)) * 6 +
+          math.cos((x / size.width * 4 * math.pi) - (wavePhase * 2 * math.pi)) * 3;
       wavePath.lineTo(x, y);
     }
     wavePath.lineTo(size.width, size.height);
@@ -811,23 +804,32 @@ class _LiquidOrbGaugePainter extends CustomPainter {
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
         colors: [
-          accentColor.withOpacity(0.45),
-          const Color(0xFF00E5FF).withOpacity(0.18),
+          accentColor.withOpacity(0.32),
+          const Color(0xFF00B0FF).withOpacity(0.10),
         ],
       ).createShader(Offset.zero & size);
 
     canvas.drawPath(wavePath, waterPaint);
     canvas.restore();
 
-    final ringPaint = Paint()
+    // 3D Kristal Mercek Dış Çemberi
+    final rimPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.4
-      ..color = accentColor.withOpacity(0.80);
-    canvas.drawCircle(center, radius - 1.5, ringPaint);
+      ..strokeWidth = 1.6
+      ..shader = LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Colors.white.withOpacity(0.65),
+          Colors.white.withOpacity(0.10),
+          accentColor.withOpacity(0.55),
+        ],
+      ).createShader(Rect.fromCircle(center: center, radius: radius));
+    canvas.drawCircle(center, radius, rimPaint);
   }
 
   @override
-  bool shouldRepaint(covariant _LiquidOrbGaugePainter oldDelegate) {
+  bool shouldRepaint(covariant _CrystalOrbGaugePainter oldDelegate) {
     return oldDelegate.wavePhase != wavePhase ||
         oldDelegate.progress != progress ||
         oldDelegate.accentColor != accentColor;

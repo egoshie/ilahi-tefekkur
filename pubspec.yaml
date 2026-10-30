@@ -1,7 +1,7 @@
 name: ilahi_tefekkur
-description: "Ilahi Metinler, Tefekkur ve Ibadet Ekosistemi V2.0 - Hyper-Vibrant Liquid Glass"
+description: "Huzur - İlahi Metinler, Tefekkür ve İbadet Ekosistemi V4.0"
 publish_to: 'none'
-version: 2.0.0+2
+version: 4.0.0+4
 
 environment:
   sdk: '>=3.2.0 <4.0.0'
