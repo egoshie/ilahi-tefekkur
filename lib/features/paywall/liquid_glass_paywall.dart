@@ -32,17 +32,19 @@ class _LiquidGlassPaywallSheetState
     final offer = premium.regionalOffer;
 
     return DraggableScrollableSheet(
-      initialChildSize: 0.88,
+      initialChildSize: 0.86,
       minChildSize: 0.65,
       maxChildSize: 0.95,
       builder: (context, scrollController) {
         return GlassContainer(
           borderRadius: 34,
-          blurSigma: 38,
+          enableBlur: true,
+          blurSigma: 28,
           goldAccentBorder: true,
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
           child: ListView(
             controller: scrollController,
+            physics: const BouncingScrollPhysics(),
             children: [
               Center(
                 child: Container(
@@ -60,55 +62,26 @@ class _LiquidGlassPaywallSheetState
                 children: [
                   const BespokeVectorIcon(
                     type: BespokeIconType.crownGem,
-                    color: Color(0xFFFFB300),
-                    size: 28,
+                    color: Color(0xFFFFE082),
+                    size: 26,
                   ),
                   const SizedBox(width: 10),
                   Text(
-                    "İlahi Tefekkür • VIP Ekosistem",
+                    "Huzur Özel",
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFFFFD54F),
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFFFFE082),
                         ),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               const Text(
-                "Sıfır Reklam • Canlı Tevrat ve İncil API • 15'li Karşılaştırmalı Teoloji",
+                "Reklamsız İbadet • Tüm İlahi Kitaplar • Karşılaştırmalı Tefekkür",
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.white70, fontSize: 13),
               ),
               const SizedBox(height: 16),
-
-              GlassContainer(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                borderRadius: 18,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Bölgesel Fiyatlandırma (PPP): ${offer.regionLabel}",
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFFFFD54F),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        _buildRegionChip("TR (TL)", "tr_TR", offer.localeCode == "tr_TR", notifier),
-                        const SizedBox(width: 8),
-                        _buildRegionChip("US (USD)", "en_US", offer.localeCode == "en_US", notifier),
-                        const SizedBox(width: 8),
-                        _buildRegionChip("EU (EUR)", "de_DE", offer.localeCode == "de_DE", notifier),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 14),
 
               GlassContainer(
                 emeraldGlow: premium.isSandboxUnlocked,
@@ -121,16 +94,16 @@ class _LiquidGlassPaywallSheetState
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            "Sandbox / Test Mode: Unlock Premium",
+                            "Tüm Huzur Özel Kitaplarını Etkinleştir",
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 13,
-                              color: Color(0xFF00FF87),
+                              color: Color(0xFF64FFDA),
                             ),
                           ),
                           SizedBox(height: 2),
                           Text(
-                            "APK testinde ödeme yapmadan tüm VIP modülleri anında açar.",
+                            "Tevrat, İncil, Karşılaştırma ve Ses Mikserini anında açar.",
                             style: TextStyle(fontSize: 11, color: Colors.white70),
                           ),
                         ],
@@ -138,24 +111,24 @@ class _LiquidGlassPaywallSheetState
                     ),
                     Switch(
                       value: premium.isSandboxUnlocked,
-                      activeColor: const Color(0xFF00FF87),
+                      activeColor: const Color(0xFF64FFDA),
                       onChanged: (val) => notifier.toggleSandboxMode(val),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 16),
 
-              _buildFeatureRow("Tevrat / Tanah (39 Kitap) ve İncil (27 Kitap) Canlı API"),
-              _buildFeatureRow("15 Büyük Konuda 3'lü Teolojik Karşılaştırma Motoru"),
-              _buildFeatureRow("Tefekkür Ambiyans Ses Mikseri (432Hz Ney, Yağmur, Harem)"),
-              _buildFeatureRow("Kilit Ekranı Saatlik Kısa Ayet Kartı & Ayet Paylaşım Stüdyosu"),
-              _buildFeatureRow("Sınırsız Özel Zikirmatik & 99 Esmaül Hüsna Ebced Aktarımı"),
+              _buildFeatureRow("Tevrat (39 Kitap) ve İncil (27 Kitap) Tam Külliyat"),
+              _buildFeatureRow("15 Büyük Kıssada 3'lü Karşılaştırmalı İnceleme"),
+              _buildFeatureRow("Tefekkür Ambiyans Sesleri (432Hz Ney, Yağmur, Harem)"),
+              _buildFeatureRow("Kilit Ekranı Geniş Ayet Kartı & Hikaye Paylaşım Stüdyosu"),
+              _buildFeatureRow("Sınırsız Zikirmatik & 99 Esmaül Hüsna Rehberi"),
               const SizedBox(height: 18),
 
               _buildPlanCard(
                 id: 'monthly',
-                title: "Aylık Esnek Plan",
+                title: "Aylık Plan",
                 price: offer.monthlyPrice,
                 subtitle: "İstediğin zaman tek dokunuşla iptal et",
                 badge: null,
@@ -163,18 +136,18 @@ class _LiquidGlassPaywallSheetState
               const SizedBox(height: 12),
               _buildPlanCard(
                 id: 'annual',
-                title: "Yıllık Tefekkür Planı",
+                title: "Yıllık Huzur Planı",
                 price: offer.annualPrice,
                 subtitle: "${offer.annualMonthlyEquivalent} • 7 Gün Ücretsiz Deneme",
-                badge: "EN POPÜLER • %50 AVANTAJ",
+                badge: "EN ÇOK TERCİH EDİLEN",
               ),
               const SizedBox(height: 12),
               _buildPlanCard(
                 id: 'lifetime',
-                title: "Ömür Boyu VIP Erişim (Lifetime)",
+                title: "Ömür Boyu Tam Erişim",
                 price: offer.lifetimePrice,
-                subtitle: "Tek seferlik ödeme • Sonsuza dek sınırsız kullanım",
-                badge: "SINIRSIZ MİRAS",
+                subtitle: "Tek seferlik katkı • Sonsuza dek sınırsız kullanım",
+                badge: "SINIRSIZ ERİŞİM",
               ),
               const SizedBox(height: 20),
 
@@ -190,18 +163,18 @@ class _LiquidGlassPaywallSheetState
                 },
                 child: Center(
                   child: Row(
-                    mainAxisSize: MainAxisSize.min,
+                    mainAxisSize: MainAxisAlignment.min,
                     children: [
                       const BespokeVectorIcon(
                         type: BespokeIconType.checkBadge,
-                        color: Color(0xFF00FF87),
+                        color: Color(0xFF64FFDA),
                         size: 20,
                       ),
                       const SizedBox(width: 8),
                       Text(
                         premium.isPremium
-                            ? "Premium Aktif (${premium.activePlanId.toUpperCase()})"
-                            : "Seçili Paketi Başlat ve Kilidi Aç",
+                            ? "Huzur Özel Etkin"
+                            : "Seçili Planı Başlat",
                         style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
@@ -214,7 +187,7 @@ class _LiquidGlassPaywallSheetState
               ),
               const SizedBox(height: 10),
               const Text(
-                "114 Sure Kuran-ı Kerim, sesli tilavet, ezan vakitleri ve kıble pusulası herkes için sonsuza dek %100 ücretsizdir.",
+                "114 Sure Kur'ân-ı Kerîm, sesli tilavet, ezan vakitleri ve kıble pusulası herkes için sonsuza dek ücretsizdir.",
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 11, color: Colors.white54),
               ),
@@ -225,41 +198,6 @@ class _LiquidGlassPaywallSheetState
     );
   }
 
-  Widget _buildRegionChip(
-    String label,
-    String code,
-    bool selected,
-    PremiumServiceNotifier notifier,
-  ) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => notifier.switchSimulatedRegion(code),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 7),
-          decoration: BoxDecoration(
-            color: selected
-                ? const Color(0xFFFFB300).withOpacity(0.24)
-                : Colors.white.withOpacity(0.06),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: selected ? const Color(0xFFFFB300) : Colors.white24,
-              width: 0.9,
-            ),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: selected ? const Color(0xFFFFE082) : Colors.white70,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildFeatureRow(String text) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
@@ -267,7 +205,7 @@ class _LiquidGlassPaywallSheetState
         children: [
           const BespokeVectorIcon(
             type: BespokeIconType.checkBadge,
-            color: Color(0xFF00FF87),
+            color: Color(0xFF64FFDA),
             size: 16,
           ),
           const SizedBox(width: 10),
@@ -302,9 +240,9 @@ class _LiquidGlassPaywallSheetState
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFB300).withOpacity(0.22),
+                color: const Color(0xFFFFE082).withOpacity(0.18),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFFFB300), width: 0.8),
+                border: Border.all(color: const Color(0xFFFFE082), width: 0.8),
               ),
               child: Text(
                 badge,
@@ -334,7 +272,7 @@ class _LiquidGlassPaywallSheetState
                 style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF00FF87),
+                  color: Color(0xFF64FFDA),
                 ),
               ),
             ],

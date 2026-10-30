@@ -8,10 +8,8 @@ import 'package:sensors_plus/sensors_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/services/ambiance_mixer_service.dart';
 import '../../core/services/prayer_service.dart';
-import '../../core/services/pricing_and_premium_service.dart';
 import '../../core/theme/glass_container.dart';
 import '../../core/theme/liquid_glass_theme.dart';
-import '../paywall/liquid_glass_paywall.dart';
 
 class QiblaAndToolsScreen extends ConsumerStatefulWidget {
   const QiblaAndToolsScreen({super.key});
@@ -67,7 +65,8 @@ class _QiblaAndToolsScreenState extends ConsumerState<QiblaAndToolsScreen> {
     final nextPrayers = (remainingPrayers ?? _remainingPrayers).clamp(0, 99999);
     final nextFasts = (remainingFasts ?? _remainingFasts).clamp(0, 9999);
     final nextPace = (dailyPace ?? _dailyPace).clamp(1, 20);
-    final nextInitial = nextPrayers > _initialPrayers ? nextPrayers : _initialPrayers;
+    final nextInitial =
+        nextPrayers > _initialPrayers ? nextPrayers : _initialPrayers;
 
     await prefs.setInt('kaza_initial_prayers', nextInitial);
     await prefs.setInt('kaza_prayers', nextPrayers);
@@ -93,7 +92,6 @@ class _QiblaAndToolsScreenState extends ConsumerState<QiblaAndToolsScreen> {
     final prayerState = ref.watch(prayerEngineProvider);
     final ambianceChannels = ref.watch(ambianceMixerProvider);
     final ambianceNotifier = ref.read(ambianceMixerProvider.notifier);
-    final premium = ref.watch(premiumServiceProvider);
     final hijri = HijriCalendar.now();
 
     final qiblaAngle = prayerState.qiblaDirection;
@@ -101,21 +99,22 @@ class _QiblaAndToolsScreenState extends ConsumerState<QiblaAndToolsScreen> {
 
     final completedRatio = _initialPrayers == 0
         ? 1.0
-        : ((_initialPrayers - _remainingPrayers) / _initialPrayers).clamp(0.0, 1.0);
+        : ((_initialPrayers - _remainingPrayers) / _initialPrayers)
+            .clamp(0.0, 1.0);
     final daysLeft = (_remainingPrayers / _dailyPace).ceil();
     final finishDate = DateTime.now().add(Duration(days: daysLeft));
     final finishFormatted = DateFormat('dd.MM.yyyy').format(finishDate);
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(18, 12, 18, 130),
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(18, 12, 18, 148),
       children: [
         const Text(
-          "Kıble Pusulası, Ambiyans Mikseri & Kaza Planlayıcı",
-          style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+          "Kıble Pusulası, Ambiyans Sesleri & Kaza Takibi",
+          style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 14),
 
-        // 1. 3D Sensörlü Kıble Pusulası
         GlassContainer(
           borderRadius: 28,
           goldAccentBorder: true,
@@ -126,7 +125,7 @@ class _QiblaAndToolsScreenState extends ConsumerState<QiblaAndToolsScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
-                    "3D Sensörlü Kıble Pusulası",
+                    "Canlı Kıble Pusulası",
                     style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                   ),
                   Text(
@@ -134,22 +133,24 @@ class _QiblaAndToolsScreenState extends ConsumerState<QiblaAndToolsScreen> {
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF00FF87),
+                      color: Color(0xFF64FFDA),
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 16),
-              SizedBox(
-                width: 170,
-                height: 170,
-                child: CustomPaint(
-                  painter: _QiblaBeamCompassPainter(relativeRadians: relativeAngle),
+              RepaintBoundary(
+                child: SizedBox(
+                  width: 170,
+                  height: 170,
+                  child: CustomPaint(
+                    painter: _QiblaBeamCompassPainter(relativeRadians: relativeAngle),
+                  ),
                 ),
               ),
               const SizedBox(height: 10),
               Text(
-                "Manyetometre Başlığı: ${_deviceHeading.toStringAsFixed(0)}° • Işık huzmesi Kâbe yönünü gösterir",
+                "Yön Derecesi: ${_deviceHeading.toStringAsFixed(0)}° • Işık ibresi Kâbe yönünü gösterir",
                 style: const TextStyle(fontSize: 11, color: Colors.white70),
               ),
             ],
@@ -157,7 +158,6 @@ class _QiblaAndToolsScreenState extends ConsumerState<QiblaAndToolsScreen> {
         ),
         const SizedBox(height: 16),
 
-        // 2. Tefekkür Ambiyans Ses Mikseri (Gerçek Ses + Canlı SVG Visualizer)
         GlassContainer(
           borderRadius: 28,
           emeraldGlow: true,
@@ -165,40 +165,13 @@ class _QiblaAndToolsScreenState extends ConsumerState<QiblaAndToolsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    "Tefekkür Ambiyans Ses Mikseri",
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                  ),
-                  if (!premium.isPremium)
-                    GestureDetector(
-                      onTap: () => LiquidGlassPaywallSheet.show(context),
-                      child: const Row(
-                        children: [
-                          BespokeVectorIcon(
-                            type: BespokeIconType.lockShield,
-                            color: Color(0xFFFFB300),
-                            size: 14,
-                          ),
-                          SizedBox(width: 4),
-                          Text(
-                            "VIP AÇ",
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFFFFE082),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                ],
+              const Text(
+                "Tefekkür Ambiyans Ses Mikseri",
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 4),
               const Text(
-                "Gerçek zamanlı 432Hz Ney, Seher Yağmuru ve Harem Kubbe akustiği",
+                "Okuma ve zikir esnasında arka plan su, ney ve kubbe akustiği",
                 style: TextStyle(fontSize: 11, color: Colors.white70),
               ),
               const SizedBox(height: 12),
@@ -209,12 +182,12 @@ class _QiblaAndToolsScreenState extends ConsumerState<QiblaAndToolsScreen> {
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: ch.isPlaying
-                          ? const Color(0xFF00FF87).withOpacity(0.14)
-                          : Colors.white.withOpacity(0.05),
+                          ? const Color(0xFF64FFDA).withOpacity(0.14)
+                          : Colors.white.withOpacity(0.04),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                         color: ch.isPlaying
-                            ? const Color(0xFF00FF87)
+                            ? const Color(0xFF64FFDA)
                             : Colors.white12,
                         width: 0.9,
                       ),
@@ -225,7 +198,7 @@ class _QiblaAndToolsScreenState extends ConsumerState<QiblaAndToolsScreen> {
                           children: [
                             LiveSvgAudioVisualizer(
                               isPlaying: ch.isPlaying,
-                              color: const Color(0xFF00FF87),
+                              color: const Color(0xFF64FFDA),
                             ),
                             const SizedBox(width: 10),
                             Expanded(
@@ -248,16 +221,14 @@ class _QiblaAndToolsScreenState extends ConsumerState<QiblaAndToolsScreen> {
                               ),
                             ),
                             GestureDetector(
-                              onTap: () {
-                                ambianceNotifier.toggleChannel(ch.id);
-                              },
+                              onTap: () => ambianceNotifier.toggleChannel(ch.id),
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 12, vertical: 7),
                                 decoration: BoxDecoration(
                                   color: ch.isPlaying
-                                      ? const Color(0xFFFFB300)
-                                      : const Color(0xFF00FF87),
+                                      ? const Color(0xFFFFE082)
+                                      : const Color(0xFF64FFDA),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Row(
@@ -287,7 +258,7 @@ class _QiblaAndToolsScreenState extends ConsumerState<QiblaAndToolsScreen> {
                         if (ch.isPlaying)
                           Slider(
                             value: ch.volume,
-                            activeColor: const Color(0xFF00FF87),
+                            activeColor: const Color(0xFF64FFDA),
                             onChanged: (v) => ambianceNotifier.setVolume(ch.id, v),
                           ),
                       ],
@@ -300,7 +271,6 @@ class _QiblaAndToolsScreenState extends ConsumerState<QiblaAndToolsScreen> {
         ),
         const SizedBox(height: 16),
 
-        // 3. İnteraktif Kaza Namazı & Orucu Planlayıcı Modülü
         GlassContainer(
           borderRadius: 28,
           goldAccentBorder: true,
@@ -309,16 +279,16 @@ class _QiblaAndToolsScreenState extends ConsumerState<QiblaAndToolsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                "İnteraktif Kaza Namazı & Orucu Planlayıcı",
+                "Kaza Namazı & Orucu Planlayıcı",
                 style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 6),
               Text(
-                "İlerleme: %${(completedRatio * 100).toStringAsFixed(0)} Tamamlandı • Tahmini Bitiş: $finishFormatted",
+                "Tamamlanan: %${(completedRatio * 100).toStringAsFixed(0)} • Tahmini Bitiş: $finishFormatted",
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF00FF87),
+                  color: Color(0xFF64FFDA),
                 ),
               ),
               const SizedBox(height: 8),
@@ -328,7 +298,8 @@ class _QiblaAndToolsScreenState extends ConsumerState<QiblaAndToolsScreen> {
                   value: completedRatio,
                   minHeight: 8,
                   backgroundColor: Colors.white12,
-                  valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF00FF87)),
+                  valueColor:
+                      const AlwaysStoppedAnimation<Color>(Color(0xFF64FFDA)),
                 ),
               ),
               const SizedBox(height: 14),
@@ -338,8 +309,10 @@ class _QiblaAndToolsScreenState extends ConsumerState<QiblaAndToolsScreen> {
                     child: _buildKazaCard(
                       label: "Kalan Kaza Namazı",
                       value: _remainingPrayers,
-                      onDec: () => _updateKaza(remainingPrayers: _remainingPrayers - 1),
-                      onInc: () => _updateKaza(remainingPrayers: _remainingPrayers + 1),
+                      onDec: () =>
+                          _updateKaza(remainingPrayers: _remainingPrayers - 1),
+                      onInc: () =>
+                          _updateKaza(remainingPrayers: _remainingPrayers + 1),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -347,8 +320,10 @@ class _QiblaAndToolsScreenState extends ConsumerState<QiblaAndToolsScreen> {
                     child: _buildKazaCard(
                       label: "Kalan Kaza Orucu",
                       value: _remainingFasts,
-                      onDec: () => _updateKaza(remainingFasts: _remainingFasts - 1),
-                      onInc: () => _updateKaza(remainingFasts: _remainingFasts + 1),
+                      onDec: () =>
+                          _updateKaza(remainingFasts: _remainingFasts - 1),
+                      onInc: () =>
+                          _updateKaza(remainingFasts: _remainingFasts + 1),
                     ),
                   ),
                 ],
@@ -358,7 +333,7 @@ class _QiblaAndToolsScreenState extends ConsumerState<QiblaAndToolsScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    "Günlük Kaza Eritme Hedefi: $_dailyPace Vakit / Gün",
+                    "Günlük Hedef: $_dailyPace Vakit / Gün",
                     style: const TextStyle(fontSize: 12, color: Colors.white70),
                   ),
                   Row(
@@ -367,7 +342,7 @@ class _QiblaAndToolsScreenState extends ConsumerState<QiblaAndToolsScreen> {
                         onTap: () => _updateKaza(dailyPace: _dailyPace - 1),
                         child: const BespokeVectorIcon(
                           type: BespokeIconType.minusCircle,
-                          color: Color(0xFF00E5FF),
+                          color: Color(0xFFFFE082),
                           size: 22,
                         ),
                       ),
@@ -376,7 +351,7 @@ class _QiblaAndToolsScreenState extends ConsumerState<QiblaAndToolsScreen> {
                         onTap: () => _updateKaza(dailyPace: _dailyPace + 1),
                         child: const BespokeVectorIcon(
                           type: BespokeIconType.plusCircle,
-                          color: Color(0xFF00FF87),
+                          color: Color(0xFF64FFDA),
                           size: 22,
                         ),
                       ),
@@ -389,7 +364,6 @@ class _QiblaAndToolsScreenState extends ConsumerState<QiblaAndToolsScreen> {
         ),
         const SizedBox(height: 16),
 
-        // 4. Hicri Takvim
         GlassContainer(
           borderRadius: 26,
           padding: const EdgeInsets.all(18),
@@ -406,7 +380,7 @@ class _QiblaAndToolsScreenState extends ConsumerState<QiblaAndToolsScreen> {
               ),
               const SizedBox(height: 8),
               const Text(
-                "Regâib, Miraç, Berat ve Kadir Gecesi bildirimleri ile Eyyâm-ı Biyd (Hicri 13-14-15. günler) oruç hatırlatıcıları Sıfır Sapma motoruna bağlıdır.",
+                "Mübarek geceler ve Eyyâm-ı Biyd (Hicri 13, 14 ve 15. günler) sünnet orucu hatırlatıcıları vakit motoruna bağlıdır.",
                 style: TextStyle(fontSize: 12, color: Colors.white70, height: 1.45),
               ),
             ],
@@ -425,7 +399,7 @@ class _QiblaAndToolsScreenState extends ConsumerState<QiblaAndToolsScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.06),
+        color: Colors.white.withOpacity(0.05),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white12, width: 0.8),
       ),
@@ -450,7 +424,7 @@ class _QiblaAndToolsScreenState extends ConsumerState<QiblaAndToolsScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF00FF87).withOpacity(0.22),
+                    color: const Color(0xFF64FFDA).withOpacity(0.20),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Text(
@@ -458,7 +432,7 @@ class _QiblaAndToolsScreenState extends ConsumerState<QiblaAndToolsScreen> {
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF00FF87),
+                      color: Color(0xFF64FFDA),
                     ),
                   ),
                 ),
@@ -495,7 +469,7 @@ class _QiblaBeamCompassPainter extends CustomPainter {
     final ringPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.6
-      ..color = const Color(0xFF00E5FF).withOpacity(0.45);
+      ..color = const Color(0xFF64FFDA).withOpacity(0.45);
     canvas.drawCircle(center, radius - 4, ringPaint);
     canvas.drawCircle(center, radius * 0.65, ringPaint);
 
@@ -514,7 +488,7 @@ class _QiblaBeamCompassPainter extends CustomPainter {
       ..shader = const LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: [Color(0xFF00FF87), Color(0xFF00E5FF)],
+        colors: [Color(0xFFFFE082), Color(0xFF64FFDA)],
       ).createShader(Rect.fromCircle(center: Offset.zero, radius: radius));
 
     canvas.drawPath(beamPath, beamPaint);

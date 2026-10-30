@@ -1,132 +1,57 @@
-name: Build Huzur iOS IPA (Liquid Glass + WidgetKit)
+name: Build Huzur iOS IPA V4.1
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: [main, master]
   workflow_dispatch:
 
 jobs:
   build-ipa:
     runs-on: macos-latest
     steps:
-      - name: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Flutter SDK (Latest Stable)
+      - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
+          channel: stable
           cache: true
 
-      - name: Configure Flutter iOS & Pods
+      - name: Install Flutter dependencies
+        run: flutter pub get
+
+      - name: Add WidgetKit extension target
         run: |
-          flutter pub get
-          flutter build ios --config-only --release --no-codesign
-          cd ios
-          pod install
-
-      - name: Inject WidgetKit Target (Without Embed Cycle)
-        run: |
-          gem install xcodeproj
-          cat << 'RUBYEOF' > ios/fix_and_add_widget.rb
-          require 'xcodeproj'
-          project_path = 'ios/Runner.xcodeproj'
-          project = Xcodeproj::Project.open(project_path)
-          
-          runner_target = project.targets.find { |t| t.name == 'Runner' }
-          
-          runner_target.copy_files_build_phases.each do |phase|
-            if phase.name&.include?('Embed') || phase.dst_subfolder_spec == "13"
-              phase.remove_from_project
-            end
-          end
-
-          runner_target.dependencies.each do |dep|
-            if dep.target&.name == 'HuzurWidgetExtension'
-              dep.remove_from_project
-            end
-          end
-
-          widget_target = project.targets.find { |t| t.name == 'HuzurWidgetExtension' }
-          unless widget_target
-            widget_target = project.new_target(:app_extension, 'HuzurWidgetExtension', :ios, '16.0')
-            group = project.main_group.find_subpath('HuzurWidget', true)
-            group.set_source_tree('<group>')
-            
-            if File.exist?('ios/HuzurWidget/HuzurWidget.swift')
-              file_ref = group.new_reference('HuzurWidget/HuzurWidget.swift')
-              widget_target.source_build_phase.add_file_reference(file_ref, true)
-            end
-          end
-
-          runner_bundle_id = 'com.ilahi.tefekkur'
-          runner_target.build_configurations.each do |config|
-            b_id = config.build_settings['PRODUCT_BUNDLE_IDENTIFIER']
-            runner_bundle_id = b_id if b_id && !b_id.empty?
-            config.build_settings['INFOPLIST_KEY_CFBundleDisplayName'] = 'Huzur'
-          end
-
-          widget_target.build_configurations.each do |config|
-            config.build_settings['PRODUCT_NAME'] = 'HuzurWidgetExtension'
-            config.build_settings['PRODUCT_BUNDLE_IDENTIFIER'] = "#{runner_bundle_id}.HuzurWidget"
-            config.build_settings['INFOPLIST_FILE'] = 'HuzurWidget/Info.plist'
-            config.build_settings['SWIFT_VERSION'] = '5.0'
-            config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.0'
-            config.build_settings['SKIP_INSTALL'] = 'NO'
-            config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
-            config.build_settings['CODE_SIGNING_REQUIRED'] = 'NO'
-          end
-
-          project.save
-          puts "✅ HuzurWidgetExtension hedefi başarıyla kaydedildi!"
-          RUBYEOF
+          gem install xcodeproj --no-document
           ruby ios/fix_and_add_widget.rb
 
-      - name: Build Runner & WidgetExtension Separately
+      - name: Build iOS release without signing
+        run: flutter build ios --release --no-codesign
+
+      - name: Package IPA
+        shell: bash
         run: |
-          cd ios
-          # 1. Ana Uygulamayı (Runner) derle
-          xcodebuild -workspace Runner.xcworkspace \
-            -scheme Runner \
-            -configuration Release \
-            -sdk iphoneos \
-            -derivedDataPath "$PWD/build_runner" \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO \
-            AD_HOC_CODE_SIGNING_ALLOWED=YES \
-            COMPILER_INDEX_STORE_ENABLE=NO
+          set -Eeuo pipefail
+          APP_PATH="build/ios/iphoneos/Runner.app"
+          WIDGET_PATH="$APP_PATH/PlugIns/HuzurWidgetExtension.appex"
 
-          # 2. HuzurWidgetExtension hedefini SYMROOT ile derle (-derivedDataPath hatası vermez!)
-          xcodebuild -project Runner.xcodeproj \
-            -target HuzurWidgetExtension \
-            -configuration Release \
-            -sdk iphoneos \
-            SYMROOT="$PWD/build_widget" \
-            OBJROOT="$PWD/build_widget/obj" \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO \
-            AD_HOC_CODE_SIGNING_ALLOWED=YES \
-            COMPILER_INDEX_STORE_ENABLE=NO
+          if [[ ! -d "$APP_PATH" ]]; then
+            echo "Runner.app bulunamadi. Flutter iOS build ciktisini kontrol et."
+            exit 1
+          fi
+          if [[ ! -d "$WIDGET_PATH" ]]; then
+            echo "Widget extension Runner.app/PlugIns altina gomulmemis. Xcode target entegrasyonunu kontrol et."
+            exit 1
+          fi
 
-      - name: Embed Widget into Runner.app & Package Huzur.ipa
-        run: |
-          cd ios
-          RUNNER_APP="$PWD/build_runner/Build/Products/Release-iphoneos/Runner.app"
-          WIDGET_APPEX="$PWD/build_widget/Release-iphoneos/HuzurWidgetExtension.appex"
-          
-          mkdir -p "$RUNNER_APP/PlugIns"
-          cp -r "$WIDGET_APPEX" "$RUNNER_APP/PlugIns/"
-          
-          mkdir -p Payload
-          cp -r "$RUNNER_APP" Payload/
-          zip -qq -r Huzur-Release.ipa Payload
-          mkdir -p $GITHUB_WORKSPACE/output_ipa
-          mv Huzur-Release.ipa $GITHUB_WORKSPACE/output_ipa/
+          rm -rf package output_ipa
+          mkdir -p package/Payload output_ipa
+          cp -R "$APP_PATH" package/Payload/
+          (cd package && /usr/bin/zip -qry ../output_ipa/Huzur-Release.ipa Payload)
 
-      - name: Upload Huzur IPA Artifact
+      - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Huzur-Release-IPA
+          name: Huzur-iOS-V4.1-Release-IPA
           path: output_ipa/Huzur-Release.ipa

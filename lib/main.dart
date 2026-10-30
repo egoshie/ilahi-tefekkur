@@ -75,10 +75,11 @@ class _LiquidRootShellState extends State<LiquidRootShell> {
       bottomNavigationBar: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+          padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
           child: GlassContainer(
             borderRadius: 30,
-            blurSigma: 30,
+            enableBlur: true,
+            blurSigma: 22,
             emeraldGlow: true,
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             child: Row(
@@ -114,11 +115,11 @@ class _LiquidRootShellState extends State<LiquidRootShell> {
                         BespokeVectorIcon(
                           type: BespokeIconType.crownGem,
                           color: Color(0xFFFFE082),
-                          size: 18,
+                          size: 17,
                         ),
                         SizedBox(height: 2),
                         Text(
-                          "VIP",
+                          "Özel",
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
@@ -148,10 +149,10 @@ class _LiquidRootShellState extends State<LiquidRootShell> {
         setState(() => _currentIndex = index);
       },
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 220),
+        duration: const Duration(milliseconds: 160),
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
         decoration: BoxDecoration(
-          color: selected ? Colors.white.withOpacity(0.10) : Colors.transparent,
+          color: selected ? Colors.white.withOpacity(0.11) : Colors.transparent,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(

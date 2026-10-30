@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:adhan/adhan.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
@@ -14,16 +15,19 @@ class CityPreset {
 }
 
 const List<CityPreset> kGlobalCityPresets = [
+  CityPreset("Kadirli, Osmaniye", "Türkiye", 37.3739, 36.0961),
+  CityPreset("Osmaniye", "Türkiye", 37.0742, 36.2478),
   CityPreset("İstanbul", "Türkiye", 41.0082, 28.9784),
   CityPreset("Ankara", "Türkiye", 39.9334, 32.8597),
-  CityPreset("Osmaniye / Kadirli", "Türkiye", 37.3739, 36.0961),
   CityPreset("İzmir", "Türkiye", 38.4237, 27.1428),
+  CityPreset("Adana", "Türkiye", 37.0000, 35.3213),
+  CityPreset("Bursa", "Türkiye", 40.1885, 29.0610),
+  CityPreset("Konya", "Türkiye", 37.8746, 32.4932),
+  CityPreset("Gaziantep", "Türkiye", 37.0662, 37.3833),
+  CityPreset("Antalya", "Türkiye", 36.8969, 30.7133),
   CityPreset("Mekke-i Mükerreme", "Suudi Arabistan", 21.4225, 39.8262),
   CityPreset("Medine-i Münevvere", "Suudi Arabistan", 24.4672, 39.6112),
   CityPreset("Kudüs", "Filistin", 31.7683, 35.2137),
-  CityPreset("Berlin", "Almanya", 52.5200, 13.4050),
-  CityPreset("Londra", "Birleşik Krallık", 51.5072, -0.1276),
-  CityPreset("New York", "ABD", 40.7128, -74.0060),
 ];
 
 enum CalculationMethodChoice { diyanet, mwl, isna, ummAlQura, egyptian }
@@ -73,11 +77,18 @@ class PrayerEngineNotifier extends StateNotifier<PrayerEngineState> {
   Timer? _ticker;
   CityPreset _city = kGlobalCityPresets.first;
   CalculationMethodChoice _method = CalculationMethodChoice.diyanet;
-  String _maqam = "Saba (İmsak) / Hicaz (Akşam)";
+  String _maqam = "Hicaz Makamı";
   int _preReminder = 30;
   PrayerPeriod? _manualPreviewPeriod;
 
-  PrayerEngineNotifier() : super(_compute(kGlobalCityPresets.first, CalculationMethodChoice.diyanet, "Hicaz Makamı", 30, null)) {
+  PrayerEngineNotifier()
+      : super(_compute(
+          kGlobalCityPresets.first,
+          CalculationMethodChoice.diyanet,
+          "Hicaz Makamı",
+          30,
+          null,
+        )) {
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) => _refresh());
   }
 
@@ -110,25 +121,46 @@ class PrayerEngineNotifier extends StateNotifier<PrayerEngineState> {
     _refresh();
   }
 
+  static String _resolveCityNameFromCoords(double lat, double lon) {
+    CityPreset closest = kGlobalCityPresets.first;
+    double minDistance = double.infinity;
+
+    for (final preset in kGlobalCityPresets) {
+      final dLat = lat - preset.latitude;
+      final dLon = lon - preset.longitude;
+      final dist = math.sqrt(dLat * dLat + dLon * dLon);
+      if (dist < minDistance) {
+        minDistance = dist;
+        closest = preset;
+      }
+    }
+
+    if (minDistance <= 1.2) {
+      return closest.name;
+    }
+    return "Türkiye";
+  }
+
   Future<void> detectGpsLocation() async {
     try {
       LocationPermission perm = await Geolocator.checkPermission();
       if (perm == LocationPermission.denied) {
         perm = await Geolocator.requestPermission();
       }
-      if (perm == LocationPermission.always || perm == LocationPermission.whileInUse) {
+      if (perm == LocationPermission.always ||
+          perm == LocationPermission.whileInUse) {
         final pos = await Geolocator.getCurrentPosition();
+        final resolvedName =
+            _resolveCityNameFromCoords(pos.latitude, pos.longitude);
         _city = CityPreset(
-          "GPS Konumu (${pos.latitude.toStringAsFixed(2)}, ${pos.longitude.toStringAsFixed(2)})",
-          "Canlı Koordinat",
+          resolvedName,
+          "Türkiye",
           pos.latitude,
           pos.longitude,
         );
         _refresh();
       }
-    } catch (_) {
-      // İzin verilmediyse mevcut şehir korunur
-    }
+    } catch (_) {}
   }
 
   static CalculationParameters _paramsFor(CalculationMethodChoice choice) {

@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:ui';
 import 'package:audio_session/audio_session.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
 import '../../core/models/app_models.dart';
@@ -10,6 +9,7 @@ import '../../core/services/database_seeder.dart';
 import '../../core/services/pricing_and_premium_service.dart';
 import '../../core/theme/glass_container.dart';
 import '../../core/theme/liquid_glass_theme.dart';
+import '../../core/theme/story_share_sheet.dart';
 import '../paywall/liquid_glass_paywall.dart';
 
 class SacredTextsScreen extends ConsumerStatefulWidget {
@@ -20,7 +20,7 @@ class SacredTextsScreen extends ConsumerStatefulWidget {
 }
 
 class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
-  String _selectedTab = 'quran'; // 'quran', 'torah', 'gospel', 'cross_ref'
+  String _selectedTab = 'quran';
   List<SurahMeta> _surahs = [];
   SurahMeta? _selectedSurah;
   List<LiveAyahItem> _ayahs = [];
@@ -39,7 +39,7 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
   final AudioPlayer _quranAudioPlayer = AudioPlayer();
   StreamSubscription<PlayerState>? _playerSub;
   int? _playingAyahIndex;
-  bool _autoAdvanceEnabled = true;
+  final bool _autoAdvanceEnabled = true;
 
   @override
   void initState() {
@@ -98,7 +98,8 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
       _playingAyahIndex = null;
     });
     try {
-      final ayahs = await ref.read(databaseServiceProvider).fetchSurahAyahs(surahNum);
+      final ayahs =
+          await ref.read(databaseServiceProvider).fetchSurahAyahs(surahNum);
       if (mounted) {
         setState(() {
           _ayahs = ayahs;
@@ -115,7 +116,8 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
     if (testament == 'torah') {
       setState(() => _loadingTorah = true);
       try {
-        final list = await db.fetchBibleChapter(_selectedTorahBook, _selectedTorahChapter);
+        final list =
+            await db.fetchBibleChapter(_selectedTorahBook, _selectedTorahChapter);
         if (mounted) {
           setState(() {
             _torahVerses = list;
@@ -128,7 +130,8 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
     } else {
       setState(() => _loadingGospel = true);
       try {
-        final list = await db.fetchBibleChapter(_selectedGospelBook, _selectedGospelChapter);
+        final list =
+            await db.fetchBibleChapter(_selectedGospelBook, _selectedGospelChapter);
         if (mounted) {
           setState(() {
             _gospelVerses = list;
@@ -178,32 +181,33 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
     final isLockedTab = (_selectedTab != 'quran') && !premium.isPremium;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(18, 12, 18, 118),
+      padding: const EdgeInsets.fromLTRB(18, 12, 18, 122),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            "Canlı Kutsal Kitaplar & Teoloji Kütüphanesi",
-            style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+            "İlahi Kitaplar & Tefekkür Kütüphanesi",
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 4),
           const Text(
-            "114 Sure Kuran-ı Kerim (%100 Ücretsiz) • 39 Kitap Tevrat • 27 Kitap İncil",
+            "Kur'ân-ı Kerîm • Tevrat • İncil • Karşılaştırmalı Kıssalar",
             style: TextStyle(fontSize: 12, color: Colors.white70),
           ),
           const SizedBox(height: 12),
 
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
             child: Row(
               children: [
-                _buildTraditionTab("quran", "Kuran-ı Kerim (114 Sure)", false),
+                _buildTraditionTab("quran", "Kur'ân-ı Kerîm", false),
                 const SizedBox(width: 8),
-                _buildTraditionTab("torah", "Tevrat / Tanah (39 Kitap)", !premium.isPremium),
+                _buildTraditionTab("torah", "Tevrat (39 Kitap)", !premium.isPremium),
                 const SizedBox(width: 8),
                 _buildTraditionTab("gospel", "İncil (27 Kitap)", !premium.isPremium),
                 const SizedBox(width: 8),
-                _buildTraditionTab("cross_ref", "15'li Teolojik Karşılaştırma", !premium.isPremium),
+                _buildTraditionTab("cross_ref", "Karşılaştırma", !premium.isPremium),
               ],
             ),
           ),
@@ -245,11 +249,11 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
         decoration: BoxDecoration(
           color: selected
-              ? const Color(0xFF00FF87).withOpacity(0.22)
-              : Colors.white.withOpacity(0.07),
+              ? const Color(0xFF64FFDA).withOpacity(0.18)
+              : Colors.white.withOpacity(0.06),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: selected ? const Color(0xFF00FF87) : Colors.white24,
+            color: selected ? const Color(0xFF64FFDA) : Colors.white24,
             width: 0.9,
           ),
         ),
@@ -260,15 +264,15 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
-                color: selected ? const Color(0xFF00FF87) : Colors.white,
+                color: selected ? const Color(0xFF64FFDA) : Colors.white,
               ),
             ),
             if (showLock) ...[
               const SizedBox(width: 6),
               const BespokeVectorIcon(
                 type: BespokeIconType.lockShield,
-                color: Color(0xFFFFB300),
-                size: 14,
+                color: Color(0xFFFFE082),
+                size: 13,
               ),
             ],
           ],
@@ -292,7 +296,7 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                     children: [
                       const BespokeVectorIcon(
                         type: BespokeIconType.sacredScroll,
-                        color: Color(0xFF00E5FF),
+                        color: Color(0xFF64FFDA),
                         size: 18,
                       ),
                       const SizedBox(width: 8),
@@ -304,7 +308,7 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF00E5FF),
+                            color: Color(0xFF64FFDA),
                           ),
                         ),
                       ),
@@ -325,13 +329,13 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                   decoration: BoxDecoration(
                     color: _playingAyahIndex != null
-                        ? const Color(0xFFFFB300).withOpacity(0.25)
-                        : const Color(0xFF00FF87).withOpacity(0.22),
+                        ? const Color(0xFFFFE082).withOpacity(0.22)
+                        : const Color(0xFF64FFDA).withOpacity(0.18),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: _playingAyahIndex != null
-                          ? const Color(0xFFFFB300)
-                          : const Color(0xFF00FF87),
+                          ? const Color(0xFFFFE082)
+                          : const Color(0xFF64FFDA),
                       width: 0.9,
                     ),
                   ),
@@ -343,8 +347,8 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                             : BespokeIconType.playTriangle,
                         color: _playingAyahIndex != null
                             ? const Color(0xFFFFE082)
-                            : const Color(0xFF00FF87),
-                        size: 14,
+                            : const Color(0xFF64FFDA),
+                        size: 13,
                       ),
                       const SizedBox(width: 6),
                       Text(
@@ -362,21 +366,28 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
         Expanded(
           child: _loadingQuran
               ? const Center(
-                  child: CircularProgressIndicator(color: Color(0xFF00FF87)),
+                  child: CircularProgressIndicator(color: Color(0xFF64FFDA)),
                 )
               : ListView.separated(
+                  physics: const BouncingScrollPhysics(),
                   itemCount: _ayahs.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
                     final a = _ayahs[index];
                     final isPlaying = _playingAyahIndex == index;
-                    final words = a.arabicText.split(' ');
 
                     return GlassContainer(
                       borderRadius: 24,
                       emeraldGlow: isPlaying,
                       goldAccentBorder: isPlaying,
                       padding: const EdgeInsets.all(16),
+                      onTap: () => HuzurStoryShareSheet.show(
+                        context,
+                        arabic: a.arabicText,
+                        turkish: a.turkishText,
+                        reference: "${a.surahName}, ${a.numberInSurah}",
+                        category: "Kur'ân-ı Kerîm",
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -389,8 +400,8 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
                                   color: isPlaying
-                                      ? const Color(0xFF00FF87)
-                                      : const Color(0xFFFFD54F),
+                                      ? const Color(0xFF64FFDA)
+                                      : const Color(0xFFFFE082),
                                 ),
                               ),
                               Row(
@@ -414,7 +425,7 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                                           horizontal: 10, vertical: 6),
                                       decoration: BoxDecoration(
                                         color: isPlaying
-                                            ? const Color(0xFF00FF87).withOpacity(0.25)
+                                            ? const Color(0xFF64FFDA).withOpacity(0.22)
                                             : Colors.white.withOpacity(0.08),
                                         borderRadius: BorderRadius.circular(10),
                                       ),
@@ -425,7 +436,7 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                                                 ? BespokeIconType.stopSquare
                                                 : BespokeIconType.playTriangle,
                                             color: isPlaying
-                                                ? const Color(0xFF00FF87)
+                                                ? const Color(0xFF64FFDA)
                                                 : Colors.white,
                                             size: 13,
                                           ),
@@ -441,11 +452,12 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                                   ),
                                   const SizedBox(width: 6),
                                   GestureDetector(
-                                    onTap: () => _showShareStudioDialog(
+                                    onTap: () => HuzurStoryShareSheet.show(
                                       context,
                                       arabic: a.arabicText,
                                       turkish: a.turkishText,
                                       reference: "${a.surahName}, ${a.numberInSurah}",
+                                      category: "Kur'ân-ı Kerîm",
                                     ),
                                     child: Container(
                                       padding: const EdgeInsets.all(6),
@@ -454,8 +466,8 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                                         borderRadius: BorderRadius.circular(10),
                                       ),
                                       child: const BespokeVectorIcon(
-                                        type: BespokeIconType.shareCard,
-                                        color: Color(0xFF00E5FF),
+                                        type: BespokeIconType.instagramStory,
+                                        color: Color(0xFFFFE082),
                                         size: 15,
                                       ),
                                     ),
@@ -467,26 +479,17 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                           const SizedBox(height: 12),
                           Align(
                             alignment: Alignment.centerRight,
-                            child: Wrap(
-                              alignment: WrapAlignment.end,
-                              spacing: 6,
-                              runSpacing: 6,
-                              children: words.map((w) {
-                                return GestureDetector(
-                                  onTap: () => _showWordAnalysisSheet(context, w, a),
-                                  child: Text(
-                                    w,
-                                    style: TextStyle(
-                                      fontSize: 22,
-                                      height: 1.55,
-                                      fontWeight: FontWeight.w600,
-                                      color: isPlaying
-                                          ? const Color(0xFF00FF87)
-                                          : const Color(0xFFFFF3C4),
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
+                            child: Text(
+                              a.arabicText,
+                              textAlign: TextAlign.right,
+                              style: TextStyle(
+                                fontSize: 22,
+                                height: 1.55,
+                                fontWeight: FontWeight.w600,
+                                color: isPlaying
+                                    ? const Color(0xFF64FFDA)
+                                    : const Color(0xFFFFF8E1),
+                              ),
                             ),
                           ),
                           const SizedBox(height: 10),
@@ -508,11 +511,14 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
     final books = DatabaseService.kAllBibleBooks
         .where((b) => b.testament == testament)
         .toList();
-    final activeBook = testament == 'torah' ? _selectedTorahBook : _selectedGospelBook;
+    final activeBook =
+        testament == 'torah' ? _selectedTorahBook : _selectedGospelBook;
     final activeChapter =
         testament == 'torah' ? _selectedTorahChapter : _selectedGospelChapter;
     final verses = testament == 'torah' ? _torahVerses : _gospelVerses;
     final loading = testament == 'torah' ? _loadingTorah : _loadingGospel;
+    final categoryLabel =
+        testament == 'torah' ? "Tevrat • Tanah" : "İncil • Yeni Ahit";
 
     return Column(
       children: [
@@ -528,7 +534,7 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                     children: [
                       const BespokeVectorIcon(
                         type: BespokeIconType.sacredScroll,
-                        color: Color(0xFFFFB300),
+                        color: Color(0xFFFFE082),
                         size: 18,
                       ),
                       const SizedBox(width: 8),
@@ -587,7 +593,7 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF00E5FF).withOpacity(0.18),
+                        color: const Color(0xFF64FFDA).withOpacity(0.18),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Text(
@@ -595,7 +601,7 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF00E5FF),
+                          color: Color(0xFF64FFDA),
                         ),
                       ),
                     ),
@@ -609,9 +615,10 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
         Expanded(
           child: loading
               ? const Center(
-                  child: CircularProgressIndicator(color: Color(0xFFFFB300)),
+                  child: CircularProgressIndicator(color: Color(0xFFFFE082)),
                 )
               : ListView.separated(
+                  physics: const BouncingScrollPhysics(),
                   itemCount: verses.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 10),
                   itemBuilder: (context, index) {
@@ -619,6 +626,13 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                     return GlassContainer(
                       borderRadius: 20,
                       padding: const EdgeInsets.all(15),
+                      onTap: () => HuzurStoryShareSheet.show(
+                        context,
+                        arabic: v.originalScript,
+                        turkish: v.turkishText,
+                        reference: "${v.bookName} ${v.chapter}:${v.verse}",
+                        category: categoryLabel,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -630,20 +644,21 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                                 style: const TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFFFFD54F),
+                                  color: Color(0xFFFFE082),
                                 ),
                               ),
                               GestureDetector(
-                                onTap: () => _showShareStudioDialog(
+                                onTap: () => HuzurStoryShareSheet.show(
                                   context,
                                   arabic: v.originalScript,
                                   turkish: v.turkishText,
                                   reference: "${v.bookName} ${v.chapter}:${v.verse}",
+                                  category: categoryLabel,
                                 ),
                                 child: const BespokeVectorIcon(
-                                  type: BespokeIconType.shareCard,
-                                  color: Color(0xFF00E5FF),
-                                  size: 15,
+                                  type: BespokeIconType.instagramStory,
+                                  color: Color(0xFF64FFDA),
+                                  size: 16,
                                 ),
                               ),
                             ],
@@ -657,7 +672,7 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                                 textAlign: TextAlign.right,
                                 style: const TextStyle(
                                   fontSize: 18,
-                                  color: Color(0xFFFFF3C4),
+                                  color: Color(0xFFFFF8E1),
                                 ),
                               ),
                             ),
@@ -680,6 +695,7 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
   Widget _buildCrossReferenceView() {
     const topics = DatabaseService.kCrossReferenceTopics;
     return ListView.separated(
+      physics: const BouncingScrollPhysics(),
       itemCount: topics.length,
       separatorBuilder: (_, __) => const SizedBox(height: 14),
       itemBuilder: (context, index) {
@@ -705,11 +721,14 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                 style: const TextStyle(fontSize: 12, color: Colors.white70),
               ),
               const SizedBox(height: 12),
-              _buildComparisonCard("KURAN-I KERİM (${cr.quranKey})", cr.quranText, const Color(0xFF00FF87)),
+              _buildComparisonCard(
+                  "KUR'ÂN-I KERÎM (${cr.quranKey})", cr.quranText, const Color(0xFF64FFDA)),
               const SizedBox(height: 8),
-              _buildComparisonCard("TEVRAT / TANAH (${cr.torahRef})", cr.torahText, const Color(0xFFFFB300)),
+              _buildComparisonCard(
+                  "TEVRAT (${cr.torahRef})", cr.torahText, const Color(0xFFFFE082)),
               const SizedBox(height: 8),
-              _buildComparisonCard("İNCİL / YENİ AHİT (${cr.gospelRef})", cr.gospelText, const Color(0xFF00E5FF)),
+              _buildComparisonCard(
+                  "İNCİL (${cr.gospelRef})", cr.gospelText, const Color(0xFF80D8FF)),
             ],
           ),
         );
@@ -722,9 +741,9 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: accent.withOpacity(0.09),
+        color: accent.withOpacity(0.08),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: accent.withOpacity(0.55), width: 0.9),
+        border: Border.all(color: accent.withOpacity(0.45), width: 0.9),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -753,12 +772,13 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
           builder: (context, ctrl) {
             return GlassContainer(
               borderRadius: 30,
+              enableBlur: true,
               padding: const EdgeInsets.all(18),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    "114 Sure ফihristi (AlQuran Cloud Live)",
+                    "114 Sure Fihristi",
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 10),
@@ -774,7 +794,7 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                             "${s.number}. ${s.nameTurkish}",
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
-                          subtitle: Text("${s.revelationType} • ${s.ayahCount} Ayet"),
+                          subtitle: Text("${s.ayahCount} Ayet"),
                           trailing: Text(
                             s.nameArabic,
                             style: const TextStyle(
@@ -817,14 +837,15 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
           builder: (context, ctrl) {
             return GlassContainer(
               borderRadius: 30,
+              enableBlur: true,
               padding: const EdgeInsets.all(18),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     testament == 'torah'
-                        ? "Tevrat / Tanah Kitapları (39 Kitap)"
-                        : "İncil / Yeni Ahit Kitapları (27 Kitap)",
+                        ? "Tevrat Kitapları (39 Kitap)"
+                        : "İncil Kitapları (27 Kitap)",
                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 10),
@@ -866,151 +887,13 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
     );
   }
 
-  void _showWordAnalysisSheet(BuildContext context, String word, LiveAyahItem ayah) {
-    showDialog(
-      context: context,
-      builder: (_) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: GlassContainer(
-          borderRadius: 26,
-          goldAccentBorder: true,
-          padding: const EdgeInsets.all(22),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                word,
-                style: const TextStyle(
-                  fontSize: 34,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF00FF87),
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                "${ayah.surahName} • Ayet ${ayah.numberInSurah}",
-                style: const TextStyle(fontSize: 12, color: Color(0xFFFFE082)),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                "Ayet Bağlamı ve Meal:\n\"${ayah.turkishText}\"",
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 13, height: 1.45),
-              ),
-              const SizedBox(height: 16),
-              GlassContainer(
-                borderRadius: 14,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                onTap: () => Navigator.pop(context),
-                child: const Text("Kapat", style: TextStyle(fontSize: 12)),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showShareStudioDialog(
-    BuildContext context, {
-    required String arabic,
-    required String turkish,
-    required String reference,
-  }) {
-    showDialog(
-      context: context,
-      builder: (_) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: GlassContainer(
-          borderRadius: 30,
-          emeraldGlow: true,
-          goldAccentBorder: true,
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                "AYET PAYLAŞIM STÜDYOSU • LIQUID GLASS KART",
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.1,
-                  color: Color(0xFF00E5FF),
-                ),
-              ),
-              const SizedBox(height: 16),
-              if (arabic.isNotEmpty) ...[
-                Text(
-                  arabic,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFFFFE082),
-                  ),
-                ),
-                const SizedBox(height: 12),
-              ],
-              Text(
-                "\"$turkish\"",
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontStyle: FontStyle.italic,
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                "— $reference",
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF00FF87),
-                ),
-              ),
-              const SizedBox(height: 18),
-              Row(
-                children: [
-                  Expanded(
-                    child: GlassContainer(
-                      borderRadius: 14,
-                      goldAccentBorder: true,
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      onTap: () {
-                        Clipboard.setData(
-                          ClipboardData(text: "$arabic\n\"$turkish\"\n— $reference"),
-                        );
-                        Navigator.pop(context);
-                      },
-                      child: const Center(
-                        child: Text(
-                          "Panoya Kopyala ve Paylaş",
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFFFFE082),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildBlurredPremiumLockOverlay(BuildContext context) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(26),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
         child: Container(
-          color: Colors.black.withOpacity(0.48),
+          color: Colors.black.withOpacity(0.45),
           alignment: Alignment.center,
           padding: const EdgeInsets.all(24),
           child: GlassContainer(
@@ -1022,12 +905,12 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
               children: [
                 const BespokeVectorIcon(
                   type: BespokeIconType.lockShield,
-                  color: Color(0xFFFFB300),
-                  size: 36,
+                  color: Color(0xFFFFE082),
+                  size: 34,
                 ),
                 const SizedBox(height: 12),
                 const Text(
-                  "Canlı Tevrat, İncil & 15'li Teolojik Karşılaştırma",
+                  "Tevrat, İncil & Karşılaştırmalı İnceleme",
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 16,
@@ -1037,7 +920,7 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                 ),
                 const SizedBox(height: 10),
                 const Text(
-                  "114 Sure Kuran-ı Kerim ve sesli tilavet tamamen ücretsizdir. 39 Kitap Tevrat, 27 Kitap İncil ve Karşılaştırmalı Teoloji motoru VIP abonelere özeldir.",
+                  "114 Sure Kur'ân-ı Kerîm ve sesli tilavet tamamen ücretsizdir. Tevrat, İncil ve Karşılaştırma modülü Huzur Özel kapsamındadır.",
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 13, color: Colors.white70, height: 1.4),
                 ),
@@ -1048,11 +931,11 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
                   onTap: () => LiquidGlassPaywallSheet.show(context),
                   child: const Text(
-                    "Premium / Sandbox Kilidini Aç",
+                    "Huzur Özel'i Etkinleştir",
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF00FF87),
+                      color: Color(0xFF64FFDA),
                     ),
                   ),
                 ),

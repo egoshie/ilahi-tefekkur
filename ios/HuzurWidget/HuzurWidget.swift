@@ -45,7 +45,7 @@ struct HuzurTimelineProvider: TimelineProvider {
         ("إِنَّا لِلَّهِ وَإِنَّآ إِلَيْهِ رَٰجِعُونَ", "Biz Allah'a aidiz ve O'na döneceğiz.", "Bakara, 156"),
         ("وَٱصْبِرْ وَمَا صَبْرُكَ إِلَّا بِٱللَّهِ", "Sabret! Sabrın ancak Allah'ın yardımıyladır.", "Nahl, 127"),
         ("إِنَّ رَبِّى قَرِيبٌ مُّجِيبٌ", "Rabbim yakındır, dualara icabet edendir.", "Hûd, 61"),
-        ("وَكفىٰ بِٱللَّهِ وَكِيلًا", "Vekil olarak Allah yeter.", "Ahzâb, 3"),
+        ("وَكَفَىٰ بِٱللَّهِ وَكِيلًا", "Vekil olarak Allah yeter.", "Ahzâb, 3"),
         ("رَّبِّ زِدْنِى عِلْمًا", "Rabbim! İlmimi artır.", "Tâhâ, 114"),
         ("إِنَّ ٱللَّهَ غَفُورٌ رَّحِيمٌ", "Şüphesiz Allah çok bağışlayandır.", "Bakara, 173"),
         ("وَٱللَّهُ خَيْرٌ حَـٰفِظًا", "Allah en hayırlı koruyucudur.", "Yûsuf, 64"),
@@ -68,57 +68,68 @@ struct HuzurTimelineProvider: TimelineProvider {
     func getTimeline(in context: Context, completion: @escaping (Timeline<HuzurVerseEntry>) -> Void) {
         var entries: [HuzurVerseEntry] = []
         let now = Date()
-        let cal = Calendar.current
-        let baseHour = cal.component(.hour, from: now) + (cal.component(.day, from: now) * 24)
+        let calendar = Calendar.current
+        let hourOfDay = calendar.component(.hour, from: now)
+        let dayOfYear = calendar.ordinality(of: .day, in: .year, for: now) ?? 1
+        let baseIndex = (dayOfYear * 24 + hourOfDay) % verses.count
 
-        for offset in 0 ..< 24 {
-            let entryDate = cal.date(byAdding: .hour, value: offset, to: now) ?? now
-            let item = verses[(baseHour + offset) % verses.count]
+        for offset in 0..<24 {
+            let entryDate = calendar.date(byAdding: .hour, value: offset, to: now) ?? now
+            let verse = verses[(baseIndex + offset) % verses.count]
             entries.append(
                 HuzurVerseEntry(
                     date: entryDate,
-                    arabic: item.ar,
-                    turkish: item.tr,
-                    reference: item.ref
+                    arabic: verse.ar,
+                    turkish: verse.tr,
+                    reference: verse.ref
                 )
             )
         }
 
-        let nextReload = cal.date(byAdding: .hour, value: 1, to: now) ?? now.addingTimeInterval(3600)
+        let nextReload = calendar.date(byAdding: .hour, value: 1, to: now) ?? now.addingTimeInterval(3600)
         completion(Timeline(entries: entries, policy: .after(nextReload)))
     }
 }
 
 extension View {
     @ViewBuilder
-    func applyLiquidGlassWidgetBackground() -> some View {
-        if #available(iOS 17.0, *) {
-            self.containerBackground(for: .widget) {
+    func applyHuzurWidgetBackground() -> some View {
+        if #available(iOSApplicationExtension 17.0, *) {
+            containerBackground(for: .widget) {
                 LinearGradient(
                     colors: [
-                        Color(red: 0.01, green: 0.04, blue: 0.08),
-                        Color(red: 0.03, green: 0.12, blue: 0.15),
-                        Color(red: 0.04, green: 0.18, blue: 0.21)
+                        Color(red: 0.02, green: 0.07, blue: 0.12),
+                        Color(red: 0.04, green: 0.15, blue: 0.20)
                     ],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
             }
         } else {
-            self
+            background(
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.02, green: 0.07, blue: 0.12),
+                        Color(red: 0.04, green: 0.15, blue: 0.20)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
         }
     }
 }
 
-struct HuzurWidgetEntryView: View {
-    var entry: HuzurTimelineProvider.Entry
-    @Environment(\.widgetFamily) var family
+struct HuzurKisaAyetWidgetView: View {
+    let entry: HuzurVerseEntry
+    @Environment(\.widgetFamily) private var family
 
     var body: some View {
         Group {
             switch family {
             case .accessoryInline:
                 Text("\(entry.turkish) • \(entry.reference)")
+                    .lineLimit(1)
             case .accessoryCircular:
                 ZStack {
                     AccessoryWidgetBackground()
@@ -131,62 +142,106 @@ struct HuzurWidgetEntryView: View {
                     }
                 }
             case .accessoryRectangular:
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 1) {
                     Text(entry.arabic)
                         .font(.system(size: 13, weight: .bold))
                         .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                    Text("\"\(entry.turkish)\"")
+                        .font(.system(size: 11.5, weight: .semibold))
+                        .lineLimit(3)
+                        .minimumScaleFactor(0.65)
+                    Text("— \(entry.reference)")
+                        .font(.system(size: 9.5, weight: .medium))
+                        .opacity(0.85)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            default:
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Huzur")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(Color(red: 1.0, green: 0.88, blue: 0.51))
+                    Text(entry.arabic)
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(Color(red: 1.0, green: 0.96, blue: 0.88))
+                        .frame(maxWidth: .infinity, alignment: .trailing)
                     Text("\"\(entry.turkish)\"")
                         .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.white)
                         .lineLimit(2)
                     Text("— \(entry.reference)")
                         .font(.system(size: 10, weight: .medium))
-                        .opacity(0.8)
+                        .foregroundStyle(Color(red: 0.39, green: 1.0, blue: 0.85))
                 }
-            default:
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack {
-                        Text("Huzur")
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundColor(Color(red: 1.0, green: 0.88, blue: 0.51))
-                        Spacer()
-                        Text(entry.reference)
-                            .font(.system(size: 10, weight: .semibold))
-                            .foregroundColor(Color(red: 0.39, green: 1.0, blue: 0.85))
-                    }
-                    Spacer(minLength: 2)
-                    Text(entry.arabic)
-                        .font(.system(size: 17, weight: .bold))
-                        .foregroundColor(Color(red: 1.0, green: 0.96, blue: 0.88))
-                        .frame(maxWidth: .infinity, alignment: .trailing)
-                        .lineLimit(1)
-                    Text("\"\(entry.turkish)\"")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(.white)
-                        .lineLimit(2)
-                }
-                .padding(12)
             }
         }
-        .applyLiquidGlassWidgetBackground()
+        .applyHuzurWidgetBackground()
+    }
+}
+
+struct HuzurGenisAyetWidgetView: View {
+    let entry: HuzurVerseEntry
+    @Environment(\.widgetFamily) private var family
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text("Günün İlhamı")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(Color(red: 1.0, green: 0.88, blue: 0.51))
+                Spacer()
+                Text(entry.reference)
+                    .font(.system(size: 10.5, weight: .bold))
+                    .foregroundStyle(Color(red: 0.39, green: 1.0, blue: 0.85))
+            }
+            Spacer(minLength: 2)
+            Text(entry.arabic)
+                .font(.system(size: family == .systemMedium ? 21 : 16, weight: .bold))
+                .foregroundStyle(Color(red: 1.0, green: 0.96, blue: 0.88))
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+            Text("\"\(entry.turkish)\"")
+                .font(.system(size: family == .systemMedium ? 14 : 12, weight: .semibold))
+                .foregroundStyle(.white)
+                .lineLimit(3)
+                .minimumScaleFactor(0.75)
+        }
+        .padding(family == .systemMedium ? 16 : 10)
+        .applyHuzurWidgetBackground()
+    }
+}
+
+struct HuzurKisaAyetWidget: Widget {
+    let kind = "HuzurKisaAyetWidget"
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: HuzurTimelineProvider()) { entry in
+            HuzurKisaAyetWidgetView(entry: entry)
+        }
+        .configurationDisplayName("Huzur • Saatlik Ayet")
+        .description("Kilit ekranında kompakt ayet kartı.")
+        .supportedFamilies([.accessoryRectangular, .accessoryInline, .accessoryCircular, .systemSmall])
+    }
+}
+
+struct HuzurGenisAyetWidget: Widget {
+    let kind = "HuzurGenisAyetWidget"
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: HuzurTimelineProvider()) { entry in
+            HuzurGenisAyetWidgetView(entry: entry)
+        }
+        .configurationDisplayName("Huzur • Geniş İlham Kartı")
+        .description("Ana ekranda geniş ayet kartı.")
+        .supportedFamilies([.systemMedium, .accessoryRectangular, .systemSmall])
     }
 }
 
 @main
-struct HuzurWidget: Widget {
-    let kind: String = "HuzurWidget"
-
-    var body: some WidgetConfiguration {
-        StaticConfiguration(kind: kind, provider: HuzurTimelineProvider()) { entry in
-            HuzurWidgetEntryView(entry: entry)
-        }
-        .configurationDisplayName("Huzur • Saatlik Ayet")
-        .description("Kilit ekranında ve ana ekranda her saat başı yenilenen kısa Kuran ayeti.")
-        .supportedFamilies([
-            .accessoryRectangular,
-            .accessoryInline,
-            .accessoryCircular,
-            .systemSmall,
-            .systemMedium
-        ])
+struct HuzurWidgetBundle: WidgetBundle {
+    var body: some Widget {
+        HuzurKisaAyetWidget()
+        HuzurGenisAyetWidget()
     }
 }

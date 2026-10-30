@@ -8,9 +8,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/models/app_models.dart';
 import '../../core/services/notification_service.dart';
 import '../../core/services/prayer_service.dart';
-import '../../core/services/pricing_and_premium_service.dart';
 import '../../core/theme/glass_container.dart';
 import '../../core/theme/liquid_glass_theme.dart';
+import '../../core/theme/story_share_sheet.dart';
 import '../paywall/liquid_glass_paywall.dart';
 
 class MainDashboardScreen extends ConsumerStatefulWidget {
@@ -27,6 +27,21 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
   Timer? _hourlyChecker;
   int _manualVerseOffset = 0;
   bool _alarmConfirmed = false;
+
+  static const Map<int, String> _trHijriMonths = {
+    1: "Muharrem",
+    2: "Safer",
+    3: "Rebîülevvel",
+    4: "Rebîülâhir",
+    5: "Cemâziyelevvel",
+    6: "Cemâziyelâhir",
+    7: "Recep",
+    8: "Şaban",
+    9: "Ramazan",
+    10: "Şevval",
+    11: "Zilkade",
+    12: "Zilhicce",
+  };
 
   @override
   void initState() {
@@ -75,20 +90,19 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
   Widget build(BuildContext context) {
     final prayerState = ref.watch(prayerEngineProvider);
     final prayerNotifier = ref.read(prayerEngineProvider.notifier);
-    final premium = ref.watch(premiumServiceProvider);
     final palette = LiquidGlassPalette.forPeriod(prayerState.activePeriod);
     final timeFmt = DateFormat('HH:mm');
     final hijri = HijriCalendar.now();
-    final gregorianStr = DateFormat('d MMMM yyyy').format(DateTime.now());
+    final hijriMonthTr = _trHijriMonths[hijri.hMonth] ?? hijri.longMonthName;
 
     final activeShortVerse = NotificationAndWidgetService.instance
         .getActiveHourlyVerse(offset: _manualVerseOffset);
 
     return ListView(
       physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(18, 16, 18, 132),
+      padding: const EdgeInsets.fromLTRB(18, 14, 18, 148),
       children: [
-        // 1. Üst Başlık: Huzur & Tarih/Şehir
+        // 1. Üst Başlık: Huzur & Temiz Şehir + Türkçe Hicri Tarih
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -107,33 +121,37 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    "${prayerState.selectedCity.name} • ${hijri.hDay} ${hijri.longMonthName} ${hijri.hYear} ($gregorianStr)",
+                    "${prayerState.selectedCity.name} • ${hijri.hDay} $hijriMonthTr ${hijri.hYear}",
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.white.withOpacity(0.72),
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white.withOpacity(0.75),
                     ),
                   ),
                 ],
               ),
             ),
+            const SizedBox(width: 8),
             GlassContainer(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+              padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
               borderRadius: 18,
               goldAccentBorder: true,
               onTap: () => LiquidGlassPaywallSheet.show(context),
-              child: Row(
+              child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const BespokeVectorIcon(
+                  BespokeVectorIcon(
                     type: BespokeIconType.crownGem,
                     color: Color(0xFFFFE082),
-                    size: 16,
+                    size: 15,
                   ),
-                  const SizedBox(width: 6),
+                  SizedBox(width: 6),
                   Text(
-                    premium.isPremium ? "VIP AÇIK" : "PREMIUM",
-                    style: const TextStyle(
-                      fontSize: 11,
+                    "Huzur Özel",
+                    style: TextStyle(
+                      fontSize: 11.5,
                       fontWeight: FontWeight.w700,
                       color: Color(0xFFFFE082),
                     ),
@@ -143,20 +161,19 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
             ),
           ],
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 16),
 
         // 2. Kesilmeyen Saf Kristal Dairesel Vakit Küresi ve 6 Vakit Çizelgesi
         GlassContainer(
           borderRadius: 32,
           emeraldGlow: true,
-          padding: const EdgeInsets.fromLTRB(18, 24, 18, 20),
+          padding: const EdgeInsets.fromLTRB(16, 22, 16, 18),
           child: Column(
             children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 6),
+              RepaintBoundary(
                 child: SizedBox(
-                  width: 204,
-                  height: 204,
+                  width: 198,
+                  height: 198,
                   child: AnimatedBuilder(
                     animation: _waveController,
                     builder: (context, _) {
@@ -182,9 +199,9 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                               Text(
                                 _formatDuration(prayerState.timeUntilNext),
                                 style: const TextStyle(
-                                  fontSize: 30,
+                                  fontSize: 29,
                                   fontWeight: FontWeight.w800,
-                                  letterSpacing: 1.5,
+                                  letterSpacing: 1.4,
                                 ),
                               ),
                               const SizedBox(height: 6),
@@ -192,7 +209,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 10, vertical: 3),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.07),
+                                  color: Colors.white.withOpacity(0.08),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Text(
@@ -212,7 +229,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 18),
 
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -231,7 +248,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                       prayerState.activePeriod == PrayerPeriod.yatsi, palette),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
 
               Row(
                 children: [
@@ -251,7 +268,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                           SizedBox(width: 6),
                           Flexible(
                             child: Text(
-                              "Konum & Makam",
+                              "Şehir & Makam",
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                             ),
@@ -313,11 +330,17 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
         ),
         const SizedBox(height: 16),
 
-        // 3. Saatlik Huzur Ayeti Kartı (Doğal ve Manevi Tasarım)
+        // 3. Saatlik Huzur Ayeti Kartı (Tıklanınca veya Hikaye Paylaş'a basınca X-Story Açılır)
         GlassContainer(
           borderRadius: 30,
           goldAccentBorder: true,
-          padding: const EdgeInsets.all(22),
+          padding: const EdgeInsets.all(20),
+          onTap: () => HuzurStoryShareSheet.show(
+            context,
+            arabic: activeShortVerse.arabicShort,
+            turkish: activeShortVerse.turkishShort,
+            reference: activeShortVerse.reference,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -335,21 +358,21 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                   Text(
                     activeShortVerse.reference,
                     style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
                       color: Color(0xFF64FFDA),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
               Align(
                 alignment: Alignment.centerRight,
                 child: Text(
                   activeShortVerse.arabicShort,
                   textAlign: TextAlign.right,
                   style: const TextStyle(
-                    fontSize: 26,
+                    fontSize: 25,
                     height: 1.5,
                     fontWeight: FontWeight.w700,
                     color: Color(0xFFFFF8E1),
@@ -360,19 +383,19 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
               Text(
                 "\"${activeShortVerse.turkishShort}\"",
                 style: const TextStyle(
-                  fontSize: 17,
+                  fontSize: 16.5,
                   fontWeight: FontWeight.w600,
-                  height: 1.4,
+                  height: 1.42,
                   color: Colors.white,
                 ),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 16),
               Row(
                 children: [
                   Expanded(
                     child: GlassContainer(
-                      borderRadius: 16,
-                      padding: const EdgeInsets.symmetric(vertical: 11),
+                      borderRadius: 15,
+                      padding: const EdgeInsets.symmetric(vertical: 10),
                       onTap: () async {
                         setState(() => _manualVerseOffset++);
                         await NotificationAndWidgetService.instance
@@ -386,13 +409,13 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                           BespokeVectorIcon(
                             type: BespokeIconType.refreshSpark,
                             color: Color(0xFF64FFDA),
-                            size: 16,
+                            size: 15,
                           ),
-                          SizedBox(width: 8),
+                          SizedBox(width: 7),
                           Text(
                             "Yenile",
                             style: TextStyle(
-                              fontSize: 13,
+                              fontSize: 12.5,
                               fontWeight: FontWeight.w600,
                               color: Color(0xFF64FFDA),
                             ),
@@ -404,24 +427,29 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                   const SizedBox(width: 10),
                   Expanded(
                     child: GlassContainer(
-                      borderRadius: 16,
+                      borderRadius: 15,
                       goldAccentBorder: true,
-                      padding: const EdgeInsets.symmetric(vertical: 11),
-                      onTap: () => _showFullScreenInspiration(context, activeShortVerse, palette),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      onTap: () => HuzurStoryShareSheet.show(
+                        context,
+                        arabic: activeShortVerse.arabicShort,
+                        turkish: activeShortVerse.turkishShort,
+                        reference: activeShortVerse.reference,
+                      ),
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           BespokeVectorIcon(
-                            type: BespokeIconType.expandFrame,
+                            type: BespokeIconType.instagramStory,
                             color: Color(0xFFFFE082),
                             size: 15,
                           ),
-                          SizedBox(width: 8),
+                          SizedBox(width: 7),
                           Text(
-                            "Tam Ekran",
+                            "Hikayede Paylaş",
                             style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w700,
                               color: Color(0xFFFFE082),
                             ),
                           ),
@@ -436,10 +464,10 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
         ),
         const SizedBox(height: 16),
 
-        // 4. Vakit Atmosferi (Otomatik, Seher, Gün Ortası, Grup, Gece)
+        // 4. Vakit Atmosferi (Sağdan veya alttan asla kesilmeyen yatay kaydırmalı bar)
         GlassContainer(
           borderRadius: 24,
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -454,6 +482,8 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
               const SizedBox(height: 10),
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.only(right: 12),
                 child: Row(
                   children: [
                     _buildAtmosphereChip("Otomatik", null, prayerNotifier),
@@ -468,113 +498,6 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
           ),
         ),
       ],
-    );
-  }
-
-  void _showFullScreenInspiration(
-    BuildContext context,
-    HourlyShortVerse verse,
-    LiquidGlassPalette palette,
-  ) {
-    final clockFmt = DateFormat('HH:mm').format(DateTime.now());
-    showGeneralDialog(
-      context: context,
-      barrierDismissible: true,
-      barrierLabel: "InspirationFullScreen",
-      pageBuilder: (ctx, _, __) {
-        return Scaffold(
-          backgroundColor: palette.deepCosmicStart,
-          body: LiquidMeshBackground(
-            palette: palette,
-            child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
-                child: Column(
-                  children: [
-                    Text(
-                      "Günün İlhamı",
-                      style: TextStyle(
-                        fontSize: 13,
-                        letterSpacing: 1.1,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white.withOpacity(0.75),
-                      ),
-                    ),
-                    const SizedBox(height: 28),
-                    Text(
-                      clockFmt,
-                      style: const TextStyle(
-                        fontSize: 72,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 2,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    GlassContainer(
-                      borderRadius: 28,
-                      emeraldGlow: true,
-                      goldAccentBorder: true,
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: Text(
-                              verse.arabicShort,
-                              style: const TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFFFFF8E1),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            "\"${verse.turkishShort}\"",
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: Text(
-                              "— ${verse.reference}",
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF64FFDA),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Spacer(),
-                    GlassContainer(
-                      borderRadius: 18,
-                      padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 32),
-                      onTap: () => Navigator.of(ctx).pop(),
-                      child: const Text(
-                        "Kapat",
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFFFFE082),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      },
     );
   }
 
@@ -627,9 +550,9 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
       child: GestureDetector(
         onTap: () => notifier.setManualPeriodPreview(period),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.06),
+            color: Colors.white.withOpacity(0.07),
             borderRadius: BorderRadius.circular(14),
             border: Border.all(color: Colors.white.withOpacity(0.18), width: 0.8),
           ),
@@ -653,6 +576,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
       builder: (_) {
         return GlassContainer(
           borderRadius: 30,
+          enableBlur: true,
           padding: const EdgeInsets.all(20),
           child: ListView(
             shrinkWrap: true,
@@ -680,7 +604,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                     ),
                     SizedBox(width: 8),
                     Text(
-                      "Bulunduğum Konumu Algıla",
+                      "Bulunduğum Şehri Otomatik Algıla",
                       style: TextStyle(
                         color: Color(0xFF64FFDA),
                         fontWeight: FontWeight.bold,
@@ -772,7 +696,6 @@ class _CrystalOrbGaugePainter extends CustomPainter {
     canvas.save();
     canvas.clipPath(clipPath);
 
-    // Saf Kristal İç Yüzey
     final sphereBg = Paint()
       ..shader = RadialGradient(
         center: const Alignment(-0.35, -0.45),
@@ -785,15 +708,14 @@ class _CrystalOrbGaugePainter extends CustomPainter {
       ).createShader(Rect.fromCircle(center: center, radius: radius));
     canvas.drawCircle(center, radius, sphereBg);
 
-    // Akışkan Kristal Su Dalgası
     final waterHeight = size.height * (1.0 - progress.clamp(0.18, 0.84));
     final wavePath = Path()..moveTo(0, size.height);
     wavePath.lineTo(0, waterHeight);
 
-    for (double x = 0; x <= size.width; x += 5) {
+    for (double x = 0; x <= size.width; x += 6) {
       final y = waterHeight +
-          math.sin((x / size.width * 2 * math.pi) + (wavePhase * 2 * math.pi)) * 6 +
-          math.cos((x / size.width * 4 * math.pi) - (wavePhase * 2 * math.pi)) * 3;
+          math.sin((x / size.width * 2 * math.pi) + (wavePhase * 2 * math.pi)) * 5.5 +
+          math.cos((x / size.width * 4 * math.pi) - (wavePhase * 2 * math.pi)) * 2.5;
       wavePath.lineTo(x, y);
     }
     wavePath.lineTo(size.width, size.height);
@@ -812,7 +734,6 @@ class _CrystalOrbGaugePainter extends CustomPainter {
     canvas.drawPath(wavePath, waterPaint);
     canvas.restore();
 
-    // 3D Kristal Mercek Dış Çemberi
     final rimPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.6

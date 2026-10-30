@@ -12,6 +12,7 @@ class GlassContainer extends StatelessWidget {
   final Color? tintColor;
   final bool goldAccentBorder;
   final bool emeraldGlow;
+  final bool enableBlur;
   final VoidCallback? onTap;
 
   const GlassContainer({
@@ -20,65 +21,74 @@ class GlassContainer extends StatelessWidget {
     this.padding = const EdgeInsets.all(18),
     this.margin,
     this.borderRadius = 26,
-    this.blurSigma = 28,
+    this.blurSigma = 16,
     this.tintColor,
     this.goldAccentBorder = false,
     this.emeraldGlow = false,
+    this.enableBlur = false,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final content = Container(
-      margin: margin,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(borderRadius),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.32),
-            blurRadius: 24,
-            spreadRadius: -4,
-            offset: const Offset(0, 10),
-          ),
-          if (emeraldGlow || goldAccentBorder)
-            BoxShadow(
-              color: (goldAccentBorder
-                      ? const Color(0xFFFFD54F)
-                      : const Color(0xFF64FFDA))
-                  .withOpacity(0.10),
-              blurRadius: 18,
-              spreadRadius: -2,
-            ),
-        ],
+    Widget surface = CustomPaint(
+      foregroundPainter: _RefractiveSpecularRimPainter(
+        borderRadius: borderRadius,
+        goldAccent: goldAccentBorder,
+        emeraldAccent: emeraldGlow,
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(borderRadius),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: blurSigma, sigmaY: blurSigma),
-          child: CustomPaint(
-            foregroundPainter: _RefractiveSpecularRimPainter(
-              borderRadius: borderRadius,
-              goldAccent: goldAccentBorder,
-              emeraldAccent: emeraldGlow,
-            ),
-            child: Container(
-              padding: padding,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(borderRadius),
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Colors.white.withOpacity(0.085),
-                    (tintColor ?? Colors.white).withOpacity(0.045),
-                    Colors.white.withOpacity(0.020),
-                  ],
-                  stops: const [0.0, 0.48, 1.0],
-                ),
-              ),
-              child: child,
-            ),
+      child: Container(
+        padding: padding,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(borderRadius),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.white.withOpacity(0.105),
+              (tintColor ?? const Color(0xFF0B2430)).withOpacity(0.38),
+              const Color(0xFF05131D).withOpacity(0.56),
+            ],
+            stops: const [0.0, 0.50, 1.0],
           ),
+        ),
+        child: child,
+      ),
+    );
+
+    if (enableBlur) {
+      surface = BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: blurSigma, sigmaY: blurSigma),
+        child: surface,
+      );
+    }
+
+    final content = RepaintBoundary(
+      child: Container(
+        margin: margin,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(borderRadius),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.28),
+              blurRadius: 18,
+              spreadRadius: -4,
+              offset: const Offset(0, 8),
+            ),
+            if (emeraldGlow || goldAccentBorder)
+              BoxShadow(
+                color: (goldAccentBorder
+                        ? const Color(0xFFFFD54F)
+                        : const Color(0xFF64FFDA))
+                    .withOpacity(0.09),
+                blurRadius: 14,
+                spreadRadius: -2,
+              ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(borderRadius),
+          child: surface,
         ),
       ),
     );
@@ -112,12 +122,12 @@ class _RefractiveSpecularRimPainter extends CustomPainter {
     );
 
     final topLeftRim = goldAccent
-        ? const Color(0xFFFFE082).withOpacity(0.55)
+        ? const Color(0xFFFFE082).withOpacity(0.58)
         : Colors.white.withOpacity(0.45);
 
     final bottomRightRim = emeraldAccent
-        ? const Color(0xFF64FFDA).withOpacity(0.35)
-        : const Color(0xFF64FFDA).withOpacity(0.28);
+        ? const Color(0xFF64FFDA).withOpacity(0.38)
+        : const Color(0xFF64FFDA).withOpacity(0.26);
 
     final borderPaint = Paint()
       ..style = PaintingStyle.stroke
@@ -127,7 +137,7 @@ class _RefractiveSpecularRimPainter extends CustomPainter {
         end: Alignment.bottomRight,
         colors: [
           topLeftRim,
-          Colors.white.withOpacity(0.05),
+          Colors.white.withOpacity(0.06),
           bottomRightRim,
         ],
         stops: const [0.0, 0.52, 1.0],
@@ -135,7 +145,6 @@ class _RefractiveSpecularRimPainter extends CustomPainter {
 
     canvas.drawRRect(rrect, borderPaint);
 
-    // 1px Üst Kristal Tavan Parlaması (Specular Ceiling Highlight)
     final topHighlightPath = Path()
       ..moveTo(borderRadius * 0.85, 0.9)
       ..lineTo(size.width - borderRadius * 0.85, 0.9);
@@ -146,7 +155,7 @@ class _RefractiveSpecularRimPainter extends CustomPainter {
       ..shader = LinearGradient(
         colors: [
           Colors.white.withOpacity(0.0),
-          Colors.white.withOpacity(0.48),
+          Colors.white.withOpacity(0.45),
           Colors.white.withOpacity(0.0),
         ],
       ).createShader(Rect.fromLTWH(0, 0, size.width, 2));
@@ -187,26 +196,26 @@ class _SpringGlassInteractiveState extends State<SpringGlassInteractive>
     _controller = AnimationController.unbounded(vsync: this)
       ..addListener(() {
         setState(() {
-          _scale = 1.0 - (_controller.value * 0.035);
+          _scale = 1.0 - (_controller.value * 0.032);
         });
       });
   }
 
   void _onTapDown(TapDownDetails details) {
     HapticFeedback.selectionClick();
-    const spring = SpringDescription(mass: 1.0, stiffness: 450.0, damping: 22.0);
+    const spring = SpringDescription(mass: 1.0, stiffness: 480.0, damping: 24.0);
     _controller.animateWith(SpringSimulation(spring, _controller.value, 1.0, 0));
   }
 
   void _onTapUp(TapUpDetails details) {
     HapticFeedback.lightImpact();
-    const spring = SpringDescription(mass: 1.0, stiffness: 320.0, damping: 16.0);
+    const spring = SpringDescription(mass: 1.0, stiffness: 360.0, damping: 18.0);
     _controller.animateWith(SpringSimulation(spring, _controller.value, 0.0, -2.0));
     widget.onTap();
   }
 
   void _onTapCancel() {
-    const spring = SpringDescription(mass: 1.0, stiffness: 320.0, damping: 18.0);
+    const spring = SpringDescription(mass: 1.0, stiffness: 360.0, damping: 20.0);
     _controller.animateWith(SpringSimulation(spring, _controller.value, 0.0, 0));
   }
 
@@ -224,7 +233,7 @@ class _SpringGlassInteractiveState extends State<SpringGlassInteractive>
       onTapUp: _onTapUp,
       onTapCancel: _onTapCancel,
       child: Transform.scale(
-        scale: _scale.clamp(0.94, 1.03),
+        scale: _scale.clamp(0.95, 1.02),
         child: widget.child,
       ),
     );

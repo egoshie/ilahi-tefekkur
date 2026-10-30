@@ -1,5 +1,4 @@
 import 'dart:math' as math;
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -127,6 +126,7 @@ class LiquidGlassPalette {
   }
 }
 
+// 120Hz ProMotion GPU-Dostu Arka Plan (Tamamen RepaintBoundary ile İzole)
 class LiquidMeshBackground extends StatefulWidget {
   final LiquidGlassPalette palette;
   final Widget child;
@@ -150,7 +150,7 @@ class _LiquidMeshBackgroundState extends State<LiquidMeshBackground>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 24),
+      duration: const Duration(seconds: 26),
     )..repeat();
   }
 
@@ -165,23 +165,23 @@ class _LiquidMeshBackgroundState extends State<LiquidMeshBackground>
     return Stack(
       fit: StackFit.expand,
       children: [
-        AnimatedBuilder(
-          animation: _controller,
-          builder: (context, _) {
-            return CustomPaint(
-              painter: _AuroraCosmicPainter(
-                progress: _controller.value,
-                palette: widget.palette,
-              ),
-              size: Size.infinite,
-            );
-          },
+        RepaintBoundary(
+          child: AnimatedBuilder(
+            animation: _controller,
+            builder: (context, _) {
+              return CustomPaint(
+                isComplex: true,
+                willChange: true,
+                painter: _AuroraCosmicPainter(
+                  progress: _controller.value,
+                  palette: widget.palette,
+                ),
+                size: Size.infinite,
+              );
+            },
+          ),
         ),
-        BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 36, sigmaY: 36),
-          child: const SizedBox.expand(),
-        ),
-        widget.child,
+        RepaintBoundary(child: widget.child),
       ],
     );
   }
@@ -214,60 +214,38 @@ class _AuroraCosmicPainter extends CustomPainter {
 
     final angle = progress * 2 * math.pi;
 
-    // İpeksi Aurora Işık Katmanı 1
     final center1 = Offset(
-      size.width * (0.28 + 0.18 * math.sin(angle)),
-      size.height * (0.20 + 0.10 * math.cos(angle * 1.1)),
+      size.width * (0.25 + 0.16 * math.sin(angle)),
+      size.height * (0.18 + 0.09 * math.cos(angle * 1.1)),
     );
     _drawSilkyAurora(
       canvas,
       center1,
-      size.width * 0.65,
-      palette.auroraPrimary.withOpacity(0.18),
+      size.width * 0.72,
+      palette.auroraPrimary.withOpacity(0.16),
     );
 
-    // İpeksi Aurora Işık Katmanı 2
     final center2 = Offset(
-      size.width * (0.76 + 0.15 * math.cos(angle * 0.8)),
-      size.height * (0.52 + 0.12 * math.sin(angle * 1.2)),
+      size.width * (0.78 + 0.14 * math.cos(angle * 0.8)),
+      size.height * (0.48 + 0.11 * math.sin(angle * 1.2)),
     );
     _drawSilkyAurora(
       canvas,
       center2,
-      size.width * 0.60,
-      palette.auroraSecondary.withOpacity(0.14),
+      size.width * 0.68,
+      palette.auroraSecondary.withOpacity(0.13),
     );
 
-    // İpeksi Aurora Işık Katmanı 3
     final center3 = Offset(
-      size.width * (0.45 + 0.20 * math.sin(angle * 0.9 + 1.4)),
+      size.width * (0.42 + 0.18 * math.sin(angle * 0.9 + 1.4)),
       size.height * (0.82 + 0.08 * math.cos(angle)),
     );
     _drawSilkyAurora(
       canvas,
       center3,
-      size.width * 0.70,
-      palette.crystalAccent.withOpacity(0.12),
+      size.width * 0.75,
+      palette.crystalAccent.withOpacity(0.11),
     );
-
-    // Su Kırılması İnce Kristal Dalgalar
-    final ribbonPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0
-      ..color = Colors.white.withOpacity(0.05);
-
-    for (int i = 0; i < 3; i++) {
-      final path = Path();
-      final baseY = size.height * (0.24 + i * 0.26);
-      path.moveTo(0, baseY);
-      for (double x = 0; x <= size.width; x += 20) {
-        final y = baseY +
-            math.sin((x / size.width * 2 * math.pi) + angle + i) * 16 +
-            math.cos((x / size.width * 3 * math.pi) - angle) * 6;
-        path.lineTo(x, y);
-      }
-      canvas.drawPath(path, ribbonPaint);
-    }
   }
 
   void _drawSilkyAurora(Canvas canvas, Offset center, double radius, Color color) {
@@ -275,10 +253,10 @@ class _AuroraCosmicPainter extends CustomPainter {
       ..shader = RadialGradient(
         colors: [
           color,
-          color.withOpacity(0.05),
+          color.withOpacity(0.04),
           Colors.transparent,
         ],
-        stops: const [0.0, 0.55, 1.0],
+        stops: const [0.0, 0.52, 1.0],
       ).createShader(Rect.fromCircle(center: center, radius: radius));
     canvas.drawCircle(center, radius, paint);
   }
@@ -307,6 +285,10 @@ enum BespokeIconType {
   minusCircle,
   refreshSpark,
   expandFrame,
+  instagramStory,
+  whatsappShare,
+  downloadCard,
+  verifiedSeal,
 }
 
 class BespokeVectorIcon extends StatelessWidget {
@@ -365,6 +347,7 @@ class BespokeVectorIcon extends StatelessWidget {
   <path d="M8.59 13.51L15.42 17.49M15.41 6.51L8.59 10.49" stroke="$hexColor" stroke-width="1.7"/>
 </svg>''';
       case BespokeIconType.checkBadge:
+      case BespokeIconType.verifiedSeal:
         return '''
 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
   <circle cx="12" cy="12" r="9" stroke="$hexColor" stroke-width="1.7"/>
@@ -420,6 +403,24 @@ class BespokeVectorIcon extends StatelessWidget {
         return '''
 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
   <path d="M15 3H21V9M9 21H3V15M21 3L14 10M3 21L10 14" stroke="$hexColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>''';
+      case BespokeIconType.instagramStory:
+        return '''
+<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="3" y="3" width="18" height="18" rx="5" stroke="$hexColor" stroke-width="1.7"/>
+  <circle cx="12" cy="12" r="4" stroke="$hexColor" stroke-width="1.7"/>
+  <circle cx="17.5" cy="6.5" r="1.2" fill="$hexColor"/>
+</svg>''';
+      case BespokeIconType.whatsappShare:
+        return '''
+<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M21 11.5A8.38 8.38 0 0 1 12.5 20A8.5 8.5 0 0 1 7.8 18.6L3 20L4.4 15.2A8.38 8.38 0 0 1 3 11.5A8.5 8.5 0 0 1 11.5 3A8.5 8.5 0 0 1 21 11.5Z" stroke="$hexColor" stroke-width="1.7" stroke-linejoin="round"/>
+  <path d="M9.5 9.5C10 11.5 12.5 14 14.5 14.5" stroke="$hexColor" stroke-width="1.7" stroke-linecap="round"/>
+</svg>''';
+      case BespokeIconType.downloadCard:
+        return '''
+<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M12 4V16M12 16L8 12M12 16L16 12M4 20H20" stroke="$hexColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>''';
     }
   }
