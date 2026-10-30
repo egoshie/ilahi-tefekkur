@@ -1,6 +1,6 @@
 import 'dart:math' as math;
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 enum PrayerPeriod { imsak, gunes, ogle, ikindi, aksam, yatsi }
@@ -126,7 +126,6 @@ class LiquidGlassPalette {
   }
 }
 
-// 120Hz ProMotion GPU-Dostu Arka Plan (Tamamen RepaintBoundary ile İzole)
 class LiquidMeshBackground extends StatefulWidget {
   final LiquidGlassPalette palette;
   final Widget child;
@@ -138,10 +137,10 @@ class LiquidMeshBackground extends StatefulWidget {
   });
 
   @override
-  State<LiquidMeshBackground> createState() => _LiquidMeshBackgroundState();
+  State< LiquidMeshBackground > createState() => _LiquidMeshBackgroundState();
 }
 
-class _LiquidMeshBackgroundState extends State<LiquidMeshBackground>
+class _LiquidMeshBackgroundState extends State< LiquidMeshBackground >
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 
@@ -150,7 +149,7 @@ class _LiquidMeshBackgroundState extends State<LiquidMeshBackground>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 26),
+      duration: const Duration(seconds: 28),
     )..repeat();
   }
 
@@ -215,40 +214,45 @@ class _AuroraCosmicPainter extends CustomPainter {
     final angle = progress * 2 * math.pi;
 
     final center1 = Offset(
-      size.width * (0.25 + 0.16 * math.sin(angle)),
-      size.height * (0.18 + 0.09 * math.cos(angle * 1.1)),
+      size.width * (0.25 + 0.15 * math.sin(angle)),
+      size.height * (0.18 + 0.08 * math.cos(angle * 1.1)),
     );
     _drawSilkyAurora(
       canvas,
       center1,
-      size.width * 0.72,
-      palette.auroraPrimary.withOpacity(0.16),
+      size.width * 0.70,
+      palette.auroraPrimary.withOpacity(0.15),
     );
 
     final center2 = Offset(
-      size.width * (0.78 + 0.14 * math.cos(angle * 0.8)),
-      size.height * (0.48 + 0.11 * math.sin(angle * 1.2)),
+      size.width * (0.76 + 0.13 * math.cos(angle * 0.8)),
+      size.height * (0.48 + 0.10 * math.sin(angle * 1.2)),
     );
     _drawSilkyAurora(
       canvas,
       center2,
-      size.width * 0.68,
-      palette.auroraSecondary.withOpacity(0.13),
+      size.width * 0.65,
+      palette.auroraSecondary.withOpacity(0.12),
     );
 
     final center3 = Offset(
-      size.width * (0.42 + 0.18 * math.sin(angle * 0.9 + 1.4)),
-      size.height * (0.82 + 0.08 * math.cos(angle)),
+      size.width * (0.42 + 0.16 * math.sin(angle * 0.9 + 1.4)),
+      size.height * (0.82 + 0.07 * math.cos(angle)),
     );
     _drawSilkyAurora(
       canvas,
       center3,
-      size.width * 0.75,
-      palette.crystalAccent.withOpacity(0.11),
+      size.width * 0.72,
+      palette.crystalAccent.withOpacity(0.10),
     );
   }
 
-  void _drawSilkyAurora(Canvas canvas, Offset center, double radius, Color color) {
+  void _drawSilkyAurora(
+    Canvas canvas,
+    Offset center,
+    double radius,
+    Color color,
+  ) {
     final paint = Paint()
       ..shader = RadialGradient(
         colors: [
@@ -275,8 +279,12 @@ enum BespokeIconType {
   crownGem,
   playTriangle,
   stopSquare,
+  pauseBars,
   lockShield,
   bookmarkStar,
+  heartFavorite,
+  widgetSpark,
+  searchLens,
   audioWave,
   gpsTarget,
   shareCard,
@@ -289,6 +297,7 @@ enum BespokeIconType {
   whatsappShare,
   downloadCard,
   verifiedSeal,
+  esmaGrid,
 }
 
 class BespokeVectorIcon extends StatelessWidget {
@@ -303,135 +312,68 @@ class BespokeVectorIcon extends StatelessWidget {
     this.size = 22,
   });
 
-  String _svgForType(String hexColor) {
+  IconData _resolveIconData() {
     switch (type) {
+      case BespokeIconType.crescentOrb:
+        return CupertinoIcons.moon_stars_fill;
+      case BespokeIconType.sacredScroll:
+        return CupertinoIcons.book_fill;
+      case BespokeIconType.tasbihRipple:
+        return CupertinoIcons.circle_grid_hex_fill;
+      case BespokeIconType.qiblaStar:
+        return CupertinoIcons.compass_fill;
       case BespokeIconType.crownGem:
-        return '''
-<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M3 18H21M4 15L2 7L8 11L12 4L16 11L22 7L20 15H4Z" stroke="$hexColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>''';
+        return CupertinoIcons.sparkles;
       case BespokeIconType.playTriangle:
-        return '''
-<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <polygon points="6,4 20,12 6,20" fill="$hexColor"/>
-</svg>''';
+        return CupertinoIcons.play_arrow_solid;
       case BespokeIconType.stopSquare:
-        return '''
-<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect x="6" y="6" width="12" height="12" rx="2.5" fill="$hexColor"/>
-</svg>''';
+        return CupertinoIcons.stop_fill;
+      case BespokeIconType.pauseBars:
+        return CupertinoIcons.pause_fill;
       case BespokeIconType.lockShield:
-        return '''
-<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect x="5" y="11" width="14" height="10" rx="3" stroke="$hexColor" stroke-width="1.7"/>
-  <path d="M8 11V7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7V11" stroke="$hexColor" stroke-width="1.7" stroke-linecap="round"/>
-</svg>''';
+        return CupertinoIcons.lock_shield_fill;
       case BespokeIconType.bookmarkStar:
-        return '''
-<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="$hexColor" stroke-width="1.7" stroke-linejoin="round"/>
-</svg>''';
+        return CupertinoIcons.bookmark_fill;
+      case BespokeIconType.heartFavorite:
+        return CupertinoIcons.heart_fill;
+      case BespokeIconType.widgetSpark:
+        return CupertinoIcons.square_grid_2x2_fill;
+      case BespokeIconType.searchLens:
+        return CupertinoIcons.search;
+      case BespokeIconType.audioWave:
+        return CupertinoIcons.waveform;
       case BespokeIconType.gpsTarget:
-        return '''
-<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="12" cy="12" r="7" stroke="$hexColor" stroke-width="1.7"/>
-  <circle cx="12" cy="12" r="2.5" fill="$hexColor"/>
-  <path d="M12 2V5M12 19V22M2 12H5M19 12H22" stroke="$hexColor" stroke-width="1.7" stroke-linecap="round"/>
-</svg>''';
+        return CupertinoIcons.location_fill;
       case BespokeIconType.shareCard:
-        return '''
-<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="18" cy="5" r="3" stroke="$hexColor" stroke-width="1.7"/>
-  <circle cx="6" cy="12" r="3" stroke="$hexColor" stroke-width="1.7"/>
-  <circle cx="18" cy="19" r="3" stroke="$hexColor" stroke-width="1.7"/>
-  <path d="M8.59 13.51L15.42 17.49M15.41 6.51L8.59 10.49" stroke="$hexColor" stroke-width="1.7"/>
-</svg>''';
+        return CupertinoIcons.share;
       case BespokeIconType.checkBadge:
       case BespokeIconType.verifiedSeal:
-        return '''
-<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="12" cy="12" r="9" stroke="$hexColor" stroke-width="1.7"/>
-  <path d="M8 12.5L10.8 15.3L16.5 9.5" stroke="$hexColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>''';
+        return CupertinoIcons.checkmark_seal_fill;
       case BespokeIconType.plusCircle:
-        return '''
-<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="12" cy="12" r="9" stroke="$hexColor" stroke-width="1.7"/>
-  <path d="M12 8V16M8 12H16" stroke="$hexColor" stroke-width="1.7" stroke-linecap="round"/>
-</svg>''';
+        return CupertinoIcons.add_circled;
       case BespokeIconType.minusCircle:
-        return '''
-<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="12" cy="12" r="9" stroke="$hexColor" stroke-width="1.7"/>
-  <path d="M8 12H16" stroke="$hexColor" stroke-width="1.7" stroke-linecap="round"/>
-</svg>''';
-      case BespokeIconType.audioWave:
-        return '''
-<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M4 10V14M8 6V18M12 3V21M16 7V17M20 10V14" stroke="$hexColor" stroke-width="1.9" stroke-linecap="round"/>
-</svg>''';
-      case BespokeIconType.crescentOrb:
-        return '''
-<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" stroke="$hexColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>''';
-      case BespokeIconType.sacredScroll:
-        return '''
-<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M2 4H8C10.2091 4 12 5.79086 12 8V20C12 18.3431 10.6569 17 9 17H2V4Z" stroke="$hexColor" stroke-width="1.7" stroke-linejoin="round"/>
-  <path d="M22 4H16C13.7909 4 12 5.79086 12 8V20C12 18.3431 13.3431 17 15 17H22V4Z" stroke="$hexColor" stroke-width="1.7" stroke-linejoin="round"/>
-</svg>''';
-      case BespokeIconType.tasbihRipple:
-        return '''
-<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="12" cy="12" r="3" fill="$hexColor"/>
-  <circle cx="12" cy="12" r="7" stroke="$hexColor" stroke-width="1.5"/>
-  <circle cx="12" cy="12" r="10.5" stroke="$hexColor" stroke-width="1.1" stroke-dasharray="3 3"/>
-</svg>''';
-      case BespokeIconType.qiblaStar:
-        return '''
-<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <polygon points="12,2 15.5,10.5 22,12 15.5,13.5 12,22 8.5,13.5 2,12 8.5,10.5" stroke="$hexColor" stroke-width="1.6" stroke-linejoin="round"/>
-  <circle cx="12" cy="12" r="2" fill="$hexColor"/>
-</svg>''';
+        return CupertinoIcons.minus_circled;
       case BespokeIconType.refreshSpark:
-        return '''
-<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M21 12A9 9 0 0 0 6 5.3L3 8M3 3V8H8M3 12A9 9 0 0 0 18 18.7L21 16M21 21V16H16" stroke="$hexColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>''';
+        return CupertinoIcons.arrow_2_circlepath;
       case BespokeIconType.expandFrame:
-        return '''
-<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M15 3H21V9M9 21H3V15M21 3L14 10M3 21L10 14" stroke="$hexColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>''';
+        return CupertinoIcons.fullscreen;
       case BespokeIconType.instagramStory:
-        return '''
-<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect x="3" y="3" width="18" height="18" rx="5" stroke="$hexColor" stroke-width="1.7"/>
-  <circle cx="12" cy="12" r="4" stroke="$hexColor" stroke-width="1.7"/>
-  <circle cx="17.5" cy="6.5" r="1.2" fill="$hexColor"/>
-</svg>''';
+        return CupertinoIcons.camera_viewfinder;
       case BespokeIconType.whatsappShare:
-        return '''
-<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M21 11.5A8.38 8.38 0 0 1 12.5 20A8.5 8.5 0 0 1 7.8 18.6L3 20L4.4 15.2A8.38 8.38 0 0 1 3 11.5A8.5 8.5 0 0 1 11.5 3A8.5 8.5 0 0 1 21 11.5Z" stroke="$hexColor" stroke-width="1.7" stroke-linejoin="round"/>
-  <path d="M9.5 9.5C10 11.5 12.5 14 14.5 14.5" stroke="$hexColor" stroke-width="1.7" stroke-linecap="round"/>
-</svg>''';
+        return CupertinoIcons.paperplane_fill;
       case BespokeIconType.downloadCard:
-        return '''
-<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M12 4V16M12 16L8 12M12 16L16 12M4 20H20" stroke="$hexColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>''';
+        return CupertinoIcons.arrow_down_to_line;
+      case BespokeIconType.esmaGrid:
+        return CupertinoIcons.sparkles;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final hex = '#${color.value.toRadixString(16).padLeft(8, '0').substring(2)}';
-    return SvgPicture.string(
-      _svgForType(hex),
-      width: size,
-      height: size,
+    return Icon(
+      _resolveIconData(),
+      color: color,
+      size: size,
     );
   }
 }
@@ -447,10 +389,10 @@ class LiveSvgAudioVisualizer extends StatefulWidget {
   });
 
   @override
-  State<LiveSvgAudioVisualizer> createState() => _LiveSvgAudioVisualizerState();
+  State< LiveSvgAudioVisualizer > createState() => _LiveSvgAudioVisualizerState();
 }
 
-class _LiveSvgAudioVisualizerState extends State<LiveSvgAudioVisualizer>
+class _LiveSvgAudioVisualizerState extends State< LiveSvgAudioVisualizer >
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 
@@ -460,7 +402,20 @@ class _LiveSvgAudioVisualizerState extends State<LiveSvgAudioVisualizer>
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 650),
-    )..repeat();
+    );
+    if (widget.isPlaying) {
+      _controller.repeat();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant LiveSvgAudioVisualizer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isPlaying && !_controller.isAnimating) {
+      _controller.repeat();
+    } else if (!widget.isPlaying && _controller.isAnimating) {
+      _controller.stop();
+    }
   }
 
   @override
@@ -518,5 +473,6 @@ class _WaveBarsPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _WaveBarsPainter oldDelegate) => true;
+  bool shouldRepaint(covariant _WaveBarsPainter oldDelegate) =>
+      oldDelegate.phase != phase;
 }

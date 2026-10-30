@@ -6,6 +6,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import '../models/v42_models.dart';
 import 'glass_container.dart';
 import 'liquid_glass_theme.dart';
 
@@ -14,140 +15,638 @@ class HuzurStoryShareSheet extends StatefulWidget {
   final String turkishText;
   final String reference;
   final String bookCategory;
-  const HuzurStoryShareSheet({super.key,required this.arabicText,required this.turkishText,required this.reference,this.bookCategory="Kur'ân-ı Kerîm"});
 
-  static Future<void> show(BuildContext context,{required String arabic,required String turkish,required String reference,String category="Kur'ân-ı Kerîm"}) async {
-    await showModalBottomSheet<void>(
-      context:context,isScrollControlled:true,backgroundColor:Colors.transparent,
-      builder:(_)=>HuzurStoryShareSheet(arabicText:arabic,turkishText:turkish,reference:reference,bookCategory:category),
+  const HuzurStoryShareSheet({
+    super.key,
+    required this.arabicText,
+    required this.turkishText,
+    required this.reference,
+    this.bookCategory = "Kur'ân-ı Kerîm",
+  });
+
+  static Future< void > show(
+    BuildContext context, {
+    required String arabic,
+    required String turkish,
+    required String reference,
+    String category = "Kur'ân-ı Kerîm",
+  }) {
+    return showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => HuzurStoryShareSheet(
+        arabicText: arabic,
+        turkishText: turkish,
+        reference: reference,
+        bookCategory: category,
+      ),
     );
   }
 
   @override
-  State<HuzurStoryShareSheet> createState()=>_HuzurStoryShareSheetState();
+  State< HuzurStoryShareSheet > createState() => _HuzurStoryShareSheetState();
 }
 
-class _HuzurStoryShareSheetState extends State<HuzurStoryShareSheet> {
-  static const MethodChannel _mediaChannel=MethodChannel('com.ilahi.tefekkur/media');
-  final GlobalKey _storyCanvasKey=GlobalKey();
-  bool _isGenerating=false;
-  String _statusMessage='';
-  int _selectedTheme=0;
-  static const List<Color> _themes=[Color(0xFF050507),Color(0xFF041E1B),Color(0xFF061326),Color(0xFF1F1605)];
-  static const List<String> _themeNames=['Gece Siyahı','Zümrüt Kristal','Safir Gece','Kehribar Altın'];
+class _HuzurStoryShareSheetState extends State< HuzurStoryShareSheet > {
+  static const MethodChannel _mediaChannel =
+      MethodChannel('com.ilahi.tefekkur/media');
 
-  Future<Uint8List?> _capturePngBytes() async {
-    if (!mounted || _isGenerating) return null;
-    setState(()=>_isGenerating=true);
+  final GlobalKey _storyCanvasKey = GlobalKey();
+  int _selectedThemeIndex = 0;
+  bool _isExporting = false;
+  String _statusMessage = "";
+
+  StoryThemePreset get _activeTheme =>
+      StoryThemePreset.presets[_selectedThemeIndex % StoryThemePreset.presets.length];
+
+  String get _formattedCaption =>
+      "\"${widget.turkishText}\"\n— ${widget.reference}\n\nHuzur";
+
+  Future< Uint8List? > _captureStoryPngBytes() async {
     try {
-      await WidgetsBinding.instance.endOfFrame;
-      await Future.delayed(const Duration(milliseconds:120));
-      final renderObject=_storyCanvasKey.currentContext?.findRenderObject();
-      if (renderObject is! RenderRepaintBoundary) throw StateError('Hikâye tuvali henüz hazır değil.');
-      final ui.Image image=await renderObject.toImage(pixelRatio:2.5);
-      try {
-        final data=await image.toByteData(format:ui.ImageByteFormat.png);
-        if(data==null) throw StateError('PNG verisi oluşturulamadı.');
-        return data.buffer.asUint8List();
-      } finally {
-        image.dispose();
+      if (mounted) {
+        setState(() {
+          _isExporting = true;
+          _statusMessage = "Yüksek çözünürlüklü hikâye kartı hazırlanıyor...";
+        });
       }
-    } catch (error) {
-      if(mounted) setState(()=>_statusMessage='Kart hazırlanamadı: ' + error.toString());
+
+      await WidgetsBinding.instance.endOfFrame;
+      await Future.delayed(const Duration(milliseconds: 45));
+
+      final boundary = _storyCanvasKey.currentContext?.findRenderObject()
+          as RenderRepaintBoundary?;
+      if (boundary == null) return null;
+
+      final ui.Image image = await boundary.toImage(pixelRatio: 2.75);
+      final ByteData? byteData =
+          await image.toByteData(format: ui.ImageByteFormat.png);
+      image.dispose();
+
+      if (byteData == null) return null;
+      return byteData.buffer.asUint8List();
+    } catch (_) {
       return null;
     } finally {
-      if(mounted) setState(()=>_isGenerating=false);
+      if (mounted) {
+        setState(() {
+          _isExporting = false;
+        });
+      }
     }
   }
 
-  String get _caption => '“' + widget.turkishText + '”\n— ' + widget.reference + '\n\nHuzur';
+  Rect _computeShareOrigin(BuildContext ctx) {
+    final size = MediaQuery.of(ctx).size;
+    final w = size.width > 0 ? size.width : 390.0;
+    final h = size.height > 0 ? size.height : 844.0;
+    return Rect.fromCenter(
+      center: Offset(w / 2.0, h * 0.65),
+      width: 120.0,
+      height: 60.0,
+    );
+  }
 
-  Future<void> _shareCard({required bool storyMode}) async {
+  Future< void > _shareStory({required bool includeText}) async {
+    if (_isExporting) return;
     HapticFeedback.mediumImpact();
-    final bytes=await _capturePngBytes();
-    if(bytes==null || !mounted) return;
+    final originRect = _computeShareOrigin(context);
+    final pngBytes = await _captureStoryPngBytes();
+
+    if (pngBytes == null) {
+      if (mounted) {
+        setState(() {
+          _statusMessage = "Görsel oluşturulamadı, lütfen tekrar deneyin.";
+        });
+      }
+      return;
+    }
+
     try {
-      final temp=await getTemporaryDirectory();
-      final file=File(temp.path + '/huzur_story_' + DateTime.now().millisecondsSinceEpoch.toString() + '.png');
-      await file.writeAsBytes(bytes,flush:true);
-      final render=context.findRenderObject();
-      final box=render is RenderBox && render.hasSize ? render : null;
-      final fallback=MediaQuery.of(context).size;
-      final origin=box!=null ? box.localToGlobal(Offset.zero) & box.size : Rect.fromLTWH(0,0,fallback.width,fallback.height/2);
-      await Share.shareXFiles(
-        [XFile(file.path,mimeType:'image/png')],
-        text:storyMode ? null : _caption,
-        subject:'Huzur • ' + widget.reference,
-        sharePositionOrigin:origin,
+      final tempDir = await getTemporaryDirectory();
+      final file = File(
+        '${tempDir.path}/huzur_story_${DateTime.now().millisecondsSinceEpoch}.png',
       );
-      if(mounted) setState(()=>_statusMessage='Paylaşım menüsü açıldı.');
-    } catch(error) {
-      if(mounted) setState(()=>_statusMessage='Paylaşım açılamadı: ' + error.toString());
+      await file.writeAsBytes(pngBytes, flush: true);
+
+      await Clipboard.setData(ClipboardData(text: _formattedCaption));
+
+      await Share.shareXFiles(
+        [XFile(file.path, mimeType: 'image/png', name: 'huzur_story.png')],
+        text: includeText ? _formattedCaption : null,
+        subject: "Huzur • ${widget.reference}",
+        sharePositionOrigin: originRect,
+      );
+
+      if (mounted) {
+        setState(() {
+          _statusMessage = "Paylaşım menüsü açıldı ve metin panoya kopyalandı.";
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _statusMessage = "Paylaşım işlemi tamamlanamadı.";
+        });
+      }
     }
   }
 
-  Future<void> _saveToGalleryAndCopy() async {
+  Future< void > _saveToPhotosGallery() async {
+    if (_isExporting) return;
     HapticFeedback.mediumImpact();
-    final bytes=await _capturePngBytes();
-    if(bytes==null || !mounted) return;
-    try {
-      await _mediaChannel.invokeMethod<bool>('saveImageToGallery',bytes);
-      await Clipboard.setData(ClipboardData(text:_caption));
-      if(mounted) setState(()=>_statusMessage="Hikaye kartı Fotoğraflar'a kaydedildi ve metin kopyalandı!");
-    } on PlatformException catch(error) {
-      if(mounted) setState(()=>_statusMessage='Galeriye kaydedilemedi: ' + (error.message ?? 'iOS izinlerini kontrol edin.'));
-    } on MissingPluginException {
-      if(mounted) setState(()=>_statusMessage='iOS galeri köprüsü bulunamadı. ADIM 3/3 kurulumu gerekli.');
-    } catch(error) {
-      if(mounted) setState(()=>_statusMessage='Kaydetme başarısız: ' + error.toString());
+    final originRect = _computeShareOrigin(context);
+    final pngBytes = await _captureStoryPngBytes();
+
+    if (pngBytes == null) {
+      if (mounted) {
+        setState(() {
+          _statusMessage = "Görsel oluşturulamadı.";
+        });
+      }
+      return;
     }
+
+    await Clipboard.setData(ClipboardData(text: _formattedCaption));
+
+    try {
+      final bool? saved = await _mediaChannel.invokeMethod< bool >(
+        'saveImageToGallery',
+        {'bytes': pngBytes},
+      );
+
+      if (saved == true) {
+        HapticFeedback.heavyImpact();
+        if (mounted) {
+          setState(() {
+            _statusMessage =
+                "Kart Fotoğraflar galerisine kaydedildi ve metin kopyalandı.";
+          });
+        }
+        return;
+      }
+    } catch (_) {}
+
+    // Native kanal izin vermezse veya Android ortamındaysa güvenli sistem kaydetme menüsü
+    try {
+      final tempDir = await getTemporaryDirectory();
+      final file = File(
+        '${tempDir.path}/huzur_card_${DateTime.now().millisecondsSinceEpoch}.png',
+      );
+      await file.writeAsBytes(pngBytes, flush: true);
+
+      await Share.shareXFiles(
+        [XFile(file.path, mimeType: 'image/png', name: 'huzur_card.png')],
+        text: _formattedCaption,
+        sharePositionOrigin: originRect,
+      );
+
+      if (mounted) {
+        setState(() {
+          _statusMessage = "Görsel hazırlandı ve metin panoya kopyalandı.";
+        });
+      }
+    } catch (_) {}
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = _activeTheme;
+
     return DraggableScrollableSheet(
-      initialChildSize:0.92,minChildSize:0.72,maxChildSize:0.97,
-      builder:(context,scrollController)=>GlassContainer(
-        borderRadius:30,enableBlur:true,blurSigma:24,goldAccentBorder:true,
-        padding:const EdgeInsets.fromLTRB(18,14,18,22),
-        child:ListView(controller:scrollController,children:[
-          Center(child:Container(width:44,height:4,decoration:BoxDecoration(color:Colors.white30,borderRadius:BorderRadius.circular(8)))),
-          const SizedBox(height:12),
-          const Text('Ayet Paylaşım Stüdyosu',textAlign:TextAlign.center,style:TextStyle(fontSize:18,fontWeight:FontWeight.w800,color:Colors.white)),
-          const SizedBox(height:4),
-          const Text('Instagram Hikâyesi veya WhatsApp için kartını kişiselleştir.',textAlign:TextAlign.center,style:TextStyle(fontSize:11,color:Colors.white60)),
-          const SizedBox(height:12),
-          SizedBox(height:40,child:ListView.separated(scrollDirection:Axis.horizontal,itemCount:_themes.length,separatorBuilder:(_,__)=>const SizedBox(width:8),itemBuilder:(context,index)=>GestureDetector(
-            onTap:()=>setState(()=>_selectedTheme=index),
-            child:Container(padding:const EdgeInsets.symmetric(horizontal:12,vertical:8),decoration:BoxDecoration(color:_themes[index],borderRadius:BorderRadius.circular(13),border:Border.all(color:_selectedTheme==index?const Color(0xFF64FFDA):Colors.white24,width:_selectedTheme==index?2:1)),child:Text(_themeNames[index],style:const TextStyle(fontSize:11,fontWeight:FontWeight.w700,color:Colors.white))),
-          ))),
-          const SizedBox(height:12),
-          Center(child: RepaintBoundary(
-            key:_storyCanvasKey,
-            child:AspectRatio(aspectRatio:9/16,child:Container(
-              width:double.infinity,padding:const EdgeInsets.all(18),
-              decoration:BoxDecoration(color:_themes[_selectedTheme],borderRadius:BorderRadius.circular(25),gradient:RadialGradient(center:Alignment.topCenter,radius:1.25,colors:[Color.lerp(_themes[_selectedTheme],const Color(0xFF16443D),0.35)!,_themes[_selectedTheme]])),
-              child:Center(child: Container(width:double.infinity,padding:const EdgeInsets.all(17),decoration:BoxDecoration(color:Colors.white.withOpacity(0.055),borderRadius:BorderRadius.circular(19),border:Border.all(color:Colors.white.withOpacity(0.18))),child:Column(mainAxisSize:MainAxisSize.min,crossAxisAlignment:CrossAxisAlignment.start,children:[
-                Row(children:[Container(width:34,height:34,decoration:const BoxDecoration(shape:BoxShape.circle,color:Color(0xFF0D3030)),child:const Icon(Icons.nightlight_round,color:Color(0xFFFFE082),size:19)),const SizedBox(width:9),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[const Text('Huzur',style:TextStyle(fontSize:14,fontWeight:FontWeight.w800,color:Colors.white)),Text(widget.bookCategory,style:const TextStyle(fontSize:9,color:Colors.white60))])),const Icon(Icons.verified,color:Color(0xFF64FFDA),size:16)]),
-                const SizedBox(height:17),
-                if(widget.arabicText.trim().isNotEmpty) ...[Align(alignment:Alignment.centerRight,child:Text(widget.arabicText,textAlign:TextAlign.right,style:const TextStyle(fontSize:20,height:1.55,fontWeight:FontWeight.w700,color:Color(0xFFFFF8E1)))),const SizedBox(height:12)],
-                Text(widget.turkishText,style:const TextStyle(fontSize:14,height:1.45,fontWeight:FontWeight.w500,color:Colors.white),maxLines:9,overflow:TextOverflow.fade),
-                const SizedBox(height:12),Text('— ' + widget.reference,style:const TextStyle(fontSize:11,fontWeight:FontWeight.w700,color:Color(0xFF64FFDA))),
-                const SizedBox(height:12),const Divider(color:Colors.white12,height:1),const SizedBox(height:8),
-                const Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[Text('huzur.app',style:TextStyle(fontSize:10,color:Colors.white54,fontWeight:FontWeight.w600)),Text('Günün İlhamı',style:TextStyle(fontSize:9,color:Colors.white38))]),
-              ]))),
-            ),
-          )),
-          const SizedBox(height:14),
-          if(_isGenerating) const Padding(padding:EdgeInsets.only(bottom:10),child:Center(child:Text('Yüksek çözünürlüklü hikâye kartı hazırlanıyor...',style:TextStyle(color:Color(0xFF64FFDA),fontSize:11)))),
-          GlassContainer(borderRadius:16,goldAccentBorder:true,padding:const EdgeInsets.symmetric(vertical:13),onTap:()=>_shareCard(storyMode:true),child:const Row(mainAxisAlignment:MainAxisAlignment.center,children:[Icon(Icons.camera_alt,color:Color(0xFFFFE082),size:18),SizedBox(width:9),Text('Instagram Hikâyesi Olarak Paylaş',style:TextStyle(fontWeight:FontWeight.bold,fontSize:13))])),
-          const SizedBox(height:9),
-          GlassContainer(borderRadius:16,emeraldGlow:true,padding:const EdgeInsets.symmetric(vertical:13),onTap:()=>_shareCard(storyMode:false),child:const Row(mainAxisAlignment:MainAxisAlignment.center,children:[Icon(Icons.chat_bubble_outline,color:Color(0xFF64FFDA),size:18),SizedBox(width:9),Text("WhatsApp'ta Paylaş",style:TextStyle(fontWeight:FontWeight.bold,fontSize:13))])),
-          const SizedBox(height:9),
-          GlassContainer(borderRadius:16,padding:const EdgeInsets.symmetric(vertical:13),onTap:_saveToGalleryAndCopy,child:const Row(mainAxisAlignment:MainAxisAlignment.center,children:[Icon(Icons.download_rounded,color:Color(0xFF64FFDA),size:18),SizedBox(width:9),Text('Kartı İndir / Kopyala',style:TextStyle(fontWeight:FontWeight.bold,fontSize:13))])),
-          if(_statusMessage.isNotEmpty) Padding(padding:const EdgeInsets.only(top:12),child:Text(_statusMessage,textAlign:TextAlign.center,style:TextStyle(fontSize:11,color:_statusMessage.contains('kaydedildi')?const Color(0xFF64FFDA):Colors.white70))),
-        ]),
-      ),
+      initialChildSize: 0.92,
+      minChildSize: 0.72,
+      maxChildSize: 0.96,
+      builder: (context, scrollController) {
+        return GlassContainer(
+          borderRadius: 34,
+          enableBlur: true,
+          blurSigma: 24,
+          goldAccentBorder: true,
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+          child: ListView(
+            controller: scrollController,
+            physics: const BouncingScrollPhysics(),
+            children: [
+              Center(
+                child: Container(
+                  width: 44,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.30),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                "Paylaşım Stüdyosu",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                "Tema seçin, Instagram Hikâyesi olarak paylaşın veya Fotoğraflar'a kaydedin",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.white.withOpacity(0.68),
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              // 4 Tema Seçici Bar
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: Row(
+                  children: List< Widget >.generate(
+                    StoryThemePreset.presets.length,
+                    (idx) {
+                      final item = StoryThemePreset.presets[idx];
+                      final isSelected = idx == _selectedThemeIndex;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: GestureDetector(
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                            setState(() => _selectedThemeIndex = idx);
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 13,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? item.accentColor.withOpacity(0.20)
+                                  : Colors.white.withOpacity(0.06),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: isSelected
+                                    ? item.accentColor
+                                    : Colors.white24,
+                                width: 1.0,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 10,
+                                  height: 10,
+                                  decoration: BoxDecoration(
+                                    color: item.backgroundColor,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: item.accentColor,
+                                      width: 1.2,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 7),
+                                Text(
+                                  item.title,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: isSelected
+                                        ? item.accentColor
+                                        : Colors.white70,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // 9:16 DİKEY PAYLAŞIM KARTI TUVALİ
+              Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 310),
+                  child: RepaintBoundary(
+                    key: _storyCanvasKey,
+                    child: AspectRatio(
+                      aspectRatio: 9 / 16,
+                      child: Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: theme.backgroundColor,
+                          borderRadius: BorderRadius.circular(24),
+                          gradient: RadialGradient(
+                            center: const Alignment(0.0, -0.25),
+                            radius: 1.15,
+                            colors: [
+                              theme.cardColor,
+                              theme.backgroundColor,
+                              const Color(0xFF030305),
+                            ],
+                            stops: const [0.0, 0.62, 1.0],
+                          ),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 24,
+                        ),
+                        child: Center(
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: theme.cardColor.withOpacity(0.92),
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(
+                                color: theme.borderColor,
+                                width: 1.1,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.60),
+                                  blurRadius: 28,
+                                  spreadRadius: 1,
+                                  offset: const Offset(0, 12),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Üst Başlık: Huzur Hilal Amblemi + Doğrulama Rozeti
+                                Row(
+                                  children: [
+                                    Container(
+                                      width: 38,
+                                      height: 38,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: Colors.white.withOpacity(0.06),
+                                        border: Border.all(
+                                          color: theme.accentColor.withOpacity(0.60),
+                                          width: 1.0,
+                                        ),
+                                      ),
+                                      child: Center(
+                                        child: BespokeVectorIcon(
+                                          type: BespokeIconType.crescentOrb,
+                                          color: theme.accentColor,
+                                          size: 18,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              const Text(
+                                                "Huzur",
+                                                style: TextStyle(
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w800,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 5),
+                                              BespokeVectorIcon(
+                                                type: BespokeIconType.verifiedSeal,
+                                                color: theme.accentColor,
+                                                size: 14,
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 1),
+                                          Text(
+                                            "@huzur • ${widget.bookCategory}",
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              color: Colors.white.withOpacity(0.55),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    BespokeVectorIcon(
+                                      type: BespokeIconType.qiblaStar,
+                                      color: theme.accentColor.withOpacity(0.45),
+                                      size: 17,
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 18),
+
+                                // Arapça / Orijinal Metin
+                                if (widget.arabicText.trim().isNotEmpty) ...[
+                                  Align(
+                                    alignment: Alignment.centerRight,
+                                    child: Text(
+                                      widget.arabicText,
+                                      textAlign: TextAlign.right,
+                                      maxLines: 5,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 21,
+                                        height: 1.50,
+                                        fontWeight: FontWeight.w700,
+                                        color: Color(0xFFFFF8E1),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                ],
+
+                                // Türkçe Meal / Anlam
+                                Text(
+                                  widget.turkishText,
+                                  maxLines: 7,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 14.5,
+                                    height: 1.45,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+
+                                // Sure ve Ayet Referansı
+                                Text(
+                                  "— ${widget.reference}",
+                                  style: TextStyle(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: theme.accentColor,
+                                  ),
+                                ),
+                                const SizedBox(height: 14),
+
+                                Divider(
+                                  color: Colors.white.withOpacity(0.10),
+                                  height: 1,
+                                ),
+                                const SizedBox(height: 10),
+
+                                // Alt İmza
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      "huzur.app",
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        letterSpacing: 0.4,
+                                        color: Colors.white.withOpacity(0.45),
+                                      ),
+                                    ),
+                                    Text(
+                                      "Günün İlhamı",
+                                      style: TextStyle(
+                                        fontSize: 10.5,
+                                        color: Colors.white.withOpacity(0.42),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              if (_statusMessage.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Text(
+                    _statusMessage,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF64FFDA),
+                    ),
+                  ),
+                ),
+
+              // 1. Instagram Hikâyesi Olarak Paylaş
+              GlassContainer(
+                borderRadius: 18,
+                goldAccentBorder: true,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                onTap: () => _shareStory(includeText: false),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    BespokeVectorIcon(
+                      type: BespokeIconType.instagramStory,
+                      color: Color(0xFFFFE082),
+                      size: 19,
+                    ),
+                    SizedBox(width: 10),
+                    Text(
+                      "Instagram Hikâyesi Olarak Paylaş",
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFFFFE082),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              // 2. WhatsApp'ta Paylaş & 3. Fotoğraflar'a Kaydet
+              Row(
+                children: [
+                  Expanded(
+                    child: GlassContainer(
+                      borderRadius: 18,
+                      emeraldGlow: true,
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                      onTap: () => _shareStory(includeText: true),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          BespokeVectorIcon(
+                            type: BespokeIconType.whatsappShare,
+                            color: Color(0xFF64FFDA),
+                            size: 17,
+                          ),
+                          SizedBox(width: 7),
+                          Flexible(
+                            child: Text(
+                              "WhatsApp'ta Paylaş",
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF64FFDA),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: GlassContainer(
+                      borderRadius: 18,
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                      onTap: _saveToPhotosGallery,
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          BespokeVectorIcon(
+                            type: BespokeIconType.downloadCard,
+                            color: Colors.white,
+                            size: 17,
+                          ),
+                          SizedBox(width: 7),
+                          Flexible(
+                            child: Text(
+                              "Galeriye Kaydet",
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

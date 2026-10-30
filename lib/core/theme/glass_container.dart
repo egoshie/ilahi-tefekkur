@@ -20,8 +20,8 @@ class GlassContainer extends StatelessWidget {
     required this.child,
     this.padding = const EdgeInsets.all(18),
     this.margin,
-    this.borderRadius = 26,
-    this.blurSigma = 16,
+    this.borderRadius = 24,
+    this.blurSigma = 20,
     this.tintColor,
     this.goldAccentBorder = false,
     this.emeraldGlow = false,
@@ -45,9 +45,9 @@ class GlassContainer extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Colors.white.withOpacity(0.105),
-              (tintColor ?? const Color(0xFF0B2430)).withOpacity(0.38),
-              const Color(0xFF05131D).withOpacity(0.56),
+              Colors.white.withOpacity(0.10),
+              (tintColor ?? const Color(0xFF0A222E)).withOpacity(0.42),
+              const Color(0xFF04111A).withOpacity(0.58),
             ],
             stops: const [0.0, 0.50, 1.0],
           ),
@@ -70,17 +70,17 @@ class GlassContainer extends StatelessWidget {
           borderRadius: BorderRadius.circular(borderRadius),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.28),
-              blurRadius: 18,
+              color: Colors.black.withOpacity(0.26),
+              blurRadius: 16,
               spreadRadius: -4,
               offset: const Offset(0, 8),
             ),
             if (emeraldGlow || goldAccentBorder)
               BoxShadow(
                 color: (goldAccentBorder
-                        ? const Color(0xFFFFD54F)
+                        ? const Color(0xFFFFE082)
                         : const Color(0xFF64FFDA))
-                    .withOpacity(0.09),
+                    .withOpacity(0.08),
                 blurRadius: 14,
                 spreadRadius: -2,
               ),
@@ -122,12 +122,12 @@ class _RefractiveSpecularRimPainter extends CustomPainter {
     );
 
     final topLeftRim = goldAccent
-        ? const Color(0xFFFFE082).withOpacity(0.58)
-        : Colors.white.withOpacity(0.45);
+        ? const Color(0xFFFFE082).withOpacity(0.55)
+        : Colors.white.withOpacity(0.42);
 
     final bottomRightRim = emeraldAccent
         ? const Color(0xFF64FFDA).withOpacity(0.38)
-        : const Color(0xFF64FFDA).withOpacity(0.26);
+        : const Color(0xFF64FFDA).withOpacity(0.24);
 
     final borderPaint = Paint()
       ..style = PaintingStyle.stroke
@@ -155,7 +155,7 @@ class _RefractiveSpecularRimPainter extends CustomPainter {
       ..shader = LinearGradient(
         colors: [
           Colors.white.withOpacity(0.0),
-          Colors.white.withOpacity(0.45),
+          Colors.white.withOpacity(0.44),
           Colors.white.withOpacity(0.0),
         ],
       ).createShader(Rect.fromLTWH(0, 0, size.width, 2));
@@ -182,10 +182,10 @@ class SpringGlassInteractive extends StatefulWidget {
   });
 
   @override
-  State<SpringGlassInteractive> createState() => _SpringGlassInteractiveState();
+  State< SpringGlassInteractive > createState() => _SpringGlassInteractiveState();
 }
 
-class _SpringGlassInteractiveState extends State<SpringGlassInteractive>
+class _SpringGlassInteractiveState extends State< SpringGlassInteractive >
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   double _scale = 1.0;

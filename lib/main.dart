@@ -45,21 +45,23 @@ class LiquidRootShell extends StatefulWidget {
   const LiquidRootShell({super.key, required this.palette});
 
   @override
-  State<LiquidRootShell> createState() => _LiquidRootShellState();
+  State< LiquidRootShell > createState() => _LiquidRootShellState();
 }
 
-class _LiquidRootShellState extends State<LiquidRootShell> {
+class _LiquidRootShellState extends State< LiquidRootShell > {
   int _currentIndex = 0;
-
-  final List<Widget> _pages = const [
-    MainDashboardScreen(),
-    SacredTextsScreen(),
-    FluidTasbihScreen(),
-    QiblaAndToolsScreen(),
-  ];
 
   @override
   Widget build(BuildContext context) {
+    final pages = < Widget >[
+      MainDashboardScreen(
+        onSwitchTab: (idx) => setState(() => _currentIndex = idx),
+      ),
+      const SacredTextsScreen(),
+      const FluidTasbihScreen(),
+      const QiblaAndToolsScreen(),
+    ];
+
     return Scaffold(
       extendBody: true,
       body: LiquidMeshBackground(
@@ -68,7 +70,7 @@ class _LiquidRootShellState extends State<LiquidRootShell> {
           bottom: false,
           child: IndexedStack(
             index: _currentIndex,
-            children: _pages,
+            children: pages,
           ),
         ),
       ),
@@ -88,19 +90,23 @@ class _LiquidRootShellState extends State<LiquidRootShell> {
                   child: _buildNavItem(0, "Huzur", BespokeIconType.crescentOrb),
                 ),
                 Expanded(
-                  child: _buildNavItem(1, "Kitaplar", BespokeIconType.sacredScroll),
+                  child:
+                      _buildNavItem(1, "Kitaplar", BespokeIconType.sacredScroll),
                 ),
                 Expanded(
-                  child: _buildNavItem(2, "Zikirmatik", BespokeIconType.tasbihRipple),
+                  child: _buildNavItem(
+                      2, "Zikirmatik", BespokeIconType.tasbihRipple),
                 ),
                 Expanded(
-                  child: _buildNavItem(3, "Kıble & Ses", BespokeIconType.qiblaStar),
+                  child:
+                      _buildNavItem(3, "Kıble & Ses", BespokeIconType.qiblaStar),
                 ),
                 const SizedBox(width: 4),
                 GestureDetector(
                   onTap: () => LiquidGlassPaywallSheet.show(context),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.08),
                       borderRadius: BorderRadius.circular(16),

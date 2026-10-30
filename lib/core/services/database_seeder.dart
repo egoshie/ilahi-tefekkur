@@ -3,23 +3,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
-import '../models/app_models.dart';
+import '../models/v42_models.dart';
 import 'offline_sacred_repository.dart';
 
-final databaseServiceProvider = Provider<DatabaseService>((ref) {
+final databaseServiceProvider = Provider< DatabaseService >((ref) {
   return DatabaseService();
 });
 
 class DatabaseService {
   static Database? _db;
 
-  Future<Database> get database async {
+  Future< Database > get database async {
     if (_db != null) return _db!;
     _db = await _initDatabase();
     return _db!;
   }
 
-  Future<Database> _initDatabase() async {
+  Future< Database > _initDatabase() async {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, 'ilahi_tefekkur_v3_master.db');
 
@@ -92,52 +92,13 @@ class DatabaseService {
     );
   }
 
-  static const List<String> _trSurahNames = [
-    "Fâtiha", "Bakara", "Âl-i İmrân", "Nisâ", "Mâide", "En'âm", "A'râf", "Enfâl", "Tevbe", "Yûnus",
-    "Hûd", "Yûsuf", "Ra'd", "İbrâhîm", "Hicr", "Nahl", "İsrâ", "Kehf", "Meryem", "Tâhâ",
-    "Enbiyâ", "Hac", "Mü'minûn", "Nûr", "Furkân", "Şuarâ", "Neml", "Kasas", "Ankebût", "Rûm",
-    "Lokmân", "Secde", "Ahzâb", "Sebe'", "Fâtır", "Yâsîn", "Sâffât", "Sâd", "Zümer", "Mü'min",
-    "Fussilet", "Şûrâ", "Zuhruf", "Duhân", "Câsiye", "Ahkâf", "Muhammed", "Fetih", "Hucurât", "Kâf",
-    "Zâriyât", "Tûr", "Necm", "Kamer", "Rahmân", "Vâkıa", "Hadîd", "Mücâdele", "Haşr", "Mümtehine",
-    "Saf", "Cuma", "Münâfikûn", "Teğâbün", "Talâk", "Tahrîm", "Mülk", "Kalem", "Hâkka", "Meâric",
-    "Nûh", "Cin", "Müzzemmil", "Müddessir", "Kıyâme", "İnsân", "Mürselât", "Nebe'", "Nâziât", "Abese",
-    "Tekvîr", "İnfitâr", "Mutaffifîn", "İnşikâk", "Bürûc", "Târık", "A'lâ", "Gâşiye", "Fecr", "Beled",
-    "Şems", "Leyl", "Duhâ", "İnşirâh", "Tîn", "Alak", "Kadr", "Beyyine", "Zilzâl", "Âdiyât",
-    "Kâria", "Tekâsür", "Asr", "Hümeze", "Fîl", "Kureyş", "Mâûn", "Kevser", "Kâfirûn", "Nasr",
-    "Tebbet", "İhlâs", "Felak", "Nâs"
-  ];
-
-  static const List<int> _surahAyahCounts = [
-    7, 286, 200, 176, 120, 165, 206, 75, 129, 109,
-    123, 111, 43, 52, 99, 128, 111, 110, 98, 135,
-    112, 78, 118, 64, 77, 227, 93, 88, 69, 60,
-    34, 30, 73, 54, 45, 83, 182, 88, 75, 85,
-    54, 53, 89, 59, 37, 35, 38, 29, 18, 45,
-    60, 49, 62, 55, 78, 96, 29, 22, 24, 13,
-    14, 11, 11, 18, 12, 12, 30, 52, 52, 44,
-    28, 28, 20, 56, 40, 31, 50, 40, 46, 42,
-    29, 19, 36, 25, 22, 17, 19, 26, 30, 20,
-    15, 21, 11, 8, 8, 19, 5, 8, 8, 11,
-    11, 8, 3, 9, 5, 4, 7, 3, 6, 3,
-    5, 4, 5, 6
-  ];
-
-  Future<List<SurahMeta>> fetchAllSurahs() async {
-    return List.generate(114, (i) {
-      return SurahMeta(
-        number: i + 1,
-        nameArabic: "سورة",
-        nameTurkish: "${_trSurahNames[i]} Sûresi",
-        ayahCount: _surahAyahCounts[i],
-        revelationType: "Kur'ân-ı Kerîm",
-      );
-    });
+  Future< List< SurahMeta > > fetchAllSurahs() async {
+    return OfflineSacredRepository.getAllSurahMetadata();
   }
 
-  // %100 AÇILMA GARANTİLİ KURAN SURESİ GETİRİCİ (Önbellek -> Birincil API -> Yedek API -> Gömülü Havuz)
-  Future<List<LiveAyahItem>> fetchSurahAyahs(int surahNumber) async {
+  Future< List< LiveAyahItem > > fetchSurahAyahs(int surahNumber) async {
     final trSurahTitle = (surahNumber >= 1 && surahNumber <= 114)
-        ? "${_trSurahNames[surahNumber - 1]} Sûresi"
+        ? "${OfflineSacredRepository.kSurahNamesTr[surahNumber - 1]} Sûresi"
         : "Sûre $surahNumber";
 
     try {
@@ -149,33 +110,39 @@ class DatabaseService {
       );
 
       if (cached.isNotEmpty) {
-        final rawList = jsonDecode(cached.first['payload'] as String) as List<dynamic>;
+        final rawList =
+            jsonDecode(cached.first['payload'] as String) as List< dynamic >;
         if (rawList.isNotEmpty) {
           return rawList
-              .map((e) => LiveAyahItem.fromJson(Map<String, dynamic>.from(e as Map)))
+              .map((e) => LiveAyahItem.fromJson(
+                  Map< String, dynamic >.from(e as Map)))
               .toList();
         }
       }
 
-      // Birincil API: AlQuran Cloud
       final url =
           'https://api.alquran.cloud/v1/surah/$surahNumber/editions/quran-uthmani,tr.diyanet,ar.alafasy';
-      final res = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 7));
+      final res =
+          await http.get(Uri.parse(url)).timeout(const Duration(seconds: 8));
 
       if (res.statusCode == 200) {
-        final decoded = jsonDecode(res.body) as Map<String, dynamic>;
-        final editions = decoded['data'] as List<dynamic>;
-        final arabicAyahs = (editions[0] as Map<String, dynamic>)['ayahs'] as List<dynamic>;
-        final turkishAyahs = (editions[1] as Map<String, dynamic>)['ayahs'] as List<dynamic>;
-        final audioAyahs = (editions[2] as Map<String, dynamic>)['ayahs'] as List<dynamic>;
+        final decoded = jsonDecode(res.body) as Map< String, dynamic >;
+        final editions = decoded['data'] as List< dynamic >;
+        final arabicAyahs =
+            (editions[0] as Map< String, dynamic >)['ayahs'] as List< dynamic >;
+        final turkishAyahs =
+            (editions[1] as Map< String, dynamic >)['ayahs'] as List< dynamic >;
+        final audioAyahs =
+            (editions[2] as Map< String, dynamic >)['ayahs'] as List< dynamic >;
 
-        final List<LiveAyahItem> result = [];
+        final List< LiveAyahItem > result = [];
         for (int i = 0; i < arabicAyahs.length; i++) {
-          final ar = arabicAyahs[i] as Map<String, dynamic>;
-          final tr = turkishAyahs[i] as Map<String, dynamic>;
-          final au = audioAyahs[i] as Map<String, dynamic>;
+          final ar = arabicAyahs[i] as Map< String, dynamic >;
+          final tr = turkishAyahs[i] as Map< String, dynamic >;
+          final au = audioAyahs[i] as Map< String, dynamic >;
           final globalNum = int.tryParse(ar['number'].toString()) ?? (i + 1);
-          final inSurah = int.tryParse(ar['numberInSurah'].toString()) ?? (i + 1);
+          final inSurah =
+              int.tryParse(ar['numberInSurah'].toString()) ?? (i + 1);
 
           result.add(
             LiveAyahItem(
@@ -206,46 +173,10 @@ class DatabaseService {
       }
     } catch (_) {}
 
-    // Yedek API: Quran.com V4
-    try {
-      final backupUrl =
-          'https://api.quran.com/api/v4/quran/verses/uthmani?chapter_number=$surahNumber';
-      final trBackupUrl =
-          'https://api.quran.com/api/v4/quran/translations/77?chapter_number=$surahNumber';
-      final resAr = await http.get(Uri.parse(backupUrl)).timeout(const Duration(seconds: 6));
-      final resTr = await http.get(Uri.parse(trBackupUrl)).timeout(const Duration(seconds: 6));
-
-      if (resAr.statusCode == 200 && resTr.statusCode == 200) {
-        final versesAr = (jsonDecode(resAr.body)['verses'] as List<dynamic>);
-        final versesTr = (jsonDecode(resTr.body)['translations'] as List<dynamic>);
-        final List<LiveAyahItem> backupResult = [];
-        for (int i = 0; i < versesAr.length; i++) {
-          final arObj = versesAr[i] as Map<String, dynamic>;
-          final trObj = (i < versesTr.length) ? (versesTr[i] as Map<String, dynamic>) : {};
-          final id = int.tryParse(arObj['id'].toString()) ?? (i + 1);
-          backupResult.add(
-            LiveAyahItem(
-              globalNumber: id,
-              numberInSurah: i + 1,
-              surahNumber: surahNumber,
-              surahName: trSurahTitle,
-              arabicText: (arObj['text_uthmani'] ?? '').toString(),
-              turkishText: (trObj['text'] ?? '')
-                  .toString()
-                  .replaceAll(RegExp(r'<[^>]*>'), ''),
-              audioUrl: 'https://cdn.islamic.network/quran/audio/128/ar.alafasy/$id.mp3',
-            ),
-          );
-        }
-        if (backupResult.isNotEmpty) return backupResult;
-      }
-    } catch (_) {}
-
-    // %100 Garantili Gömülü Veri
     return OfflineSacredRepository.getFallbackSurah(surahNumber, trSurahTitle);
   }
 
-  static const List<BibleBookMeta> kAllBibleBooks = [
+  static const List< BibleBookMeta > kAllBibleBooks = [
     BibleBookMeta(bookId: 1, testament: 'torah', nameTurkish: 'Yaratılış (Tekvin)', sefariaName: 'Genesis', totalChapters: 50),
     BibleBookMeta(bookId: 2, testament: 'torah', nameTurkish: 'Mısır\'dan Çıkış (Şemot)', sefariaName: 'Exodus', totalChapters: 40),
     BibleBookMeta(bookId: 3, testament: 'torah', nameTurkish: 'Levililer (Vayikra)', sefariaName: 'Leviticus', totalChapters: 27),
@@ -314,8 +245,8 @@ class DatabaseService {
     BibleBookMeta(bookId: 66, testament: 'gospel', nameTurkish: 'Vahiy (Esinleme)', sefariaName: 'Revelation', totalChapters: 22),
   ];
 
-  // %100 AÇILMA GARANTİLİ TEVRAT & İNCİL GETİRİCİ (Asla Boş Dönmez)
-  Future<List<BibleVerseItem>> fetchBibleChapter(BibleBookMeta book, int chapter) async {
+  Future< List< BibleVerseItem > > fetchBibleChapter(
+      BibleBookMeta book, int chapter) async {
     try {
       final db = await database;
       final key = '${book.bookId}_$chapter';
@@ -326,10 +257,11 @@ class DatabaseService {
       );
 
       if (cached.isNotEmpty) {
-        final list = jsonDecode(cached.first['payload'] as String) as List<dynamic>;
+        final list =
+            jsonDecode(cached.first['payload'] as String) as List< dynamic >;
         if (list.isNotEmpty) {
           return list.map((e) {
-            final m = Map<String, dynamic>.from(e as Map);
+            final m = Map< String, dynamic >.from(e as Map);
             return BibleVerseItem(
               bookId: int.tryParse(m['bookId'].toString()) ?? book.bookId,
               bookName: m['bookName'].toString(),
@@ -342,37 +274,22 @@ class DatabaseService {
         }
       }
 
-      final trUrl = 'https://bolls.life/get-text/TCL02/${book.bookId}/$chapter/';
-      final trRes = await http.get(Uri.parse(trUrl)).timeout(const Duration(seconds: 6));
-
-      List<String> hebrewList = [];
-      if (book.testament == 'torah') {
-        try {
-          final sefRes = await http
-              .get(Uri.parse('https://www.sefaria.org/api/texts/${book.sefariaName}.$chapter?context=0'))
-              .timeout(const Duration(seconds: 4));
-          if (sefRes.statusCode == 200) {
-            final sefMap = jsonDecode(sefRes.body) as Map<String, dynamic>;
-            final he = sefMap['he'];
-            if (he is List) {
-              hebrewList = he.map((e) => e.toString().replaceAll(RegExp(r'<[^>]*>'), '')).toList();
-            }
-          }
-        } catch (_) {}
-      }
+      final trUrl =
+          'https://bolls.life/get-text/TCL02/${book.bookId}/$chapter/';
+      final trRes =
+          await http.get(Uri.parse(trUrl)).timeout(const Duration(seconds: 7));
 
       if (trRes.statusCode == 200) {
         final decodedBody = jsonDecode(trRes.body);
         if (decodedBody is List && decodedBody.isNotEmpty) {
-          final List<BibleVerseItem> verses = [];
+          final List< BibleVerseItem > verses = [];
           for (int i = 0; i < decodedBody.length; i++) {
-            final item = Map<String, dynamic>.from(decodedBody[i] as Map);
+            final item = Map< String, dynamic >.from(decodedBody[i] as Map);
             final vNum = int.tryParse(item['verse'].toString()) ?? (i + 1);
             final cleanTr = (item['text'] ?? '')
                 .toString()
-                .replaceAll(RegExp(r'<[^>]*>'), '')
+                .replaceAll(RegExp('<' '[^>]*>'), '')
                 .trim();
-            final orig = (i < hebrewList.length) ? hebrewList[i] : '';
 
             if (cleanTr.isNotEmpty) {
               verses.add(
@@ -381,7 +298,7 @@ class DatabaseService {
                   bookName: book.nameTurkish,
                   chapter: chapter,
                   verse: vNum,
-                  originalScript: orig,
+                  originalScript: '',
                   turkishText: cleanTr,
                 ),
               );
@@ -414,115 +331,17 @@ class DatabaseService {
       }
     } catch (_) {}
 
-    // API yanıt vermezse veya zaman aşımına uğrarsa anında gömülü metni döndür
     return OfflineSacredRepository.getFallbackBibleChapter(book, chapter);
   }
 
-  Future<List<EsmaItem>> fetchEsmaulHusna() async {
-    try {
-      final res = await http
-          .get(Uri.parse('https://api.aladhan.com/v1/asmaAlHusna'))
-          .timeout(const Duration(seconds: 6));
-      if (res.statusCode == 200) {
-        final map = jsonDecode(res.body) as Map<String, dynamic>;
-        final data = map['data'] as List<dynamic>;
-        return data.map((e) {
-          final item = e as Map<String, dynamic>;
-          final num = int.tryParse(item['number'].toString()) ?? 1;
-          final en = (item['en'] as Map<String, dynamic>)['meaning'].toString();
-          return EsmaItem(
-            number: num,
-            arabic: item['name'].toString(),
-            transliteration: item['transliteration'].toString(),
-            turkishMeaning: _turkishEsmaMeaning(num, en),
-            ebcedValue: _ebcedForEsma(num),
-          );
-        }).toList();
-      }
-    } catch (_) {}
-
-    return List.generate(99, (index) {
-      final n = index + 1;
-      return EsmaItem(
-        number: n,
-        arabic: "ٱللَّهُ",
-        transliteration: "Esma #$n",
-        turkishMeaning: _turkishEsmaMeaning(n, "İlahi Kemâl Sıfatı"),
-        ebcedValue: _ebcedForEsma(n),
-      );
-    });
+  Future< List< EsmaulHusnaItem > > fetchEsmaulHusna() async {
+    return OfflineSacredRepository.kAll99EsmaulHusna;
   }
 
-  static int _ebcedForEsma(int n) {
-    const ebceds = [
-      66, 298, 258, 90, 170, 131, 136, 145, 94, 206,
-      213, 684, 336, 1281, 306, 14, 731, 489, 150, 903,
-      72, 148, 576, 66, 770, 180, 75, 104, 129, 302,
-      88, 1020, 68, 1286, 526, 110, 232, 86, 80, 40,
-      73, 412, 270, 55, 137, 48, 300, 57, 319, 109,
-      108, 110, 116, 500, 156, 550, 49, 58, 69, 68,
-      61, 490, 18, 14, 65, 162, 46, 134, 305, 184,
-      188, 84, 37, 801, 1000, 106, 551, 47, 74, 80,
-      156, 287, 1098, 256, 1100, 209, 114, 1100, 1060, 100,
-      1019, 91, 256, 298, 62, 180, 707, 514, 298
-    ];
-    return ebceds[(n - 1) % ebceds.length];
-  }
+  static const List< HourlyShortVerse > kHourlyShortVerses =
+      OfflineSacredRepository.kHourlyShortVerses;
 
-  static String _turkishEsmaMeaning(int n, String fallback) {
-    const tr = {
-      1: "Kendisinden başka ilah bulunmayan tek ve mutlak Yaratıcı.",
-      2: "Dünyada bütün mahlûkata merhamet eden ve rızık veren (Er-Rahmân).",
-      3: "Ahirette müminlere sonsuz ikramda bulunan (Er-Rahîm).",
-      4: "Kâinatın tek ve gerçek sahibi, mutlak hükümdarı (El-Melik).",
-      5: "Her noksanlıktan münezzeh ve tertemiz olan (El-Kuddûs).",
-      6: "Kullarını selâmete ve içsel sükûnete çıkaran (Es-Selâm).",
-      19: "Her türlü müşkülü çözen ve hayır kapılarını açan (El-Fettâh).",
-      20: "Gizli ve açık her şeyi hakkıyla bilen (El-Alîm).",
-      63: "Ezeli ve ebedi diri, hayatın mutlak kaynağı (El-Hayy).",
-      64: "Gökleri, yeri ve tüm varlığı her an ayakta tutan (El-Kayyûm).",
-      93: "Alemleri ve kalpleri nurlandıran (En-Nûr).",
-    };
-    return tr[n] ?? "İlahi tecelli ve esma sırrı ($fallback)";
-  }
-
-  static const List<HourlyShortVerse> kHourlyShortVerses = [
-    HourlyShortVerse(index: 0, ayahKey: "93:3", arabicShort: "مَا وَدَّعَكَ رَبُّكَ", turkishShort: "Rabbin seni terk etmedi.", reference: "Duhâ, 3"),
-    HourlyShortVerse(index: 1, ayahKey: "94:6", arabicShort: "إِنَّ مَعَ ٱلْعُسْرِ يُسْرًا", turkishShort: "Zorlukla beraber kolaylık vardır.", reference: "İnşirah, 6"),
-    HourlyShortVerse(index: 2, ayahKey: "2:153", arabicShort: "إِنَّ ٱللَّهَ مَعَ ٱلصَّـٰبِرِينَ", turkishShort: "Allah sabredenlerle beraberdir.", reference: "Bakara, 153"),
-    HourlyShortVerse(index: 3, ayahKey: "9:40", arabicShort: "لَا تَحْزَنْ إِنَّ ٱللَّهَ مَعَنَا", turkishShort: "Üzülme! Allah bizimledir.", reference: "Tevbe, 40"),
-    HourlyShortVerse(index: 4, ayahKey: "2:152", arabicShort: "فَٱذْكُرُونِىٓ أَذْكُرْكُمْ", turkishShort: "Beni anın ki sizi anayım.", reference: "Bakara, 152"),
-    HourlyShortVerse(index: 5, ayahKey: "67:1", arabicShort: "وَهُوَ عَلَىٰ كُلِّ شَىْءٍ قَدِيرٌ", turkishShort: "O, her şeye kadirdir.", reference: "Mülk, 1"),
-    HourlyShortVerse(index: 6, ayahKey: "3:185", arabicShort: "كُلُّ نَفْسٍ ذَآئِقَةُ ٱلْمَوْتِ", turkishShort: "Her nefis ölümü tadacaktır.", reference: "Âl-i İmrân, 185"),
-    HourlyShortVerse(index: 7, ayahKey: "13:28", arabicShort: "أَلَا بِذِكْرِ ٱللَّهِ تَطْمَئِنُّ ٱلْقُلُوبُ", turkishShort: "Kalpler Allah'ı anmakla huzur bulur.", reference: "Ra'd, 28"),
-    HourlyShortVerse(index: 8, ayahKey: "50:16", arabicShort: "وَنَحْنُ أَقْرَبُ إِلَيْهِ مِنْ حَبْلِ ٱلْوَرِيدِ", turkishShort: "Biz ona şah damarından yakınız.", reference: "Kâf, 16"),
-    HourlyShortVerse(index: 9, ayahKey: "39:53", arabicShort: "لَا تَقْنَطُوا۟ مِن رَّحْمَةِ ٱللَّهِ", turkishShort: "Allah'ın rahmetinden ümit kesmeyin.", reference: "Zümer, 53"),
-    HourlyShortVerse(index: 10, ayahKey: "93:5", arabicShort: "وَلَسَوْفَ يُعْطِيكَ رَبُّكَ فَتَرْضَىٰ", turkishShort: "Rabbin sana verecek ve razı olacaksın.", reference: "Duhâ, 5"),
-    HourlyShortVerse(index: 11, ayahKey: "3:173", arabicShort: "حَسْبُنَا ٱللَّهُ وَنِعْمَ ٱلْوَكِيلُ", turkishShort: "Allah bize yeter, O ne güzel vekildir.", reference: "Âl-i İmrân, 173"),
-    HourlyShortVerse(index: 12, ayahKey: "40:60", arabicShort: "ٱدْعُونِىٓ أَسْتَجِبْ لَكُمْ", turkishShort: "Bana dua edin, size icabet edeyim.", reference: "Mü'min, 60"),
-    HourlyShortVerse(index: 13, ayahKey: "2:186", arabicShort: "فَإِنِّى قَرِيبٌ", turkishShort: "Şüphesiz Ben çok yakınım.", reference: "Bakara, 186"),
-    HourlyShortVerse(index: 14, ayahKey: "14:7", arabicShort: "لَئِن شَكَرْتُمْ لَأَزِيدَنَّكُمْ", turkishShort: "Şükrederseniz nimetimi artırırım.", reference: "İbrâhîm, 7"),
-    HourlyShortVerse(index: 15, ayahKey: "65:3", arabicShort: "وَمَن يَتَوَكَّلْ عَلَى ٱللَّهِ فَهُوَ حَسْبُهُۥ", turkishShort: "Allah'a tevekkül edene O yeter.", reference: "Talâk, 3"),
-    HourlyShortVerse(index: 16, ayahKey: "1:5", arabicShort: "إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ", turkishShort: "Yalnız Sana kulluk ederiz.", reference: "Fâtiha, 5"),
-    HourlyShortVerse(index: 17, ayahKey: "57:4", arabicShort: "وَهُوَ مَعَكُمْ أَيْنَ مَا كُنتُمْ", turkishShort: "Nerede olursanız olun O sizinledir.", reference: "Hadîd, 4"),
-    HourlyShortVerse(index: 18, ayahKey: "2:286", arabicShort: "لَا يُكَلِّفُ ٱللَّهُ نَفْسًا إِلَّا وُسْعَهَا", turkishShort: "Allah kimseye gücünden fazlasını yüklemez.", reference: "Bakara, 286"),
-    HourlyShortVerse(index: 19, ayahKey: "94:8", arabicShort: "وَإِلَىٰ رَبِّكَ فَٱرْغَب", turkishShort: "Yalnızca Rabbine yönel.", reference: "İnşirah, 8"),
-    HourlyShortVerse(index: 20, ayahKey: "36:82", arabicShort: "أَن يَقُولَ لَهُۥ كُن فَيَكُونُ", turkishShort: "O'nun emri 'Ol!' demektir, hemen olur.", reference: "Yâsîn, 82"),
-    HourlyShortVerse(index: 21, ayahKey: "24:35", arabicShort: "ٱللَّهُ نُورُ ٱلسَّمَـٰوَٰتِ وَٱلْأَرْضِ", turkishShort: "Allah göklerin ve yerin nûrudur.", reference: "Nûr, 35"),
-    HourlyShortVerse(index: 22, ayahKey: "51:50", arabicShort: "فَفِرُّوٓا۟ إِلَى ٱللَّهِ", turkishShort: "Öyleyse Allah'a koşun!", reference: "Zâriyât, 50"),
-    HourlyShortVerse(index: 23, ayahKey: "3:159", arabicShort: "إِنَّ ٱللَّهَ يُحِبُّ ٱلْمُتَوَكِّلِينَ", turkishShort: "Allah tevekkül edenleri sever.", reference: "Âl-i İmrân, 159"),
-    HourlyShortVerse(index: 24, ayahKey: "2:195", arabicShort: "إِنَّ ٱللَّهَ يُحِبُّ ٱلْمُحْسِنِينَ", turkishShort: "Allah iyilik edenleri sever.", reference: "Bakara, 195"),
-    HourlyShortVerse(index: 25, ayahKey: "99:7", arabicShort: "فَمَن يَعْمَلْ مِثْقَالَ ذَرَّةٍ خَيْرًا يَرَهُۥ", turkishShort: "Zerre kadar iyilik yapan karşılığını görür.", reference: "Zilzâl, 7"),
-    HourlyShortVerse(index: 26, ayahKey: "112:1", arabicShort: "قُلْ هُوَ ٱللَّهُ أَحَدٌ", turkishShort: "De ki: O Allah tektir.", reference: "İhlâs, 1"),
-    HourlyShortVerse(index: 27, ayahKey: "112:2", arabicShort: "ٱللَّهُ ٱلصَّمَدُ", turkishShort: "Her şey O'na muhtaçtır.", reference: "İhlâs, 2"),
-    HourlyShortVerse(index: 28, ayahKey: "65:7", arabicShort: "سَيَجْعَلُ ٱللَّهُ بَعْدَ عُسْرٍ يُسْرًا", turkishShort: "Allah zorluğun ardından kolaylık verir.", reference: "Talâk, 7"),
-    HourlyShortVerse(index: 29, ayahKey: "19:64", arabicShort: "وَمَا كَانَ رَبُّكَ نَسِيًّا", turkishShort: "Senin Rabbin asla unutkan değildir.", reference: "Meryem, 64"),
-    HourlyShortVerse(index: 30, ayahKey: "7:156", arabicShort: "وَرَحْمَتِى وَسِعَتْ كُلَّ شَىْءٍ", turkishShort: "Rahmetim her şeyi kuşatmıştır.", reference: "A'râf, 156"),
-    HourlyShortVerse(index: 31, ayahKey: "42:19", arabicShort: "ٱللَّهُ لَطِيفٌۢ بِعِبَادِهِۦ", turkishShort: "Allah kullarına çok lütufkârdır.", reference: "Şûrâ, 19"),
-    HourlyShortVerse(index: 32, ayahKey: "2:156", arabicShort: "إِنَّا لِلَّهِ وَإِنَّآ إِلَيْهِ رَٰجِعُونَ", turkishShort: "Biz Allah'a aidiz ve O'na döneceğiz.", reference: "Bakara, 156"),
-  ];
-
-  static const List<CrossReferenceTopic> kCrossReferenceTopics = [
+  static const List< CrossReferenceTopic > kCrossReferenceTopics = [
     CrossReferenceTopic(
       id: "cr_1",
       topic: "1. Yoktan Yaratılış ve İlahi 'Ol' Emri",
@@ -538,16 +357,16 @@ class DatabaseService {
       id: "cr_2",
       topic: "2. Hz. İbrahim'in İmanı ve Teslimiyeti",
       summary: "Tevhid babası Hz. İbrahim'in koşulsuz imanı ve tek Yaratıcıya yönelişi.",
-      quranKey: "Bakara 2:131 & En'âm 6:79",
+      quranKey: "Bakara 2:131",
       torahRef: "Yaratılış (Tekvin) 15:6",
-      gospelRef: "Romalılar 4:3 & Yakup 2:23",
+      gospelRef: "Yakup 2:23",
       quranText: "Rabbi ona 'İslam ol (teslim ol)' dediğinde, 'Âlemlerin Rabbine teslim oldum' dedi.",
       torahText: "Avram RAB'be iman etti ve RAB bunu ona doğruluk saydı.",
       gospelText: "İbrahim Tanrı'ya iman etti ve kendisine Tanrı'nın dostu dendi.",
     ),
     CrossReferenceTopic(
       id: "cr_3",
-      topic: "3. Hz. Musa ve Mukaddes Vadi (Yanan Çalı)",
+      topic: "3. Hz. Musa ve Mukaddes Vadi",
       summary: "Sina/Tuvâ vadisinde ilahi hitap ve çarıkların çıkarılması emri.",
       quranKey: "Tâhâ 20:11-12",
       torahRef: "Mısır'dan Çıkış 3:4-5",
@@ -633,15 +452,70 @@ class DatabaseService {
       torahText: "RAB Eyüp'ün önceki durumunu yeniden sağladı ve ona iki katını verdi.",
       gospelText: "Eyüp'ün sabrını duydunuz ve Rab'bin ne kadar şefkatli olduğunu gördünüz.",
     ),
+    CrossReferenceTopic(
+      id: "cr_11",
+      topic: "11. Hz. Yunus'un Karanlıklar İçindeki Duası",
+      summary: "Balık karnında yükselen tövbe ve ilahi kurtuluş.",
+      quranKey: "Enbiyâ 21:87-88",
+      torahRef: "Yunus 2:1-2",
+      gospelRef: "Matta 12:40",
+      quranText: "Karanlıklar içinde: 'Senden başka hiçbir ilah yoktur, Seni tenzih ederim, ben zalimlerden oldum' diye seslendi.",
+      torahText: "Yunus balığın karnından Tanrısı RAB'be dua etti: Sıkıntı içindeyken RAB'be yakardım, bana yanıt verdi.",
+      gospelText: "Yunus nasıl üç gün üç gece koca balığın karnında kaldıysa...",
+    ),
+    CrossReferenceTopic(
+      id: "cr_12",
+      topic: "12. Sadaka ve Gizli İyilik",
+      summary: "Gösterişten uzak, yalnızca Allah rızası için yapılan gizli yardımlaşma.",
+      quranKey: "Bakara 2:271",
+      torahRef: "Özdeyişler 19:17",
+      gospelRef: "Matta 6:3-4",
+      quranText: "Sadakaları gizleyerek fakirlere verirseniz bu sizin için daha hayırlıdır.",
+      torahText: "Yoksula acıyan RAB'be ödünç vermiş olur ve iyiliğinin karşılığını RAB öder.",
+      gospelText: "Sadaka verirken sol elin sağ elinin ne yaptığını bilmesin; gizlice gören Baban seni ödüllendirecektir.",
+    ),
+    CrossReferenceTopic(
+      id: "cr_13",
+      topic: "13. Kalp Temizliği ve Merhamet",
+      summary: "Şekilsel dindarlığın ötesinde arınmış bir kalp (Kalb-i Selim) ve merhamet.",
+      quranKey: "Şuarâ 26:88-89",
+      torahRef: "Mezmurlar 51:10",
+      gospelRef: "Matta 5:7-8",
+      quranText: "O gün ne mal fayda verir ne de evlat; ancak Allah'a arınmış bir kalple (kalb-i selîm) gelenler kurtulur.",
+      torahText: "Ey Tanrı, içimde temiz bir yürek yarat, içimdeki ruhu yenile.",
+      gospelText: "Ne mutlu merhametli olanlara! Ne mutlu yüreği temiz olanlara!",
+    ),
+    CrossReferenceTopic(
+      id: "cr_14",
+      topic: "14. Dua ve İlahi Yakınlık",
+      summary: "Yaratıcının dua eden kuluna aracısız yakınlığı ve icabeti.",
+      quranKey: "Bakara 2:186",
+      torahRef: "Mezmurlar 145:18",
+      gospelRef: "Matta 7:7",
+      quranText: "Kullarım Beni sana soracak olurlarsa, bilsinler ki Ben çok yakınım; bana dua edince dua edenin duasına icabet ederim.",
+      torahText: "RAB kendisine yakaran herkese, içtenlikle yakaran herkese yakındır.",
+      gospelText: "Dileyin, size verilecek; arayın, bulacaksınız; kapıyı çalın, size açılacaktır.",
+    ),
+    CrossReferenceTopic(
+      id: "cr_15",
+      topic: "15. Hesap Günü ve Mutlak Adalet",
+      summary: "Zerre kadar iyiliğin ve kötülüğün karşılıksız kalmayacağı büyük hesap günü.",
+      quranKey: "Zilzâl 99:7-8",
+      torahRef: "Vaiz 12:14",
+      gospelRef: "Vahiy 20:12",
+      quranText: "Kim zerre ağırlığınca bir hayır işlerse onu görür; kim de zerre ağırlığınca şer işlerse onu görür.",
+      torahText: "Çünkü Tanrı, iyi olsun kötü olsun, her gizli işi yargıya getirecektir.",
+      gospelText: "Kitaplar açıldı ve herkes kendi yaptıklarına göre yargılandı.",
+    ),
   ];
 
-  Future<List<TasbihRecord>> getTasbihRecords() async {
+  Future< List< TasbihRecord > > getTasbihRecords() async {
     final db = await database;
     final rows = await db.query('tasbih_records');
     return rows.map(TasbihRecord.fromMap).toList();
   }
 
-  Future<void> updateTasbihCount(int id, int newCount) async {
+  Future< void > updateTasbihCount(int id, int newCount) async {
     final db = await database;
     await db.update(
       'tasbih_records',
@@ -651,7 +525,7 @@ class DatabaseService {
     );
   }
 
-  Future<void> addCustomTasbih(String title, String arabic, int target) async {
+  Future< void > addCustomTasbih(String title, String arabic, int target) async {
     final db = await database;
     await db.insert('tasbih_records', {
       'title': title,

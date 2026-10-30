@@ -25,37 +25,45 @@ class RegionalOffer {
 class PremiumState {
   final bool isPremium;
   final bool isSandboxUnlocked;
+  final bool isLoading;
   final String activePlanId;
+  final String? statusMessage;
   final RegionalOffer regionalOffer;
 
   const PremiumState({
     required this.isPremium,
     required this.isSandboxUnlocked,
+    this.isLoading = false,
     required this.activePlanId,
+    this.statusMessage,
     required this.regionalOffer,
   });
 
   PremiumState copyWith({
     bool? isPremium,
     bool? isSandboxUnlocked,
+    bool? isLoading,
     String? activePlanId,
+    String? statusMessage,
     RegionalOffer? regionalOffer,
   }) {
     return PremiumState(
       isPremium: isPremium ?? this.isPremium,
       isSandboxUnlocked: isSandboxUnlocked ?? this.isSandboxUnlocked,
+      isLoading: isLoading ?? this.isLoading,
       activePlanId: activePlanId ?? this.activePlanId,
+      statusMessage: statusMessage,
       regionalOffer: regionalOffer ?? this.regionalOffer,
     );
   }
 }
 
 final premiumServiceProvider =
-    StateNotifierProvider<PremiumServiceNotifier, PremiumState>((ref) {
+    StateNotifierProvider< PremiumServiceNotifier, PremiumState >((ref) {
   return PremiumServiceNotifier();
 });
 
-class PremiumServiceNotifier extends StateNotifier<PremiumState> {
+class PremiumServiceNotifier extends StateNotifier< PremiumState > {
   PremiumServiceNotifier()
       : super(
           PremiumState(
@@ -68,32 +76,59 @@ class PremiumServiceNotifier extends StateNotifier<PremiumState> {
     _loadPersistedState();
   }
 
-  Future<void> _loadPersistedState() async {
+  Future< void > _loadPersistedState() async {
     final prefs = await SharedPreferences.getInstance();
-    final sandbox = prefs.getBool('sandbox_unlock_premium') ?? false;
+    final unlocked = prefs.getBool('sandbox_unlock_premium') ?? false;
     final plan = prefs.getString('active_plan_id') ?? 'free';
     state = state.copyWith(
-      isSandboxUnlocked: sandbox,
+      isSandboxUnlocked: unlocked,
       activePlanId: plan,
-      isPremium: sandbox || plan != 'free',
+      isPremium: unlocked || plan != 'free',
     );
   }
 
-  Future<void> toggleSandboxMode(bool enabled) async {
+  Future< void > toggleSandboxMode(bool enabled) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('sandbox_unlock_premium', enabled);
     state = state.copyWith(
       isSandboxUnlocked: enabled,
       isPremium: enabled || state.activePlanId != 'free',
+      statusMessage: enabled
+          ? "Huzur Özel içerik erişimi etkinleştirildi."
+          : "Standart erişim moduna geçildi.",
     );
   }
 
-  Future<void> activatePlan(String planId) async {
+  Future< void > activatePlan(String planId) async {
+    state = state.copyWith(isLoading: true, statusMessage: null);
+    await Future.delayed(const Duration(milliseconds: 300));
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('active_plan_id', planId);
     state = state.copyWith(
+      isLoading: false,
       activePlanId: planId,
       isPremium: planId != 'free' || state.isSandboxUnlocked,
+      statusMessage: "Seçilen Huzur Özel planı etkinleştirildi.",
+    );
+  }
+
+  Future< void > restorePurchases() async {
+    state = state.copyWith(
+      isLoading: true,
+      statusMessage: "Satın alımlar kontrol ediliyor...",
+    );
+    await Future.delayed(const Duration(milliseconds: 400));
+    final prefs = await SharedPreferences.getInstance();
+    final savedPlan = prefs.getString('active_plan_id') ?? 'free';
+    final unlocked = prefs.getBool('sandbox_unlock_premium') ?? false;
+    final hasAccess = unlocked || savedPlan != 'free';
+
+    state = state.copyWith(
+      isLoading: false,
+      isPremium: hasAccess,
+      statusMessage: hasAccess
+          ? "Mevcut Huzur Özel erişiminiz geri yüklendi."
+          : "Bu cihazda kayıtlı aktif bir abonelik bulunamadı.",
     );
   }
 
@@ -106,32 +141,34 @@ class PremiumServiceNotifier extends StateNotifier<PremiumState> {
     if (lower.contains('tr')) {
       return const RegionalOffer(
         localeCode: 'tr_TR',
-        regionLabel: 'Türkiye (PPP Yerel Fiyatlandırma)',
+        regionLabel: 'Türkiye',
         currencySymbol: 'TL',
         monthlyPrice: '49,99 TL / ay',
         annualPrice: '299,99 TL / yıl',
-        annualMonthlyEquivalent: 'Aylık sadece 24,99 TL (%50 Avantaj)',
-        lifetimePrice: '749,99 TL (Tek Seferlik)',
+        annualMonthlyEquivalent: 'Aylık 24,99 TL (%50 Avantaj)',
+        lifetimePrice: '749,99 TL',
       );
-    } else if (lower.contains('de') || lower.contains('fr') || lower.contains('nl')) {
+    } else if (lower.contains('de') ||
+        lower.contains('fr') ||
+        lower.contains('nl')) {
       return const RegionalOffer(
         localeCode: 'de_DE',
-        regionLabel: 'Avrupa Bölgesi (EUR)',
+        regionLabel: 'Avrupa (EUR)',
         currencySymbol: 'EUR',
         monthlyPrice: '4.99 EUR / ay',
         annualPrice: '29.99 EUR / yıl',
         annualMonthlyEquivalent: 'Aylık 2.49 EUR (%50 Avantaj)',
-        lifetimePrice: '79.99 EUR (Tek Seferlik)',
+        lifetimePrice: '79.99 EUR',
       );
     } else {
       return const RegionalOffer(
         localeCode: 'en_US',
-        regionLabel: 'Küresel Standart (USD)',
+        regionLabel: 'Uluslararası (USD)',
         currencySymbol: 'USD',
         monthlyPrice: '4.99 USD / ay',
         annualPrice: '29.99 USD / yıl',
         annualMonthlyEquivalent: 'Aylık 2.49 USD (%50 Avantaj)',
-        lifetimePrice: '79.99 USD (Tek Seferlik)',
+        lifetimePrice: '79.99 USD',
       );
     }
   }

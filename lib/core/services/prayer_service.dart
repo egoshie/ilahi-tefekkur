@@ -14,7 +14,7 @@ class CityPreset {
   const CityPreset(this.name, this.country, this.latitude, this.longitude);
 }
 
-const List<CityPreset> kGlobalCityPresets = [
+const List< CityPreset > kGlobalCityPresets = [
   CityPreset("Kadirli, Osmaniye", "Türkiye", 37.3739, 36.0961),
   CityPreset("Osmaniye", "Türkiye", 37.0742, 36.2478),
   CityPreset("İstanbul", "Türkiye", 41.0082, 28.9784),
@@ -69,11 +69,11 @@ class PrayerEngineState {
 }
 
 final prayerEngineProvider =
-    StateNotifierProvider<PrayerEngineNotifier, PrayerEngineState>((ref) {
+    StateNotifierProvider< PrayerEngineNotifier, PrayerEngineState >((ref) {
   return PrayerEngineNotifier();
 });
 
-class PrayerEngineNotifier extends StateNotifier<PrayerEngineState> {
+class PrayerEngineNotifier extends StateNotifier< PrayerEngineState > {
   Timer? _ticker;
   CityPreset _city = kGlobalCityPresets.first;
   CalculationMethodChoice _method = CalculationMethodChoice.diyanet;
@@ -141,7 +141,7 @@ class PrayerEngineNotifier extends StateNotifier<PrayerEngineState> {
     return "Türkiye";
   }
 
-  Future<void> detectGpsLocation() async {
+  Future< void > detectGpsLocation() async {
     try {
       LocationPermission perm = await Geolocator.checkPermission();
       if (perm == LocationPermission.denied) {

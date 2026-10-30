@@ -1,79 +1,94 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:timezone/data/latest.dart' as tzdata;
+import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import '../models/v42_models.dart';
 import 'offline_sacred_repository.dart';
 
 class NotificationAndWidgetService {
+  static final NotificationAndWidgetService instance =
+      NotificationAndWidgetService._();
   NotificationAndWidgetService._();
-  static final NotificationAndWidgetService instance = NotificationAndWidgetService._();
 
-  static const MethodChannel _mediaChannel = MethodChannel('com.ilahi.tefekkur/media');
-  final FlutterLocalNotificationsPlugin _notifications = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin _notifications =
+      FlutterLocalNotificationsPlugin();
+  static const MethodChannel _nativeChannel =
+      MethodChannel('com.ilahi.tefekkur/native_bridge');
+
   bool _initialized = false;
 
-  Future<void> initialize() async {
+  Future< void > initialize() async {
     if (_initialized) return;
-    tzdata.initializeTimeZones();
+    tz.initializeTimeZones();
+
+    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const iosSettings = DarwinInitializationSettings(
+      requestAlertPermission: false,
+      requestBadgePermission: false,
+      requestSoundPermission: false,
+    );
     const settings = InitializationSettings(
-      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
-      iOS: DarwinInitializationSettings(),
+      android: androidSettings,
+      iOS: iosSettings,
     );
     await _notifications.initialize(settings);
-    final android = _notifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-    await android?.requestNotificationsPermission();
-    final ios = _notifications.resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>();
-    await ios?.requestPermissions(alert: true, badge: true, sound: true);
+
+    try {
+      await _notifications.cancel(777);
+    } catch (_) {}
+
     _initialized = true;
   }
 
-  V42HourlyVerse getActiveHourlyVerse({int offset = 0}) {
-    final items = OfflineSacredRepository.hourlyVerses;
-    final index = (DateTime.now().hour + offset) % items.length;
-    final item = items[index < 0 ? index + items.length : index];
-    return item;
+  HourlyShortVerse getActiveHourlyVerse({int offset = 0}) {
+    final now = DateTime.now();
+    final hourSeed =
+        now.year * 8760 + now.month * 720 + now.day * 24 + now.hour + offset;
+    const list = OfflineSacredRepository.kHourlyShortVerses;
+    return list[hourSeed.abs() % list.length];
   }
 
-  Future<void> syncHourlyVerseToWidget({int manualOffset = 0}) async {
-    final verse = getActiveHourlyVerse(offset: manualOffset);
+  Future< void > syncHourlyVerseToWidget({int manualOffset = 0}) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('hourly_verse_offset', manualOffset);
-    await prefs.setString('huzur_widget_arabic', verse.arabicShort);
-    await prefs.setString('huzur_widget_turkish', verse.turkishShort);
-    await prefs.setString('huzur_widget_reference', verse.reference);
+
+    final verse = getActiveHourlyVerse(offset: manualOffset);
+
     try {
-      await _mediaChannel.invokeMethod<void>('updateWidgetVerse', <String, String>{
+      await _nativeChannel.invokeMethod('enableHourlyLockScreenVerse', {
         'arabic': verse.arabicShort,
-        'turkish': verse.turkishShort,
+        'translation': verse.turkishShort,
         'reference': verse.reference,
+        'badge': 'Günün İlhamı',
       });
-    } on MissingPluginException catch (e) {
-      debugPrint('Widget köprüsü bulunamadı: $e');
-    } on PlatformException catch (e) {
-      debugPrint('Widget güncellenemedi: ${e.message}');
-    }
+    } catch (_) {}
   }
 
-  Future<void> updateWidgetVerse({required String arabic, required String turkish, required String reference}) async {
+  Future< bool > pinCustomVerseToWidget({
+    required String arabic,
+    required String turkish,
+    required String reference,
+  }) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('huzur_widget_arabic', arabic);
-    await prefs.setString('huzur_widget_turkish', turkish);
-    await prefs.setString('huzur_widget_reference', reference);
+    await prefs.setString('v42_pinned_widget_arabic', arabic);
+    await prefs.setString('v42_pinned_widget_turkish', turkish);
+    await prefs.setString('v42_pinned_widget_reference', reference);
+
     try {
-      await _mediaChannel.invokeMethod<void>('updateWidgetVerse', <String, String>{
-        'arabic': arabic, 'turkish': turkish, 'reference': reference,
+      await _nativeChannel.invokeMethod('enableHourlyLockScreenVerse', {
+        'arabic': arabic,
+        'translation': turkish,
+        'reference': reference,
+        'badge': 'Seçili Ayet',
       });
-    } on PlatformException catch (e) {
-      debugPrint('Widget güncelleme isteği başarısız: ${e.message}');
-    } on MissingPluginException catch (e) {
-      debugPrint('Widget native köprüsü yüklenmemiş: $e');
+      return true;
+    } catch (_) {
+      return false;
     }
   }
 
-  Future<void> scheduleExactPrayerAlarm({
+  Future< void > scheduleExactPrayerAlarm({
     required int id,
     required String prayerName,
     required DateTime prayerTime,
@@ -81,28 +96,37 @@ class NotificationAndWidgetService {
     required int preReminderMinutes,
   }) async {
     await initialize();
+
+    final iosPlugin = _notifications
+        .resolvePlatformSpecificImplementation< IOSFlutterLocalNotificationsPlugin >();
+    await iosPlugin?.requestPermissions(alert: true, badge: true, sound: true);
+
     final now = DateTime.now();
-    var remindAt = prayerTime.subtract(Duration(minutes: preReminderMinutes));
-    if (!remindAt.isAfter(now)) remindAt = prayerTime;
-    if (!remindAt.isAfter(now)) return;
-    final localDate = tz.TZDateTime.from(remindAt, tz.local);
-    const details = NotificationDetails(
-      android: AndroidNotificationDetails(
-        'huzur_prayer_reminders', 'Namaz Vakti Hatırlatmaları',
-        channelDescription: 'Namaz vakti ve öncesi hatırlatmaları',
-        importance: Importance.max, priority: Priority.high,
-      ),
-      iOS: DarwinNotificationDetails(presentAlert: true, presentBadge: true, presentSound: true),
-    );
-    await _notifications.zonedSchedule(
-      id, '$prayerName vakti yaklaşıyor',
-      maqam.isEmpty ? 'Huzur vakit hatırlatıcısı' : '$maqam eşliğinde hazırlanabilirsiniz.',
-      localDate, details,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-      matchDateTimeComponents: null,
-    );
+    if (prayerTime.isAfter(now)) {
+      final scheduledDate = tz.TZDateTime.from(prayerTime, tz.local);
+      const androidDetails = AndroidNotificationDetails(
+        'huzur_adhan_channel',
+        'Huzur Ezan Vakitleri',
+        importance: Importance.max,
+        priority: Priority.max,
+        visibility: NotificationVisibility.public,
+      );
+      const iosDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentSound: true,
+        interruptionLevel: InterruptionLevel.timeSensitive,
+      );
+
+      await _notifications.zonedSchedule(
+        id,
+        '$prayerName Vakti',
+        '$maqam ile vakit çağrısı • Huzurla eda ediniz.',
+        scheduledDate,
+        const NotificationDetails(android: androidDetails, iOS: iosDetails),
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+      );
+    }
   }
 }
-
-typedef NotificationService = NotificationAndWidgetService;

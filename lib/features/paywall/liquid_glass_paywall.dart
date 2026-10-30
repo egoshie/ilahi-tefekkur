@@ -7,7 +7,7 @@ import '../../core/theme/liquid_glass_theme.dart';
 class LiquidGlassPaywallSheet extends ConsumerStatefulWidget {
   const LiquidGlassPaywallSheet({super.key});
 
-  static Future<void> show(BuildContext context) {
+  static Future< void > show(BuildContext context) {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -17,12 +17,12 @@ class LiquidGlassPaywallSheet extends ConsumerStatefulWidget {
   }
 
   @override
-  ConsumerState<LiquidGlassPaywallSheet> createState() =>
+  ConsumerState< LiquidGlassPaywallSheet > createState() =>
       _LiquidGlassPaywallSheetState();
 }
 
 class _LiquidGlassPaywallSheetState
-    extends ConsumerState<LiquidGlassPaywallSheet> {
+    extends ConsumerState< LiquidGlassPaywallSheet > {
   String _selectedTier = 'annual';
 
   @override
@@ -32,14 +32,14 @@ class _LiquidGlassPaywallSheetState
     final offer = premium.regionalOffer;
 
     return DraggableScrollableSheet(
-      initialChildSize: 0.86,
+      initialChildSize: 0.88,
       minChildSize: 0.65,
       maxChildSize: 0.95,
       builder: (context, scrollController) {
         return GlassContainer(
           borderRadius: 34,
           enableBlur: true,
-          blurSigma: 28,
+          blurSigma: 26,
           goldAccentBorder: true,
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
           child: ListView(
@@ -103,7 +103,7 @@ class _LiquidGlassPaywallSheetState
                           ),
                           SizedBox(height: 2),
                           Text(
-                            "Tevrat, İncil, Karşılaştırma ve Ses Mikserini anında açar.",
+                            "Tevrat, İncil ve Karşılaştırmalı Kıssalar erişimini bu cihazda açar.",
                             style: TextStyle(fontSize: 11, color: Colors.white70),
                           ),
                         ],
@@ -121,18 +121,16 @@ class _LiquidGlassPaywallSheetState
 
               _buildFeatureRow("Tevrat (39 Kitap) ve İncil (27 Kitap) Tam Külliyat"),
               _buildFeatureRow("15 Büyük Kıssada 3'lü Karşılaştırmalı İnceleme"),
-              _buildFeatureRow("Tefekkür Ambiyans Sesleri (432Hz Ney, Yağmur, Harem)"),
-              _buildFeatureRow("Kilit Ekranı Geniş Ayet Kartı & Hikaye Paylaşım Stüdyosu"),
+              _buildFeatureRow("Çevrimdışı Meditatif Ambiyans Ses Mikseri"),
+              _buildFeatureRow("Kilit Ekranı Geniş Ayet Kartı & Hikâye Stüdyosu"),
               _buildFeatureRow("Sınırsız Zikirmatik & 99 Esmaül Hüsna Rehberi"),
-              _buildFeatureRow("Favori ayetler, kaldığın yer ve 30 cüz hatim takibi"),
-              _buildFeatureRow("Favori ayetler, kaldığın yer ve 30 cüz hatim takibi"),
               const SizedBox(height: 18),
 
               _buildPlanCard(
                 id: 'monthly',
                 title: "Aylık Plan",
                 price: offer.monthlyPrice,
-                subtitle: "İstediğin zaman tek dokunuşla iptal et",
+                subtitle: "Esnek aylık katkı",
                 badge: null,
               ),
               const SizedBox(height: 12),
@@ -148,42 +146,79 @@ class _LiquidGlassPaywallSheetState
                 id: 'lifetime',
                 title: "Ömür Boyu Tam Erişim",
                 price: offer.lifetimePrice,
-                subtitle: "Tek seferlik katkı • Sonsuza dek sınırsız kullanım",
+                subtitle: "Tek seferlik katkı • Süresiz kullanım",
                 badge: "SINIRSIZ ERİŞİM",
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
+
+              if (premium.statusMessage != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Text(
+                    premium.statusMessage!,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF64FFDA),
+                    ),
+                  ),
+                ),
 
               GlassContainer(
                 goldAccentBorder: true,
                 borderRadius: 22,
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.symmetric(vertical: 15),
                 onTap: () async {
                   await notifier.activatePlan(_selectedTier);
-                  if (context.mounted) {
-                    Navigator.of(context).pop();
-                  }
                 },
                 child: Center(
-                  child: Row(
-                    mainAxisSize: MainAxisAlignment.min,
-                    children: [
-                      const BespokeVectorIcon(
-                        type: BespokeIconType.checkBadge,
-                        color: Color(0xFF64FFDA),
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        premium.isPremium
-                            ? "Huzur Özel Etkin"
-                            : "Seçili Planı Başlat",
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFFFFE082),
+                  child: premium.isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Color(0xFFFFE082),
+                          ),
+                        )
+                      : Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const BespokeVectorIcon(
+                              type: BespokeIconType.checkBadge,
+                              color: Color(0xFF64FFDA),
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              premium.isPremium
+                                  ? "Huzur Özel Etkin"
+                                  : "Seçili Planı Etkinleştir",
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFFFFE082),
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              GlassContainer(
+                borderRadius: 16,
+                padding: const EdgeInsets.symmetric(vertical: 11),
+                onTap: () => notifier.restorePurchases(),
+                child: const Center(
+                  child: Text(
+                    "Satın Alımları Geri Yükle (Restore Purchases)",
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white70,
+                    ),
                   ),
                 ),
               ),

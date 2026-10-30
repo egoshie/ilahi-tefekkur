@@ -1,34 +1,43 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../core/models/app_models.dart';
+import '../../core/models/v42_models.dart';
 import '../../core/services/notification_service.dart';
 import '../../core/services/prayer_service.dart';
+import '../../core/services/user_progress_service.dart';
 import '../../core/theme/glass_container.dart';
 import '../../core/theme/liquid_glass_theme.dart';
 import '../../core/theme/story_share_sheet.dart';
+import '../esma/esmaul_husna_sheet.dart';
 import '../paywall/liquid_glass_paywall.dart';
 
 class MainDashboardScreen extends ConsumerStatefulWidget {
-  const MainDashboardScreen({super.key});
+  final ValueChanged< int >? onSwitchTab;
+
+  const MainDashboardScreen({
+    super.key,
+    this.onSwitchTab,
+  });
 
   @override
-  ConsumerState<MainDashboardScreen> createState() =>
+  ConsumerState< MainDashboardScreen > createState() =>
       _MainDashboardScreenState();
 }
 
-class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
+class _MainDashboardScreenState extends ConsumerState< MainDashboardScreen >
     with SingleTickerProviderStateMixin {
   late final AnimationController _waveController;
   Timer? _hourlyChecker;
   int _manualVerseOffset = 0;
   bool _alarmConfirmed = false;
+  bool _widgetPinnedFeedback = false;
 
-  static const Map<int, String> _trHijriMonths = {
+  static const Map< int, String > _trHijriMonths = {
     1: "Muharrem",
     2: "Safer",
     3: "Rebîülevvel",
@@ -61,7 +70,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
     });
   }
 
-  Future<void> _initSilentWidgetSync() async {
+  Future< void > _initSilentWidgetSync() async {
     final prefs = await SharedPreferences.getInstance();
     final offset = prefs.getInt('hourly_verse_offset') ?? 0;
     if (mounted) {
@@ -90,6 +99,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
   Widget build(BuildContext context) {
     final prayerState = ref.watch(prayerEngineProvider);
     final prayerNotifier = ref.read(prayerEngineProvider.notifier);
+    final progress = ref.watch(userProgressProvider);
     final palette = LiquidGlassPalette.forPeriod(prayerState.activePeriod);
     final timeFmt = DateFormat('HH:mm');
     final hijri = HijriCalendar.now();
@@ -100,9 +110,9 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
 
     return ListView(
       physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(18, 14, 18, 148),
+      padding: const EdgeInsets.fromLTRB(18, 14, 18, 138),
       children: [
-        // 1. Üst Başlık: Huzur & Temiz Şehir + Türkçe Hicri Tarih
+        // 1. Üst Başlık: Huzur & Şehir / Hicri Tarih + Huzur Özel
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -163,7 +173,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
         ),
         const SizedBox(height: 16),
 
-        // 2. Kesilmeyen Saf Kristal Dairesel Vakit Küresi ve 6 Vakit Çizelgesi
+        // 2. Kristal Dairesel Vakit Sayacı ve 6 Vakit Çizelgesi
         GlassContainer(
           borderRadius: 32,
           emeraldGlow: true,
@@ -172,8 +182,8 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
             children: [
               RepaintBoundary(
                 child: SizedBox(
-                  width: 198,
-                  height: 198,
+                  width: 196,
+                  height: 196,
                   child: AnimatedBuilder(
                     animation: _waveController,
                     builder: (context, _) {
@@ -207,7 +217,9 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                               const SizedBox(height: 6),
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 3),
+                                  horizontal: 10,
+                                  vertical: 3,
+                                ),
                                 decoration: BoxDecoration(
                                   color: Colors.white.withOpacity(0.08),
                                   borderRadius: BorderRadius.circular(10),
@@ -254,9 +266,16 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                 children: [
                   Expanded(
                     child: GlassContainer(
-                      padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 10),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 11,
+                        horizontal: 10,
+                      ),
                       borderRadius: 16,
-                      onTap: () => _showLocationAndMethodModal(context, prayerState, prayerNotifier),
+                      onTap: () => _showLocationAndMethodModal(
+                        context,
+                        prayerState,
+                        prayerNotifier,
+                      ),
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -270,7 +289,10 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                             child: Text(
                               "Şehir & Makam",
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                         ],
@@ -281,7 +303,10 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                   Expanded(
                     child: GlassContainer(
                       goldAccentBorder: true,
-                      padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 10),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 11,
+                        horizontal: 10,
+                      ),
                       borderRadius: 16,
                       onTap: () async {
                         await NotificationAndWidgetService.instance
@@ -310,7 +335,9 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                           const SizedBox(width: 6),
                           Flexible(
                             child: Text(
-                              _alarmConfirmed ? "Hatırlatıcı Açık" : "Vakit Hatırlatıcı",
+                              _alarmConfirmed
+                                  ? "Hatırlatıcı Açık"
+                                  : "Vakit Hatırlatıcı",
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 fontSize: 12,
@@ -330,7 +357,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
         ),
         const SizedBox(height: 16),
 
-        // 3. Saatlik Huzur Ayeti Kartı (Tıklanınca veya Hikaye Paylaş'a basınca X-Story Açılır)
+        // 3. Günün İlhamı / Saatlik Huzur Ayeti Kartı
         GlassContainer(
           borderRadius: 30,
           goldAccentBorder: true,
@@ -348,7 +375,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
-                    "Saatlik Huzur Ayeti",
+                    "Günün İlhamı",
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
@@ -397,7 +424,10 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                       borderRadius: 15,
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       onTap: () async {
-                        setState(() => _manualVerseOffset++);
+                        setState(() {
+                          _manualVerseOffset++;
+                          _widgetPinnedFeedback = false;
+                        });
                         await NotificationAndWidgetService.instance
                             .syncHourlyVerseToWidget(
                           manualOffset: _manualVerseOffset,
@@ -411,11 +441,11 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                             color: Color(0xFF64FFDA),
                             size: 15,
                           ),
-                          SizedBox(width: 7),
+                          SizedBox(width: 6),
                           Text(
                             "Yenile",
                             style: TextStyle(
-                              fontSize: 12.5,
+                              fontSize: 12,
                               fontWeight: FontWeight.w600,
                               color: Color(0xFF64FFDA),
                             ),
@@ -424,7 +454,51 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                       ),
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: GlassContainer(
+                      borderRadius: 15,
+                      emeraldGlow: _widgetPinnedFeedback,
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      onTap: () async {
+                        HapticFeedback.mediumImpact();
+                        await NotificationAndWidgetService.instance
+                            .pinCustomVerseToWidget(
+                          arabic: activeShortVerse.arabicShort,
+                          turkish: activeShortVerse.turkishShort,
+                          reference: activeShortVerse.reference,
+                        );
+                        if (mounted) {
+                          setState(() => _widgetPinnedFeedback = true);
+                        }
+                      },
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          BespokeVectorIcon(
+                            type: _widgetPinnedFeedback
+                                ? BespokeIconType.checkBadge
+                                : BespokeIconType.widgetSpark,
+                            color: const Color(0xFF64FFDA),
+                            size: 14,
+                          ),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              _widgetPinnedFeedback ? "Widget'ta" : "Widget Yap",
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF64FFDA),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: GlassContainer(
                       borderRadius: 15,
@@ -444,13 +518,16 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                             color: Color(0xFFFFE082),
                             size: 15,
                           ),
-                          SizedBox(width: 7),
-                          Text(
-                            "Hikayede Paylaş",
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFFFFE082),
+                          SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              "Paylaş",
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFFFFE082),
+                              ),
                             ),
                           ),
                         ],
@@ -464,7 +541,122 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
         ),
         const SizedBox(height: 16),
 
-        // 4. Vakit Atmosferi (Sağdan veya alttan asla kesilmeyen yatay kaydırmalı bar)
+        // 4. Hızlı Erişim Alanı: 99 Esmaül Hüsna & Kutsal Metinler / Kaldığım Yer
+        Row(
+          children: [
+            Expanded(
+              child: GlassContainer(
+                borderRadius: 22,
+                emeraldGlow: true,
+                padding: const EdgeInsets.all(16),
+                onTap: () => EsmaulHusnaSheet.show(
+                  context,
+                  onNavigateToTasbih: () => widget.onSwitchTab?.call(2),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        BespokeVectorIcon(
+                          type: BespokeIconType.esmaGrid,
+                          color: Color(0xFF64FFDA),
+                          size: 20,
+                        ),
+                        Text(
+                          "99 İsim",
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF64FFDA),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      "Esmaül Hüsna",
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      "Anlamlar ve zikir hedefleri",
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        color: Colors.white.withOpacity(0.68),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: GlassContainer(
+                borderRadius: 22,
+                goldAccentBorder: true,
+                padding: const EdgeInsets.all(16),
+                onTap: () => widget.onSwitchTab?.call(1),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const BespokeVectorIcon(
+                          type: BespokeIconType.sacredScroll,
+                          color: Color(0xFFFFE082),
+                          size: 20,
+                        ),
+                        Text(
+                          progress.lastRead != null
+                              ? "Kaldığım Yer"
+                              : "${progress.favorites.length} Favori",
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFFFFE082),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      progress.lastRead != null
+                          ? progress.lastRead!.title
+                          : "İlahi Kitaplar",
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      progress.lastRead != null
+                          ? "Ayet / Bölüm ${progress.lastRead!.chapterOrAyah}"
+                          : "Kur'ân, Tevrat ve İncil",
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        color: Colors.white.withOpacity(0.68),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        // 5. Vakit Atmosferi (Taşma yapmayan yatay kaydırmalı bar)
         GlassContainer(
           borderRadius: 24,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -487,10 +679,14 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                 child: Row(
                   children: [
                     _buildAtmosphereChip("Otomatik", null, prayerNotifier),
-                    _buildAtmosphereChip("Seher", PrayerPeriod.imsak, prayerNotifier),
-                    _buildAtmosphereChip("Gün Ortası", PrayerPeriod.ogle, prayerNotifier),
-                    _buildAtmosphereChip("Grup", PrayerPeriod.aksam, prayerNotifier),
-                    _buildAtmosphereChip("Gece", PrayerPeriod.yatsi, prayerNotifier),
+                    _buildAtmosphereChip(
+                        "Seher", PrayerPeriod.imsak, prayerNotifier),
+                    _buildAtmosphereChip(
+                        "Gün Ortası", PrayerPeriod.ogle, prayerNotifier),
+                    _buildAtmosphereChip(
+                        "Grup", PrayerPeriod.aksam, prayerNotifier),
+                    _buildAtmosphereChip(
+                        "Gece", PrayerPeriod.yatsi, prayerNotifier),
                   ],
                 ),
               ),
@@ -502,7 +698,11 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
   }
 
   Widget _buildTimePillar(
-      String label, String time, bool isActive, LiquidGlassPalette palette) {
+    String label,
+    String time,
+    bool isActive,
+    LiquidGlassPalette palette,
+  ) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
@@ -554,7 +754,10 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.07),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.white.withOpacity(0.18), width: 0.8),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.18),
+              width: 0.8,
+            ),
           ),
           child: Text(
             label,
@@ -614,7 +817,10 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                 ),
               ),
               const SizedBox(height: 14),
-              const Text("Şehirler:", style: TextStyle(fontSize: 12, color: Colors.white70)),
+              const Text(
+                "Şehirler:",
+                style: TextStyle(fontSize: 12, color: Colors.white70),
+              ),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -626,19 +832,28 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                       Navigator.pop(context);
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 11,
+                        vertical: 7,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.08),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: Colors.white12),
                       ),
-                      child: Text(city.name, style: const TextStyle(fontSize: 12)),
+                      child: Text(
+                        city.name,
+                        style: const TextStyle(fontSize: 12),
+                      ),
                     ),
                   );
                 }).toList(),
               ),
               const SizedBox(height: 14),
-              const Text("Ezan Makamı:", style: TextStyle(fontSize: 12, color: Colors.white70)),
+              const Text(
+                "Ezan Makamı:",
+                style: TextStyle(fontSize: 12, color: Colors.white70),
+              ),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -656,7 +871,10 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                       Navigator.pop(context);
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 11,
+                        vertical: 7,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.08),
                         borderRadius: BorderRadius.circular(12),
@@ -714,8 +932,10 @@ class _CrystalOrbGaugePainter extends CustomPainter {
 
     for (double x = 0; x <= size.width; x += 6) {
       final y = waterHeight +
-          math.sin((x / size.width * 2 * math.pi) + (wavePhase * 2 * math.pi)) * 5.5 +
-          math.cos((x / size.width * 4 * math.pi) - (wavePhase * 2 * math.pi)) * 2.5;
+          math.sin((x / size.width * 2 * math.pi) + (wavePhase * 2 * math.pi)) *
+              5.5 +
+          math.cos((x / size.width * 4 * math.pi) - (wavePhase * 2 * math.pi)) *
+              2.5;
       wavePath.lineTo(x, y);
     }
     wavePath.lineTo(size.width, size.height);

@@ -1,5 +1,5 @@
 name: ilahi_tefekkur
-description: "Huzur V4.2 - İlahi Metinler, Tefekkür ve İbadet Ekosistemi"
+description: "Huzur - Ilahi Metinler, Tefekkur ve Ibadet Ekosistemi V4.2"
 publish_to: 'none'
 version: 4.2.0+6
 
@@ -11,7 +11,6 @@ dependencies:
     sdk: flutter
   flutter_riverpod: ^2.5.1
   http: ^1.2.2
-  flutter_svg: ^2.0.10+1
   sqflite: ^2.3.3+1
   path: ^1.9.0
   path_provider: ^2.1.4
@@ -36,5 +35,8 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/audio/
-    - assets/data/
+    - assets/data/seed_data.json
+    - assets/audio/ney.wav
+    - assets/audio/rain.wav
+    - assets/audio/water.wav
+    - assets/audio/wind.wav

@@ -1,101 +1,305 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/models/v42_models.dart';
 import '../../core/services/offline_sacred_repository.dart';
 import '../../core/services/tasbih_session_service.dart';
 import '../../core/theme/glass_container.dart';
+import '../../core/theme/liquid_glass_theme.dart';
 import '../../core/theme/story_share_sheet.dart';
 
-class EsmaulHusnaSheet extends StatefulWidget {
-  const EsmaulHusnaSheet({super.key});
-  static Future<void> show(BuildContext context) async {
-    await showModalBottomSheet<void>(
-      context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
-      builder: (_) => const EsmaulHusnaSheet(),
+class EsmaulHusnaSheet extends ConsumerStatefulWidget {
+  final VoidCallback? onNavigateToTasbih;
+
+  const EsmaulHusnaSheet({
+    super.key,
+    this.onNavigateToTasbih,
+  });
+
+  static Future< void > show(
+    BuildContext context, {
+    VoidCallback? onNavigateToTasbih,
+  }) {
+    return showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => EsmaulHusnaSheet(
+        onNavigateToTasbih: onNavigateToTasbih,
+      ),
     );
   }
+
   @override
-  State<EsmaulHusnaSheet> createState() => _EsmaulHusnaSheetState();
+  ConsumerState< EsmaulHusnaSheet > createState() => _EsmaulHusnaSheetState();
 }
 
-class _EsmaulHusnaSheetState extends State<EsmaulHusnaSheet> {
-  final TextEditingController _search = TextEditingController();
-  String _query = '';
-  String _normalize(String value) {
-    const map = {'İ':'i','I':'i','ı':'i','Ş':'s','ş':'s','Ğ':'g','ğ':'g','Ü':'u','ü':'u','Ö':'o','ö':'o','Ç':'c','ç':'c','Â':'a','â':'a','Î':'i','î':'i','Û':'u','û':'u','Ê':'e','ê':'e'};
-    var result = value;
-    map.forEach((from, to) { result = result.replaceAll(from, to); });
-    return result.toLowerCase();
+class _EsmaulHusnaSheetState extends ConsumerState< EsmaulHusnaSheet > {
+  String _searchQuery = '';
+
+  List< EsmaulHusnaItem > get _filteredEsmas {
+    const List< EsmaulHusnaItem > all =
+        OfflineSacredRepository.kAll99EsmaulHusna;
+    if (_searchQuery.trim().isEmpty) return all;
+
+    return all.where((item) {
+      final combined =
+          '${item.id} ${item.transliteration} ${item.turkishMeaning} ${item.reference}';
+      return TurkishSearchNormalizer.matches(combined, _searchQuery);
+    }).toList();
   }
-
-  List<EsmaItem> get _items => OfflineSacredRepository.esma.cast<dynamic>().where((dynamic item) {
-    final value = _normalize((item as dynamic).transliteration + ' ' + (item as dynamic).meaning + ' ' + (item as dynamic).arabic);
-    return value.contains(_normalize(_query));
-  }).toList(growable: false);
-
-  @override
-  void dispose() { _search.dispose(); super.dispose(); }
 
   @override
   Widget build(BuildContext context) {
+    final list = _filteredEsmas;
+
     return DraggableScrollableSheet(
-      initialChildSize: 0.88, minChildSize: 0.62, maxChildSize: 0.96,
-      builder: (context, controller) => GlassContainer(
-        borderRadius: 30, enableBlur: true, padding: const EdgeInsets.fromLTRB(18, 16, 18, 24),
-        child: Column(children: [
-          Container(width: 44,height: 4,decoration: BoxDecoration(color: Colors.white30,borderRadius: BorderRadius.circular(8))),
-          const SizedBox(height: 14),
-          const Text('99 Esmaül Hüsna',style: TextStyle(fontSize:19,fontWeight:FontWeight.w800,color:Color(0xFFFFE082))),
-          const SizedBox(height: 5),
-          const Text('İsimleri ara, anlamını oku ve zikir hedefini Zikirmatik’e aktar.',textAlign:TextAlign.center,style:TextStyle(fontSize:11,color:Colors.white70)),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _search,
-            onChanged: (value) => setState(() => _query = value.trim()),
-            decoration: InputDecoration(
-              hintText: 'Esma adı veya anlamı ara...', prefixIcon: const Icon(Icons.search,color:Color(0xFF64FFDA)),
-              suffixIcon: _query.isEmpty ? null : IconButton(icon:const Icon(Icons.close),onPressed:(){_search.clear();setState(()=>_query='');}),
-              filled:true,fillColor:Colors.white.withOpacity(0.07),border:OutlineInputBorder(borderRadius:BorderRadius.circular(16),borderSide:BorderSide.none),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Expanded(child: ListView.builder(
-            controller: controller, itemCount: _items.length,
-            itemBuilder: (context,index) {
-              final item = _items[index];
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: GlassContainer(
-                  borderRadius: 18, padding: const EdgeInsets.all(14),
-                  child: Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-                    Row(crossAxisAlignment:CrossAxisAlignment.start,children:[
-                      Container(width:28,height:28,alignment:Alignment.center,decoration:BoxDecoration(color:const Color(0xFF64FFDA).withOpacity(0.12),borderRadius:BorderRadius.circular(9)),child:Text(item.number.toString(),style:const TextStyle(fontSize:11,color:Color(0xFF64FFDA),fontWeight:FontWeight.bold))),
-                      const SizedBox(width:9),
-                      Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-                        Text(item.transliteration,style:const TextStyle(fontWeight:FontWeight.bold,fontSize:14,color:Color(0xFFFFE082))),
-                        const SizedBox(height:3),Text((item as dynamic).meaning,style:const TextStyle(fontSize:12,color:Colors.white70)),
-                      ])),
-                      Text((item as dynamic).arabic,textDirection:TextDirection.rtl,style:const TextStyle(fontSize:23,color:Color(0xFFFFF8E1))),
-                    ]),
-                    const SizedBox(height:9),
-                    Row(children:[
-                      Expanded(child:Text('Ebced değeri: ' + item.abjadValue.toString(),style:const TextStyle(fontSize:11,color:Color(0xFF64FFDA)))),
-                      TextButton.icon(onPressed:() async {
-                        await TasbihSession.instance.setTarget(value:item.abjadValue,name:item.transliteration);
-                        if (context.mounted) {
-                          final messenger = ScaffoldMessenger.of(context);
-                          Navigator.of(context).pop();
-                          messenger.showSnackBar(SnackBar(content:Text(item.transliteration + ' hedefi Zikirmatik’e aktarıldı.')));
-                        }
-                      },icon:const Icon(Icons.toll,size:15),label:const Text('Zikirmatik hedefi')),
-                      IconButton(tooltip:'Hikâye kartı paylaş',onPressed:()=>HuzurStoryShareSheet.show(context,arabic:(item as dynamic).arabic,turkish:item.transliteration + ' — ' + (item as dynamic).meaning,reference:'Esmaül Hüsna • ' + item.number.toString(),category:'99 Esmaül Hüsna'),icon:const Icon(Icons.ios_share,color:Color(0xFFFFE082),size:19)),
-                    ]),
-                  ]),
+      initialChildSize: 0.90,
+      minChildSize: 0.65,
+      maxChildSize: 0.95,
+      builder: (context, scrollController) {
+        return GlassContainer(
+          borderRadius: 34,
+          enableBlur: true,
+          blurSigma: 24,
+          emeraldGlow: true,
+          padding: const EdgeInsets.fromLTRB(18, 14, 18, 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 44,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.30),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
                 ),
-              );
-            },
-          )),
-        ]),
-      ),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "99 Esmaül Hüsna",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        "İlahi isimler, anlamları, kaynakları ve zikir hedefleri",
+                        style: TextStyle(fontSize: 12, color: Colors.white70),
+                      ),
+                    ],
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF64FFDA).withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      "${list.length} İsim",
+                      style: const TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF64FFDA),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              // Türkçe Karakter Duyarsız Arama Çubuğu
+              GlassContainer(
+                borderRadius: 16,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+                child: Row(
+                  children: [
+                    const BespokeVectorIcon(
+                      type: BespokeIconType.searchLens,
+                      color: Color(0xFF64FFDA),
+                      size: 18,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: TextField(
+                        style: const TextStyle(fontSize: 13.5),
+                        decoration: const InputDecoration(
+                          hintText: "Esma adı, anlamı veya numara ara...",
+                          hintStyle: TextStyle(
+                            color: Colors.white54,
+                            fontSize: 12.5,
+                          ),
+                          border: InputBorder.none,
+                        ),
+                        onChanged: (val) => setState(() => _searchQuery = val),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              Expanded(
+                child: ListView.separated(
+                  controller: scrollController,
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: list.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  itemBuilder: (context, index) {
+                    final esma = list[index];
+                    return GlassContainer(
+                      borderRadius: 22,
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  "${esma.id}. ${esma.transliteration}",
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFFFFE082),
+                                  ),
+                                ),
+                              ),
+                              Text(
+                                esma.arabic,
+                                style: const TextStyle(
+                                  fontSize: 25,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF64FFDA),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            esma.turkishMeaning,
+                            style: const TextStyle(
+                              fontSize: 13.5,
+                              height: 1.42,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "Zikir Adedi: ${esma.dhikrCount} • Kaynak: ${esma.reference}",
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white.withOpacity(0.65),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: GlassContainer(
+                                  borderRadius: 14,
+                                  emeraldGlow: true,
+                                  padding: const EdgeInsets.symmetric(vertical: 9),
+                                  onTap: () async {
+                                    HapticFeedback.mediumImpact();
+                                    await ref
+                                        .read(tasbihSessionProvider.notifier)
+                                        .startEsmaTarget(esma);
+                                    if (context.mounted) {
+                                      Navigator.of(context).pop();
+                                    }
+                                    widget.onNavigateToTasbih?.call();
+                                  },
+                                  child: const Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      BespokeVectorIcon(
+                                        type: BespokeIconType.tasbihRipple,
+                                        color: Color(0xFF64FFDA),
+                                        size: 15,
+                                      ),
+                                      SizedBox(width: 6),
+                                      Text(
+                                        "Zikre Başla",
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
+                                          color: Color(0xFF64FFDA),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: GlassContainer(
+                                  borderRadius: 14,
+                                  goldAccentBorder: true,
+                                  padding: const EdgeInsets.symmetric(vertical: 9),
+                                  onTap: () {
+                                    HuzurStoryShareSheet.show(
+                                      context,
+                                      arabic: esma.arabic,
+                                      turkish:
+                                          "${esma.transliteration}: ${esma.turkishMeaning}",
+                                      reference:
+                                          "Esmaül Hüsna #${esma.id} (${esma.reference})",
+                                      category: "Esmaül Hüsna",
+                                    );
+                                  },
+                                  child: const Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      BespokeVectorIcon(
+                                        type: BespokeIconType.instagramStory,
+                                        color: Color(0xFFFFE082),
+                                        size: 15,
+                                      ),
+                                      SizedBox(width: 6),
+                                      Text(
+                                        "Hikâye Paylaş",
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
+                                          color: Color(0xFFFFE082),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
