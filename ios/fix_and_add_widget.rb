@@ -39,7 +39,7 @@ widget_target.source_build_phase.add_file_reference(swift_file_ref, true)
 
 widget_target.build_configurations.each do |config|
   config.build_settings['PRODUCT_NAME'] = 'HuzurWidgetExtension'
-  config.build_settings['PRODUCT_BUNDLE_IDENTIFIER'] = 'com.ilahi.tefekkur.HuzurWidget'
+  config.build_settings['PRODUCT_BUNDLE_IDENTIFIER'] = 'com.ilahi.tefekkur.ilahiTefekkur.HuzurWidget'
   config.build_settings['INFOPLIST_FILE'] = 'HuzurWidget/Info.plist'
   config.build_settings['GENERATE_INFOPLIST_FILE'] = 'NO'
   config.build_settings['SWIFT_VERSION'] = '5.0'
