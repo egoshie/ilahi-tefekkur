@@ -1,0 +1,291 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/services/pricing_and_premium_service.dart';
+import '../../core/theme/glass_container.dart';
+import '../../core/theme/liquid_glass_theme.dart';
+
+class LiquidGlassPaywallSheet extends ConsumerStatefulWidget {
+  const LiquidGlassPaywallSheet({super.key});
+
+  static Future<void> show(BuildContext context) {
+    return showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const LiquidGlassPaywallSheet(),
+    );
+  }
+
+  @override
+  ConsumerState<LiquidGlassPaywallSheet> createState() =>
+      _LiquidGlassPaywallSheetState();
+}
+
+class _LiquidGlassPaywallSheetState
+    extends ConsumerState<LiquidGlassPaywallSheet> {
+  String _selectedTier = 'annual';
+
+  @override
+  Widget build(BuildContext context) {
+    final premium = ref.watch(premiumServiceProvider);
+    final notifier = ref.read(premiumServiceProvider.notifier);
+    final offer = premium.regionalOffer;
+
+    return DraggableScrollableSheet(
+      initialChildSize: 0.86,
+      minChildSize: 0.65,
+      maxChildSize: 0.95,
+      builder: (context, scrollController) {
+        return GlassContainer(
+          borderRadius: 34,
+          enableBlur: true,
+          blurSigma: 28,
+          goldAccentBorder: true,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          child: ListView(
+            controller: scrollController,
+            physics: const BouncingScrollPhysics(),
+            children: [
+              Center(
+                child: Container(
+                  width: 48,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.35),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const BespokeVectorIcon(
+                    type: BespokeIconType.crownGem,
+                    color: Color(0xFFFFE082),
+                    size: 26,
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    "Huzur Özel",
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFFFFE082),
+                        ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                "Reklamsız İbadet • Tüm İlahi Kitaplar • Karşılaştırmalı Tefekkür",
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.white70, fontSize: 13),
+              ),
+              const SizedBox(height: 16),
+
+              GlassContainer(
+                emeraldGlow: premium.isSandboxUnlocked,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                borderRadius: 18,
+                child: Row(
+                  children: [
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Tüm Huzur Özel Kitaplarını Etkinleştir",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              color: Color(0xFF64FFDA),
+                            ),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            "Tevrat, İncil, Karşılaştırma ve Ses Mikserini anında açar.",
+                            style: TextStyle(fontSize: 11, color: Colors.white70),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Switch(
+                      value: premium.isSandboxUnlocked,
+                      activeColor: const Color(0xFF64FFDA),
+                      onChanged: (val) => notifier.toggleSandboxMode(val),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              _buildFeatureRow("Tevrat (39 Kitap) ve İncil (27 Kitap) Tam Külliyat"),
+              _buildFeatureRow("15 Büyük Kıssada 3'lü Karşılaştırmalı İnceleme"),
+              _buildFeatureRow("Tefekkür Ambiyans Sesleri (432Hz Ney, Yağmur, Harem)"),
+              _buildFeatureRow("Kilit Ekranı Geniş Ayet Kartı & Hikaye Paylaşım Stüdyosu"),
+              _buildFeatureRow("Sınırsız Zikirmatik & 99 Esmaül Hüsna Rehberi"),
+              _buildFeatureRow("Favori ayetler, kaldığın yer ve 30 cüz hatim takibi"),
+              _buildFeatureRow("Favori ayetler, kaldığın yer ve 30 cüz hatim takibi"),
+              const SizedBox(height: 18),
+
+              _buildPlanCard(
+                id: 'monthly',
+                title: "Aylık Plan",
+                price: offer.monthlyPrice,
+                subtitle: "İstediğin zaman tek dokunuşla iptal et",
+                badge: null,
+              ),
+              const SizedBox(height: 12),
+              _buildPlanCard(
+                id: 'annual',
+                title: "Yıllık Huzur Planı",
+                price: offer.annualPrice,
+                subtitle: "${offer.annualMonthlyEquivalent} • 7 Gün Ücretsiz Deneme",
+                badge: "EN ÇOK TERCİH EDİLEN",
+              ),
+              const SizedBox(height: 12),
+              _buildPlanCard(
+                id: 'lifetime',
+                title: "Ömür Boyu Tam Erişim",
+                price: offer.lifetimePrice,
+                subtitle: "Tek seferlik katkı • Sonsuza dek sınırsız kullanım",
+                badge: "SINIRSIZ ERİŞİM",
+              ),
+              const SizedBox(height: 20),
+
+              GlassContainer(
+                goldAccentBorder: true,
+                borderRadius: 22,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                onTap: () async {
+                  await notifier.activatePlan(_selectedTier);
+                  if (context.mounted) {
+                    Navigator.of(context).pop();
+                  }
+                },
+                child: Center(
+                  child: Row(
+                    mainAxisSize: MainAxisAlignment.min,
+                    children: [
+                      const BespokeVectorIcon(
+                        type: BespokeIconType.checkBadge,
+                        color: Color(0xFF64FFDA),
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        premium.isPremium
+                            ? "Huzur Özel Etkin"
+                            : "Seçili Planı Başlat",
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFFFE082),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                "114 Sure Kur'ân-ı Kerîm, sesli tilavet, ezan vakitleri ve kıble pusulası herkes için sonsuza dek ücretsizdir.",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 11, color: Colors.white54),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildFeatureRow(String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Row(
+        children: [
+          const BespokeVectorIcon(
+            type: BespokeIconType.checkBadge,
+            color: Color(0xFF64FFDA),
+            size: 16,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(fontSize: 13, color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPlanCard({
+    required String id,
+    required String title,
+    required String price,
+    required String subtitle,
+    required String? badge,
+  }) {
+    final isSelected = _selectedTier == id;
+    return GlassContainer(
+      goldAccentBorder: isSelected,
+      borderRadius: 20,
+      padding: const EdgeInsets.all(14),
+      onTap: () => setState(() => _selectedTier = id),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (badge != null) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFE082).withOpacity(0.18),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFFFE082), width: 0.8),
+              ),
+              child: Text(
+                badge,
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFFFFE082),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              Text(
+                price,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF64FFDA),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            subtitle,
+            style: const TextStyle(fontSize: 12, color: Colors.white70),
+          ),
+        ],
+      ),
+    );
+  }
+}

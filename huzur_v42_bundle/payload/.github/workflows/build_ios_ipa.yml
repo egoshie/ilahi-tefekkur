@@ -1,0 +1,50 @@
+name: Build Huzur iOS V4.2
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build-ipa:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Install Flutter packages
+        run: flutter pub get
+
+      - name: Add WidgetKit extension target
+        run: |
+          gem install xcodeproj --no-document
+          ruby ios/fix_and_add_widget.rb
+
+      - name: Build unsigned iOS app and extension
+        run: flutter build ios --release --no-codesign
+
+      - name: Package unsigned IPA
+        run: |
+          set -euo pipefail
+          APP_PATH="build/ios/iphoneos/Runner.app"
+          test -d "$APP_PATH"
+          mkdir -p "$RUNNER_TEMP/ipa/Payload" output_ipa
+          cp -R "$APP_PATH" "$RUNNER_TEMP/ipa/Payload/Runner.app"
+          cd "$RUNNER_TEMP/ipa"
+          /usr/bin/zip -qry "$GITHUB_WORKSPACE/output_ipa/Huzur-V4.2-Unsigned.ipa" Payload
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Huzur-iOS-V4.2-Unsigned-IPA
+          path: output_ipa/Huzur-V4.2-Unsigned.ipa
+          if-no-files-found: error
