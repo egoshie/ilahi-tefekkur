@@ -27,8 +27,8 @@ class _EsmaulHusnaSheetState extends State<EsmaulHusnaSheet> {
     return result.toLowerCase();
   }
 
-  List<EsmaItem> get _items => OfflineSacredRepository.esma.where((item) {
-    final value = _normalize(item.transliteration + ' ' + item.meaning + ' ' + item.arabic);
+  List<EsmaItem> get _items => OfflineSacredRepository.esma.cast<dynamic>().where((dynamic item) {
+    final value = _normalize((item as dynamic).transliteration + ' ' + (item as dynamic).meaning + ' ' + (item as dynamic).arabic);
     return value.contains(_normalize(_query));
   }).toList(growable: false);
 
@@ -72,9 +72,9 @@ class _EsmaulHusnaSheetState extends State<EsmaulHusnaSheet> {
                       const SizedBox(width:9),
                       Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
                         Text(item.transliteration,style:const TextStyle(fontWeight:FontWeight.bold,fontSize:14,color:Color(0xFFFFE082))),
-                        const SizedBox(height:3),Text(item.meaning,style:const TextStyle(fontSize:12,color:Colors.white70)),
+                        const SizedBox(height:3),Text((item as dynamic).meaning,style:const TextStyle(fontSize:12,color:Colors.white70)),
                       ])),
-                      Text(item.arabic,textDirection:TextDirection.rtl,style:const TextStyle(fontSize:23,color:Color(0xFFFFF8E1))),
+                      Text((item as dynamic).arabic,textDirection:TextDirection.rtl,style:const TextStyle(fontSize:23,color:Color(0xFFFFF8E1))),
                     ]),
                     const SizedBox(height:9),
                     Row(children:[
@@ -87,7 +87,7 @@ class _EsmaulHusnaSheetState extends State<EsmaulHusnaSheet> {
                           messenger.showSnackBar(SnackBar(content:Text(item.transliteration + ' hedefi Zikirmatik’e aktarıldı.')));
                         }
                       },icon:const Icon(Icons.toll,size:15),label:const Text('Zikirmatik hedefi')),
-                      IconButton(tooltip:'Hikâye kartı paylaş',onPressed:()=>HuzurStoryShareSheet.show(context,arabic:item.arabic,turkish:item.transliteration + ' — ' + item.meaning,reference:'Esmaül Hüsna • ' + item.number.toString(),category:'99 Esmaül Hüsna'),icon:const Icon(Icons.ios_share,color:Color(0xFFFFE082),size:19)),
+                      IconButton(tooltip:'Hikâye kartı paylaş',onPressed:()=>HuzurStoryShareSheet.show(context,arabic:(item as dynamic).arabic,turkish:item.transliteration + ' — ' + (item as dynamic).meaning,reference:'Esmaül Hüsna • ' + item.number.toString(),category:'99 Esmaül Hüsna'),icon:const Icon(Icons.ios_share,color:Color(0xFFFFE082),size:19)),
                     ]),
                   ]),
                 ),
