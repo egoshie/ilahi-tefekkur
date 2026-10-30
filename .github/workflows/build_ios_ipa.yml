@@ -1,0 +1,39 @@
+name: Build iOS IPA (Release)
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build-ipa:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter SDK (Latest Stable)
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install Dependencies & Pods
+        run: |
+          flutter pub get
+
+      - name: Build iOS Release Unsigned IPA
+        run: |
+          flutter build ios --release --no-codesign --no-tree-shake-icons
+          cd build/ios/iphoneos
+          mkdir -p Payload
+          cp -r Runner.app Payload/
+          zip -qq -r IlahiTefekkur-Release.ipa Payload
+          mkdir -p $GITHUB_WORKSPACE/output_ipa
+          mv IlahiTefekkur-Release.ipa $GITHUB_WORKSPACE/output_ipa/
+
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: IlahiTefekkur-Release-IPA
+          path: output_ipa/IlahiTefekkur-Release.ipa

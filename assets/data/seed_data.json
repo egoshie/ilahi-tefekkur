@@ -1,0 +1,293 @@
+{
+  "sacred_verses": [
+    {
+      "id": "q_1_1",
+      "tradition": "quran",
+      "book_name": "Fâtiha Sûresi",
+      "chapter": 1,
+      "verse_number": 1,
+      "arabic_uthmani": "بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ",
+      "arabic_indopak": "بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ",
+      "translation_tr": "Rahmân ve Rahîm olan Allah'ın adıyla.",
+      "tafsir": "Besmele, varlığın başlangıcındaki ilahi sevgi ve merhamet mührüdür. Rahmân sıfatı dünyada tüm yaratılmışları kuşatan genel merhameti, Rahîm sıfatı ise ahirette müminlere tecelli edecek özel şefkati ifade eder.",
+      "root_words": {
+        "بِسْمِ": "Kök: س-م-و (s-m-v) | İsim, yücelik ve alamet. Bir varlığı zihinde görünür kılan işaret.",
+        "ٱللَّهِ": "Özel İsim (Lafza-i Celâl) | Tüm kemâl sıfatları kendisinde toplayan tek ve mutlak İlah.",
+        "ٱلرَّحْمَـٰنِ": "Kök: ر-ح-م (r-h-m) | Rahmetin kaynağı; hiçbir ayrım gözetmeksizin tüm varlığa hayat ve rızık veren.",
+        "ٱلرَّحِيمِ": "Kök: ر-ح-م (r-h-m) | Özünde merhametli; iradesini hayır yönünde kullananlara sonsuz ikramda bulunan."
+      }
+    },
+    {
+      "id": "q_1_2",
+      "tradition": "quran",
+      "book_name": "Fâtiha Sûresi",
+      "chapter": 1,
+      "verse_number": 2,
+      "arabic_uthmani": "ٱلْحَمْدُ لِلَّهِ رَبِّ ٱلْعَـٰلَمِينَ",
+      "arabic_indopak": "اَلْحَمْدُ لِلّٰهِ رَبِّ الْعٰلَمِيْنَ",
+      "translation_tr": "Hamd, âlemlerin Rabbi olan Allah'a mahsustur.",
+      "tafsir": "Evrendeki her güzellik, düzen ve iyilik O'ndan gelir. Rabb kelimesi sadece yaratmayı değil, yarattığını her an terbiye edip kemâle erdirmeyi anlatır.",
+      "root_words": {
+        "ٱلْحَمْدُ": "Kök: ح-م-د (h-m-d) | Gönülden gelen övgü, minnet ve hayranlık.",
+        "رَبِّ": "Kök: ر-ب-ب (r-b-b) | Terbiye eden, aşama aşama geliştiren, koruyup gözeten efendi.",
+        "ٱلْعَـٰلَمِينَ": "Kök: ع-ل-م (a-l-m) | Bilinen ve bilinmeyen tüm varlık küreleri, bilinç alemleri."
+      }
+    },
+    {
+      "id": "q_1_5",
+      "tradition": "quran",
+      "book_name": "Fâtiha Sûresi",
+      "chapter": 1,
+      "verse_number": 5,
+      "arabic_uthmani": "إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ",
+      "arabic_indopak": "اِيَّاكَ نَعْبُدُ وَاِيَّاكَ نَسْتَعِيْنُ",
+      "translation_tr": "Yalnız Sana ibadet eder ve yalnız Senden yardım dileriz.",
+      "tafsir": "Tevhidin kalbidir. Kulu sahte otoritelerin ve dünyevi bağımlılıkların esaretinden kurtarıp mutlak özgürlüğe kavuşturur.",
+      "root_words": {
+        "إِيَّاكَ": "Zamir | Sadece ve yalnızca Sana (hasr ve tahsis ifade eder).",
+        "نَعْبُدُ": "Kök: ع-ب-د (a-b-d) | Tevazu ve sevgiyle boyun eğmek, kulluk bilinciyle yönelmek.",
+        "نَسْتَعِينُ": "Kök: ع-و-ن (a-v-n) | Güç, destek ve tevfik talep etmek."
+      }
+    },
+    {
+      "id": "q_2_255",
+      "tradition": "quran",
+      "book_name": "Bakara Sûresi (Âyetel Kürsî)",
+      "chapter": 2,
+      "verse_number": 255,
+      "arabic_uthmani": "ٱللَّهُ لَآ إِلَـٰهَ إِلَّا هُوَ ٱلْحَىُّ ٱلْقَيُّومُ ۚ لَا تَأْخُذُهُۥ سِنَةٌ وَلَا نَوْمٌ",
+      "arabic_indopak": "اَللّٰهُ لَآ اِلٰهَ اِلَّا هُوَ الْحَيُّ الْقَيُّوْمُ ۚ لَا تَاْخُذُهٗ سِنَةٌ وَّلَا نَوْمٌ",
+      "translation_tr": "Allah, kendisinden başka hiçbir ilâh olmayandır. Diridir, kayyûmdur (her şeyi ayakta tutandır). O'nu ne bir uyuklama tutar ne de bir uyku.",
+      "tafsir": "İlahi kudretin ve kesintisiz kozmik yönetimin en veciz ifadesidir.el-Hayy mutlak hayat sahibini, el-Kayyûm ise tüm varlık düzeninin O'nun kudretiyle kaim olduğunu bildirir.",
+      "root_words": {
+        "ٱلْحَىُّ": "Kök: ح-ي-ي (h-y-y) | Ezeli ve ebedi diri, hayatın mutlak kaynağı.",
+        "ٱلْقَيُّومُ": "Kök: ق-و-م (k-v-m) | Kendi kendine var olan ve bütün varlığı her an ayakta tutan.",
+        "سِنَةٌ": "Kök: و-س-ن (v-s-n) | Uyku öncesi hafif dalgınlık, rehavet."
+      }
+    },
+    {
+      "id": "q_24_35",
+      "tradition": "quran",
+      "book_name": "Nûr Sûresi",
+      "chapter": 24,
+      "verse_number": 35,
+      "arabic_uthmani": "ٱللَّهُ نُورُ ٱلسَّمَـٰوَٰتِ وَٱلْأَرْضِ ۚ مَثَلُ نُورِهِۦ كَمِشْكَوٰةٍ فِيهَا مِصْبَاحٌ",
+      "arabic_indopak": "اَللّٰهُ نُوْرُ السَّمٰوٰتِ وَالْاَرْضِ ۗ مَثَلُ نُوْرِهٖ كَمِشْكٰوةٍ فِيْهَا مِصْبَاحٌ",
+      "translation_tr": "Allah, göklerin ve yerin nûrudur. O'nun nûrunun temsili, içinde lamba bulunan bir kandil yuvası gibidir.",
+      "tafsir": "Nûr ayeti, hem fiziksel evrenin aydınlığını hem de kalplerdeki hakikat bilgisini kristal bir cam içindeki inci yıldız metaforuyla tasvir eder.",
+      "root_words": {
+        "نُورُ": "Kök: ن-و-ر (n-v-r) | Karanlığı yarıp eşyayı görünür kılan ilahi ışık ve hidayet.",
+        "كَمِشْكَوٰةٍ": "Kök: ش-ك-و (ş-k-v) | Işığı toplayıp daha güçlü yansıtan özel kandil nişi.",
+        "مِصْبَاحٌ": "Kök: ص-ب-ح (s-b-h) | Sabah aydınlığı gibi parlak fitilli lamba."
+      }
+    },
+    {
+      "id": "q_94_5",
+      "tradition": "quran",
+      "book_name": "İnşirah Sûresi",
+      "chapter": 94,
+      "verse_number": 5,
+      "arabic_uthmani": "فَإِنَّ مَعَ ٱلْعُسْرِ يُسْرًا ۝ إِنَّ مَعَ ٱلْعُسْرِ يُسْرًا",
+      "arabic_indopak": "فَاِنَّ مَعَ الْعُسْرِ يُسْرًا ۝ اِنَّ مَعَ الْعُسْرِ يُسْرًا",
+      "translation_tr": "Şüphesiz güçlükle beraber bir kolaylık vardır. Gerçekten, güçlükle beraber bir kolaylık vardır.",
+      "tafsir": "Arap dil kaidesine göre 'el-usr' (güçlük) belirli (marife) olarak tekrarlandığı için tektir; 'yusr' (kolaylık) ise belirsiz (nekre) tekrarlandığı için her bir zorluğa iki ayrı kolaylık vaat edilmiştir.",
+      "root_words": {
+        "ٱلْعُسْرِ": "Kök: ع-س-ر (a-s-r) | Darlık, sıkışma, içinden çıkılması güç görünen hal.",
+        "يُسْرًا": "Kök: ي-س-ر (y-s-r) | Genişlik, ferahlık, kendiliğinden açılan ilahi kapı."
+      }
+    },
+    {
+      "id": "t_gen_1_1",
+      "tradition": "torah",
+      "book_name": "Yaratılış (Tekvin / Bereşit)",
+      "chapter": 1,
+      "verse_number": 1,
+      "arabic_uthmani": "בְּרֵאשִׁית בָּרָא אֱלֹהִים אֵת הַשָּׁמַיִם וְאֵת הָאָרֶץ",
+      "arabic_indopak": "Bereşit bara Elohim et haşamayim ve'et ha'aretz — Ve'ha'aretz hayeta tohu vavohu.",
+      "translation_tr": "Başlangıçta Tanrı göğü ve yeri yarattı. Yer boştu, yeryüzü şekilsizdi; engin karanlıklarla kaplıydı ve Tanrı'nın Ruhu suların üzerinde dalgalanıyordu.",
+      "tafsir": "Tevrat'ın ilk babı, zamanın ve maddenin yokluktan ilahi kelam ile var edilişini ve kaosun kozmosa dönüşümünü anlatır.",
+      "root_words": {
+        "בְּרֵאשִׁית": "Bereşit | Başlangıçta, zamanın ve hikmetin ilk noktasında.",
+        "בָּרָא": "Bara | Yoktan var etmek (yalnızca Tanrı'nın yaratması için kullanılan fiil)."
+      }
+    },
+    {
+      "id": "t_gen_1_3",
+      "tradition": "torah",
+      "book_name": "Yaratılış (Tekvin / Bereşit)",
+      "chapter": 1,
+      "verse_number": 3,
+      "arabic_uthmani": "וַיֹּאמֶר אֱלֹהִים יְהִי אוֹר וַיְהִי־אוֹר",
+      "arabic_indopak": "Vayomer Elohim yehi or vayehi-or.",
+      "translation_tr": "Tanrı, 'Işık olsun' diye buyurdu ve ışık oldu. Tanrı ışığın iyi olduğunu gördü ve onu karanlıktan ayırdı.",
+      "tafsir": "İlahi iradenin söz ile tecellisi. İslam kelamındaki 'Kün fe yekûn' (Ol der ve olur) ilkesinin Tevrat'taki karşılığıdır.",
+      "root_words": {
+        "יְהִי אוֹר": "Yehi Or | Işık olsun; varlığın ilk aydınlanma emri."
+      }
+    },
+    {
+      "id": "t_exo_3_4",
+      "tradition": "torah",
+      "book_name": "Mısır'dan Çıkış (Şemot)",
+      "chapter": 3,
+      "verse_number": 5,
+      "arabic_uthmani": "שַׁל־נְעָלֶיךָ מֵעַל רַגְלֶיךָ כִּי הַמָּקוֹם אֲשֶׁר אַתָּה עוֹמֵד עָלָיו אַדְמַת־קֹדֶשׁ הוּא",
+      "arabic_indopak": "Şal-ne'aleha me'al ragleha ki hamakom aşer ata omed alav admat-kodeş hu.",
+      "translation_tr": "Tanrı, 'Buraya yaklaşma!' dedi, 'Çarığını çıkar. Çünkü bastığın yer kutsal topraktır. Ben babanın Tanrısı, İbrahim'in, İshak'ın ve Yakup'un Tanrısıyım.'",
+      "tafsir": "Sina Dağı'nda yanan çalı kıssası. Tâhâ Suresi 12. ayetteki 'Mukaddes Tuvâ vadisinde pabuçlarını çıkar' hitabıyla birebir örtüşen tevhid mirasıdır.",
+      "root_words": {
+        "אַדְמַת־קֹדֶשׁ": "Admat-Kodeş | Kutsal toprak, ilahi huzurun tecelli ettiği mekan."
+      }
+    },
+    {
+      "id": "t_psa_23_1",
+      "tradition": "torah",
+      "book_name": "Mezmurlar (Zebur / Tehillim)",
+      "chapter": 23,
+      "verse_number": 1,
+      "arabic_uthmani": "מִזְמוֹר לְדָוִד יְהוָה רֹעִי לֹא אֶחְסָר",
+      "arabic_indopak": "Mizmor leDavid: Adonai ro'i lo ehsar. Bin'ot deşe yarbitzeni al-mei menuhot yenahaleni.",
+      "translation_tr": "Davut'un Mezmuru: RAB çobanımdır, eksiğim olmaz. Beni yemyeşilkırlarda yatırır, sakin suların kıyısına götürür, içimi tazeler.",
+      "tafsir": "Hz. Davut'un ilahi tevekkülü ve içsel huzuru anlattığı en meşhur yakarışıdır. Karanlık ölüm gölgesi vadisinden geçerken bile korkmamayı öğütler.",
+      "root_words": {
+        "רֹעִי": "Ro'i | Gözetenim, rehberim, koruyucum.",
+        "מֵי מְנֻחוֹת": "Mei Menuhot | Sakin, dingin ve huzur veren sular."
+      }
+    },
+    {
+      "id": "g_mat_5_3",
+      "tradition": "gospel",
+      "book_name": "Matta İncili (Dağdaki Vaaz)",
+      "chapter": 5,
+      "verse_number": 3,
+      "arabic_uthmani": "Μακάριοι οἱ πτωχοὶ τῷ πνεύματι, ὅτι αὐτῶν ἐστιν ἡ βασιλεία τῶν οὐρανῶν",
+      "arabic_indopak": "Makarioi hoi ptochoi to pneumati, hoti auton estin he basileia ton ouranon.",
+      "translation_tr": "Ne mutlu ruhta yoksul (mütevazı) olanlara! Çünkü Göklerin Egemenliği onlarındır. Ne mutlu merhametli olanlara! Çünkü onlar merhamet bulacaklar. Ne mutlu yüreği temiz olanlara!",
+      "tafsir": "Hz. İsa'nın Dağdaki Vaaz'ının (Tûbâ/Beatitudes) açılışıdır. Kibir yerine tevazuyu, şekilcilik yerine kalp temizliğini merkeze alır.",
+      "root_words": {
+        "Μακάριοι": "Makarioi | İlahi lütfa erişmiş, kutlu ve derin huzur sahibi olanlar.",
+        "πτωχοὶ τῷ πνεύματι": "Ruhta fakir | Allah karşısında kendi acziyetini bilen alçakgönüllü kul."
+      }
+    },
+    {
+      "id": "g_jhn_1_1",
+      "tradition": "gospel",
+      "book_name": "Yuhanna İncili",
+      "chapter": 1,
+      "verse_number": 1,
+      "arabic_uthmani": "Ἐν ἀρχῇ ἦν ὁ Λόγος, καὶ ὁ Λόγος ἦν πρὸς τὸν Θεόν",
+      "arabic_indopak": "En arche en ho Logos, kai ho Logos en pros ton Theon. En auto zoe en, kai he zoe en to phos ton anthropon.",
+      "translation_tr": "Başlangıçta Söz vardı. Söz Tanrı'yla birlikteydi. Yaşam O'ndaydı ve yaşam insanların ışığıydı. Işık karanlıkta parlar ve karanlık onu alt edememiştir.",
+      "tafsir": "İlahi Kelam (Logos) ve Nur kavramlarının İncil'deki metafizik temelidir.",
+      "root_words": {
+        "Λόγος": "Logos | İlahi Kelam, hikmet ve varlık yasası.",
+        "φῶς": "Phos | Karanlığı yenen hakikat ışığı."
+      }
+    }
+  ],
+  "cross_references": [
+    {
+      "id": "cr_1",
+      "topic": "Yaratılış, İlahi Kelam ve Kozmik Nur",
+      "summary": "Üç ilahi metinde de evrenin yokluktan var edilişi, İlahi Söz ('Ol' emri) ve karanlığı yaran 'Nur' metaforuyla anlatılır.",
+      "quran_ref": "Nûr 24:35 & Yâsîn 36:82 — 'Allah göklerin ve yerin nûrudur... Bir şeyi dilediğinde O'nun emri yalnızca OL demektir, o da hemen oluverir.'",
+      "torah_ref": "Yaratılış (Tekvin) 1:1-3 — 'Başlangıçta Tanrı göğü ve yeri yarattı... Tanrı IŞIK OLSUN diye buyurdu ve ışık oldu.'",
+      "gospel_ref": "Yuhanna 1:1-5 — 'Başlangıçta Söz vardı... Yaşam insanların ışığıydı. Işık karanlıkta parlar ve karanlık onu alt edememiştir.'"
+    },
+    {
+      "id": "cr_2",
+      "topic": "Hz. Musa ve Mukaddes Vadi Çağrısı",
+      "summary": "Hz. Musa'nın Sina/Tuvâ vadisinde ilahi huzura kabulü, ateş/ışık tecellisi ve dünyevi kaygıları simgeleyen pabuçların çıkarılması emri.",
+      "quran_ref": "Tâhâ 20:11-12 — 'Ey Musa! Şüphesiz ben senin Rabbinim. Hemen pabuçlarını çıkar! Çünkü sen mukaddes vadi Tuvâ'dasın.'",
+      "torah_ref": "Mısır'dan Çıkış 3:4-5 — 'Tanrı çalının içinden Musa! Musa! diye seslendi... Çarığını çıkar, çünkü bastığın yer kutsal topraktır.'",
+      "gospel_ref": "Elçilerin İşleri 7:33 — 'Rab ona şöyle dedi: Çarığını çıkar. Çünkü bastığın yer kutsal topraktır.'"
+    },
+    {
+      "id": "cr_3",
+      "topic": "Merhamet, Tevazu ve Kalp Temizliği",
+      "summary": "Gerçek dindarlığın gösterişte değil; yetimi gözetmekte, merhamette ve arınmış bir kalpte (Kalb-i Selim) olduğu hakikati.",
+      "quran_ref": "Şuarâ 26:88-89 — 'O gün ne mal fayda verir ne de evlat; ancak Allah'a arınmış bir kalple (kalb-i selîm) gelenler kurtulur.'",
+      "torah_ref": "Mezmurlar 51:10 & Mika 6:8 — 'Ey Tanrı, içimde temiz bir yürek yarat... RAB senden adil davranmandan, merhameti sevmenden ve alçakgönüllü yürümen dışında ne ister?'",
+      "gospel_ref": "Matta 5:7-8 — 'Ne mutlu merhametli olanlara, çünkü onlar merhamet bulacaklar! Ne mutlu yüreği temiz olanlara!'"
+    }
+  ],
+  "mood_verses": [
+    {
+      "mood": "Daralmış",
+      "arabic": "وَلَقَدْ نَعْلَمُ أَنَّكَ يَضِيقُ صَدْرُكَ بِمَا يَقُولُونَ ۝ فَسَبِّحْ بِحَمْدِ رَبِّكَ",
+      "translation": "Andolsun, onların söyledikleri yüzünden göğsünün daraldığını çok iyi biliyoruz. Sen şimdi Rabbini hamd ile tesbih et ve secde edenlerden ol.",
+      "reference": "Hicr Sûresi, 97-98",
+      "contemplation": "Göğsündeki daralma yalnızlığından değil, kalbinin dünyaya sığmamasındandır. Seni yaratan, içinden geçen en sessiz sızıyı bile duyuyor."
+    },
+    {
+      "mood": "Şükreden",
+      "arabic": "لَئِن شَكَرْتُمْ لَأَزِيدَنَّكُمْ",
+      "translation": "Eğer şükrederseniz, elbette size olan nimetimi artırırım.",
+      "reference": "İbrâhîm Sûresi, 7",
+      "contemplation": "Şükür, eldeki nimeti fark edip sahibini tanımaktır. Fark edilen her nimet, ruhun huzur hazinesini çoğaltır."
+    },
+    {
+      "mood": "Yalnız Hisseden",
+      "arabic": "لَا تَحْزَنْ إِنَّ ٱللَّهَ مَعَنَا",
+      "translation": "Üzülme! Şüphesiz Allah bizimle beraberdir.",
+      "reference": "Tevbe Sûresi, 40",
+      "contemplation": "Tüm kapılar kapandığında ve sesin kimseye ulaşmadığında bile şah damarından daha yakın olan Rabbin seninledir."
+    },
+    {
+      "mood": "Ümitvar",
+      "arabic": "وَلَسَوْفَ يُعْطِيكَ رَبُّكَ فَتَرْضَىٰ",
+      "translation": "Rabbin sana (öylesine lütuflar) verecek ki, sonunda gönlün razı olacak.",
+      "reference": "Duhâ Sûresi, 5",
+      "contemplation": "Gece ne kadar uzun sürerse sürsün kuşluk vaktinin aydınlığı yakındır. Rabbin seni ne terk etti ne de sana darıldı."
+    },
+    {
+      "mood": "Kararsız",
+      "arabic": "رَبَّنَآ ءَاتِنَا مِن لَّدُنكَ رَحْمَةً وَهَيِّئْ لَنَا مِنْ أَمْرِنَا رَشَدًا",
+      "translation": "Rabbimiz! Bize katından bir rahmet ver ve içinde bulunduğumuz şu durumda bize doğru yolu (rüşdü) kolaylaştır.",
+      "reference": "Kehf Sûresi, 10",
+      "contemplation": "Zihnin seçenekler arasında yorulduğunda kontrolü mutlak Hikmet Sahibine bırak; O en hayırlı kapıyı açandır."
+    }
+  ],
+  "esmaul_husna": [
+    {
+      "id": 1,
+      "arabic": "ٱلرَّحْمَـٰنُ",
+      "name": "Er-Rahmân",
+      "ebced": 298,
+      "meaning": "Dünyada bütün mahlûkata merhamet eden, şefkat gösteren ve rızık veren.",
+      "virtue": "Kalp katılığını giderir, ruhsal genişlik ve merhamet bilinci kazandırır."
+    },
+    {
+      "id": 2,
+      "arabic": "ٱلْمَلِكُ",
+      "name": "El-Melik",
+      "ebced": 90,
+      "meaning": "Mülkün, kâinatın tek ve gerçek sahibi, mutlak hükümdarı.",
+      "virtue": "Dünyevi korkulardan özgürleştirir, izzet ve vakur bir duruş sağlar."
+    },
+    {
+      "id": 3,
+      "arabic": "ٱلسَّلَامُ",
+      "name": "Es-Selâm",
+      "ebced": 131,
+      "meaning": "Her türlü eksiklikten uzak olan ve kullarını selâmete, iç huzuruna çıkaran.",
+      "virtue": "Kaygı, vesvese ve içsel fırtınaları dindirip kalbe sükûnet verir."
+    },
+    {
+      "id": 4,
+      "arabic": "ٱلْفَتَّاحُ",
+      "name": "El-Fettâh",
+      "ebced": 489,
+      "meaning": "Her türlü müşkülü çözen, maddi ve manevi hayır kapılarını açan.",
+      "virtue": "Sabah namazı sonrası zikredildiğinde basireti ve rızık kapılarını açar."
+    },
+    {
+      "id": 5,
+      "arabic": "ٱلْحَىُّ ٱلْقَيُّومُ",
+      "name": "El-Hayyü'l-Kayyûm",
+      "ebced": 174,
+      "meaning": "Ezeli diri olan ve gökleri, yeri ve tüm varlığı her an ayakta tutan.",
+      "virtue": "İsm-i Azam sırrını taşır; duaların kabulüne ve ruhani dirilişe vesiledir."
+    }
+  ]
+}
