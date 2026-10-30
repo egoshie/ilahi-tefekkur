@@ -18,16 +18,38 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Install Dependencies & Pods
+      - name: Install Dependencies & Disable Pod Signing
         run: |
           flutter pub get
+          flutter build ios --config-only --release --no-codesign
+          if [ -f ios/Podfile ]; then
+            cat << 'PODEOF' >> ios/Podfile
+          post_install do |installer|
+            installer.pods_project.targets.each do |target|
+              target.build_configurations.each do |config|
+                config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
+                config.build_settings['CODE_SIGNING_REQUIRED'] = 'NO'
+                config.build_settings['EXPANDED_CODE_SIGN_IDENTITY'] = ''
+              end
+            end
+          end
+          PODEOF
+          fi
 
       - name: Build iOS Release Unsigned IPA
         run: |
-          flutter build ios --release --no-codesign --no-tree-shake-icons
-          cd build/ios/iphoneos
+          cd ios
+          pod install
+          xcodebuild -workspace Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
           mkdir -p Payload
-          cp -r Runner.app Payload/
+          cp -r build/Build/Products/Release-iphoneos/Runner.app Payload/
           zip -qq -r IlahiTefekkur-Release.ipa Payload
           mkdir -p $GITHUB_WORKSPACE/output_ipa
           mv IlahiTefekkur-Release.ipa $GITHUB_WORKSPACE/output_ipa/
