@@ -64,6 +64,8 @@ class V42Verse {
 
 @immutable
 class V42HourlyVerse {
+  String get arabic => arabicShort;
+  String get turkish => turkishShort;
   final String arabicShort;
   final String turkishShort;
   final String reference;

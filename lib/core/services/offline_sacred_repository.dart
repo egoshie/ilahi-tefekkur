@@ -322,7 +322,9 @@ class OfflineSacredRepository {
   Future<List<V42Verse>> loadTorahVerses() => loadJsonAsset('assets/data/torah_tr.json');
   Future<List<V42Verse>> loadGospelVerses() => loadJsonAsset('assets/data/gospel_tr.json');
 
-  static List<SacredVerse> getFallbackSurah(int surahNumber, String trSurahTitle) {
+  static List<SacredVerse> getFallbackSurah(dynamic surahNumberObj, [dynamic trSurahTitleObj]) {
+    final int surahNumber = surahNumberObj is int ? surahNumberObj : int.tryParse(surahNumberObj.toString()) ?? 1;
+    final String trSurahTitle = (trSurahTitleObj ?? "Sure").toString();
     final samples = <Map<String, String>>[
       {"ar": "بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ", "tr": "Rahmân ve Rahîm olan Allah'ın adıyla.", "tf": "$trSurahTitle suresi manevi tefekkür ve hidayet rehberidir."},
       {"ar": "ٱلْحَمْدُ لِلَّهِ رَبِّ ٱلْعَـٰلَمِينَ", "tr": "Hamd, âlemlerin Rabbi olan Allah'a mahsustur.", "tf": "Tüm varlık âleminin yaratıcısı ve yöneticisi yalnızca O'dur."},
@@ -346,7 +348,9 @@ class OfflineSacredRepository {
     });
   }
 
-  static List<SacredVerse> getFallbackBibleChapter(String book, String chapter) {
+  static List<SacredVerse> getFallbackBibleChapter(dynamic bookObj, dynamic chapterObj) {
+    final String book = bookObj is String ? bookObj : (bookObj?.title ?? bookObj.toString());
+    final String chapter = chapterObj.toString();
     final isTorah = book.contains("Tevrat") || book.contains("Yaratılış") || book.contains("Çıkış") || book.contains("Mezmurlar") || book.contains("Tora");
     final samples = isTorah
         ? <Map<String, String>>[
