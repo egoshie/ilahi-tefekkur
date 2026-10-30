@@ -45,25 +45,25 @@ class AmbianceMixerNotifier extends StateNotifier< List< AmbianceChannel > > {
           AmbianceChannel(
             id: 'ney',
             title: 'Ney & Huzur Frekansı (432Hz)',
-            subtitle: 'Çevrimdışı harmonik odaklanma akustiği',
+            subtitle: 'Kesintisiz harmonik odaklanma akustiği',
             assetPath: 'assets/audio/ney.wav',
           ),
           AmbianceChannel(
             id: 'rain',
             title: 'Seher Yağmuru',
-            subtitle: 'Çevrimdışı yumuşak yağmur damlası dokusu',
+            subtitle: 'Yumuşak yağmur damlası dokusu',
             assetPath: 'assets/audio/rain.wav',
           ),
           AmbianceChannel(
             id: 'water',
             title: 'Dingin Su Akışı',
-            subtitle: 'Çevrimdışı su dalgası ve kubbe rezonansı',
+            subtitle: 'Su dalgası ve kubbe rezonansı',
             assetPath: 'assets/audio/water.wav',
           ),
           AmbianceChannel(
             id: 'wind',
             title: 'Gece Esintisi',
-            subtitle: 'Çevrimdışı hafif ufuk rüzgarı',
+            subtitle: 'Hafif ufuk rüzgarı',
             assetPath: 'assets/audio/wind.wav',
           ),
         ]);

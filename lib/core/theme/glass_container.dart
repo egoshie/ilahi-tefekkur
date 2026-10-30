@@ -21,7 +21,7 @@ class GlassContainer extends StatelessWidget {
     this.padding = const EdgeInsets.all(18),
     this.margin,
     this.borderRadius = 24,
-    this.blurSigma = 20,
+    this.blurSigma = 22,
     this.tintColor,
     this.goldAccentBorder = false,
     this.emeraldGlow = false,
@@ -31,6 +31,10 @@ class GlassContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final accentTint = goldAccentBorder
+        ? const Color(0xFFFFE082)
+        : (emeraldGlow ? const Color(0xFF64FFDA) : const Color(0xFF40C4FF));
+
     Widget surface = CustomPaint(
       foregroundPainter: _RefractiveSpecularRimPainter(
         borderRadius: borderRadius,
@@ -45,11 +49,11 @@ class GlassContainer extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Colors.white.withOpacity(0.10),
-              (tintColor ?? const Color(0xFF0A222E)).withOpacity(0.42),
-              const Color(0xFF04111A).withOpacity(0.58),
+              Colors.white.withOpacity(0.16),
+              accentTint.withOpacity(0.08),
+              (tintColor ?? const Color(0xFF0A2634)).withOpacity(0.52),
             ],
-            stops: const [0.0, 0.50, 1.0],
+            stops: const [0.0, 0.42, 1.0],
           ),
         ),
         child: child,
@@ -70,20 +74,18 @@ class GlassContainer extends StatelessWidget {
           borderRadius: BorderRadius.circular(borderRadius),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.26),
-              blurRadius: 16,
-              spreadRadius: -4,
+              color: Colors.black.withOpacity(0.30),
+              blurRadius: 18,
+              spreadRadius: -3,
               offset: const Offset(0, 8),
             ),
-            if (emeraldGlow || goldAccentBorder)
-              BoxShadow(
-                color: (goldAccentBorder
-                        ? const Color(0xFFFFE082)
-                        : const Color(0xFF64FFDA))
-                    .withOpacity(0.08),
-                blurRadius: 14,
-                spreadRadius: -2,
+            BoxShadow(
+              color: accentTint.withOpacity(
+                (emeraldGlow || goldAccentBorder) ? 0.14 : 0.06,
               ),
+              blurRadius: 18,
+              spreadRadius: -2,
+            ),
           ],
         ),
         child: ClipRRect(
@@ -117,45 +119,45 @@ class _RefractiveSpecularRimPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
     final rrect = RRect.fromRectAndRadius(
-      rect.deflate(0.5),
+      rect.deflate(0.55),
       Radius.circular(borderRadius),
     );
 
     final topLeftRim = goldAccent
-        ? const Color(0xFFFFE082).withOpacity(0.55)
-        : Colors.white.withOpacity(0.42);
+        ? const Color(0xFFFFE082).withOpacity(0.78)
+        : Colors.white.withOpacity(0.62);
 
     final bottomRightRim = emeraldAccent
-        ? const Color(0xFF64FFDA).withOpacity(0.38)
-        : const Color(0xFF64FFDA).withOpacity(0.24);
+        ? const Color(0xFF64FFDA).withOpacity(0.58)
+        : const Color(0xFF64FFDA).withOpacity(0.36);
 
     final borderPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0
+      ..strokeWidth = 1.25
       ..shader = LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: [
           topLeftRim,
-          Colors.white.withOpacity(0.06),
+          Colors.white.withOpacity(0.12),
           bottomRightRim,
         ],
-        stops: const [0.0, 0.52, 1.0],
+        stops: const [0.0, 0.48, 1.0],
       ).createShader(rect);
 
     canvas.drawRRect(rrect, borderPaint);
 
     final topHighlightPath = Path()
-      ..moveTo(borderRadius * 0.85, 0.9)
-      ..lineTo(size.width - borderRadius * 0.85, 0.9);
+      ..moveTo(borderRadius * 0.75, 1.0)
+      ..lineTo(size.width - borderRadius * 0.75, 1.0);
 
     final ceilingPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.9
+      ..strokeWidth = 1.1
       ..shader = LinearGradient(
         colors: [
           Colors.white.withOpacity(0.0),
-          Colors.white.withOpacity(0.44),
+          Colors.white.withOpacity(0.65),
           Colors.white.withOpacity(0.0),
         ],
       ).createShader(Rect.fromLTWH(0, 0, size.width, 2));

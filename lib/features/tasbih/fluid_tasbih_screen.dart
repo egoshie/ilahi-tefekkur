@@ -145,7 +145,7 @@ class _FluidTasbihScreenState extends ConsumerState< FluidTasbihScreen >
             .clamp(0.0, 1.0);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(18, 12, 18, 135),
+      padding: const EdgeInsets.fromLTRB(18, 12, 18, 20),
       child: Column(
         children: [
           Row(

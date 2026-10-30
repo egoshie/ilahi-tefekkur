@@ -188,7 +188,6 @@ class _HuzurStoryShareSheetState extends State< HuzurStoryShareSheet > {
       }
     } catch (_) {}
 
-    // Native kanal izin vermezse veya Android ortamındaysa güvenli sistem kaydetme menüsü
     try {
       final tempDir = await getTemporaryDirectory();
       final file = File(
@@ -222,7 +221,7 @@ class _HuzurStoryShareSheetState extends State< HuzurStoryShareSheet > {
         return GlassContainer(
           borderRadius: 34,
           enableBlur: true,
-          blurSigma: 24,
+          blurSigma: 26,
           goldAccentBorder: true,
           padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
           child: ListView(
@@ -260,7 +259,6 @@ class _HuzurStoryShareSheetState extends State< HuzurStoryShareSheet > {
               ),
               const SizedBox(height: 14),
 
-              // 4 Tema Seçici Bar
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 physics: const BouncingScrollPhysics(),
@@ -331,7 +329,6 @@ class _HuzurStoryShareSheetState extends State< HuzurStoryShareSheet > {
               ),
               const SizedBox(height: 16),
 
-              // 9:16 DİKEY PAYLAŞIM KARTI TUVALİ
               Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 310),
@@ -383,7 +380,6 @@ class _HuzurStoryShareSheetState extends State< HuzurStoryShareSheet > {
                               mainAxisSize: MainAxisSize.min,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // Üst Başlık: Huzur Hilal Amblemi + Doğrulama Rozeti
                                 Row(
                                   children: [
                                     Container(
@@ -451,7 +447,6 @@ class _HuzurStoryShareSheetState extends State< HuzurStoryShareSheet > {
                                 ),
                                 const SizedBox(height: 18),
 
-                                // Arapça / Orijinal Metin
                                 if (widget.arabicText.trim().isNotEmpty) ...[
                                   Align(
                                     alignment: Alignment.centerRight,
@@ -471,7 +466,6 @@ class _HuzurStoryShareSheetState extends State< HuzurStoryShareSheet > {
                                   const SizedBox(height: 12),
                                 ],
 
-                                // Türkçe Meal / Anlam
                                 Text(
                                   widget.turkishText,
                                   maxLines: 7,
@@ -485,7 +479,6 @@ class _HuzurStoryShareSheetState extends State< HuzurStoryShareSheet > {
                                 ),
                                 const SizedBox(height: 12),
 
-                                // Sure ve Ayet Referansı
                                 Text(
                                   "— ${widget.reference}",
                                   style: TextStyle(
@@ -502,7 +495,6 @@ class _HuzurStoryShareSheetState extends State< HuzurStoryShareSheet > {
                                 ),
                                 const SizedBox(height: 10),
 
-                                // Alt İmza
                                 Row(
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
@@ -550,7 +542,6 @@ class _HuzurStoryShareSheetState extends State< HuzurStoryShareSheet > {
                   ),
                 ),
 
-              // 1. Instagram Hikâyesi Olarak Paylaş
               GlassContainer(
                 borderRadius: 18,
                 goldAccentBorder: true,
@@ -578,7 +569,6 @@ class _HuzurStoryShareSheetState extends State< HuzurStoryShareSheet > {
               ),
               const SizedBox(height: 10),
 
-              // 2. WhatsApp'ta Paylaş & 3. Fotoğraflar'a Kaydet
               Row(
                 children: [
                   Expanded(

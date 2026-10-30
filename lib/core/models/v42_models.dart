@@ -338,7 +338,7 @@ class LastReadPosition {
 }
 
 class UserProgressState {
-  static const int currentSchemaVersion = 42;
+  static const int currentSchemaVersion = 43;
 
   final int schemaVersion;
   final LastReadPosition? lastRead;

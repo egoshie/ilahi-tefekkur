@@ -1,8 +1,10 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/prayer_service.dart';
+import 'core/services/quran_background_audio_service.dart';
 import 'core/theme/glass_container.dart';
 import 'core/theme/liquid_glass_theme.dart';
 import 'features/dashboard/main_dashboard_screen.dart';
@@ -40,19 +42,22 @@ class HuzurApp extends ConsumerWidget {
   }
 }
 
-class LiquidRootShell extends StatefulWidget {
+class LiquidRootShell extends ConsumerStatefulWidget {
   final LiquidGlassPalette palette;
   const LiquidRootShell({super.key, required this.palette});
 
   @override
-  State< LiquidRootShell > createState() => _LiquidRootShellState();
+  ConsumerState< LiquidRootShell > createState() => _LiquidRootShellState();
 }
 
-class _LiquidRootShellState extends State< LiquidRootShell > {
+class _LiquidRootShellState extends ConsumerState< LiquidRootShell > {
   int _currentIndex = 0;
 
   @override
   Widget build(BuildContext context) {
+    final audioState = ref.watch(quranAudioProvider);
+    final audioNotifier = ref.read(quranAudioProvider.notifier);
+
     final pages = < Widget >[
       MainDashboardScreen(
         onSwitchTab: (idx) => setState(() => _currentIndex = idx),
@@ -63,81 +68,212 @@ class _LiquidRootShellState extends State< LiquidRootShell > {
     ];
 
     return Scaffold(
-      extendBody: true,
+      extendBody: false,
       body: LiquidMeshBackground(
         palette: widget.palette,
         child: SafeArea(
           bottom: false,
-          child: IndexedStack(
-            index: _currentIndex,
-            children: pages,
-          ),
-        ),
-      ),
-      bottomNavigationBar: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
-          child: GlassContainer(
-            borderRadius: 30,
-            enableBlur: true,
-            blurSigma: 22,
-            emeraldGlow: true,
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _buildNavItem(0, "Huzur", BespokeIconType.crescentOrb),
+          child: Column(
+            children: [
+              // Sayfa içerikleri alt barın üstünde biter; asla alt barın altına girip ezilmez!
+              Expanded(
+                child: IndexedStack(
+                  index: _currentIndex,
+                  children: pages,
                 ),
-                Expanded(
-                  child:
-                      _buildNavItem(1, "Kitaplar", BespokeIconType.sacredScroll),
-                ),
-                Expanded(
-                  child: _buildNavItem(
-                      2, "Zikirmatik", BespokeIconType.tasbihRipple),
-                ),
-                Expanded(
-                  child:
-                      _buildNavItem(3, "Kıble & Ses", BespokeIconType.qiblaStar),
-                ),
-                const SizedBox(width: 4),
-                GestureDetector(
-                  onTap: () => LiquidGlassPaywallSheet.show(context),
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: const Color(0xFFFFE082).withOpacity(0.55),
-                        width: 0.9,
-                      ),
+              ),
+
+              // Arka plan Kur'ân tilaveti aktifken görünen Dinamik Mini Oynatıcı
+              if (audioState.hasActiveSession)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 4, 14, 6),
+                  child: GlassContainer(
+                    borderRadius: 22,
+                    emeraldGlow: true,
+                    goldAccentBorder: true,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
                     ),
-                    child: const Column(
-                      mainAxisSize: MainAxisSize.min,
+                    onTap: () => setState(() => _currentIndex = 1),
+                    child: Row(
                       children: [
-                        BespokeVectorIcon(
-                          type: BespokeIconType.crownGem,
-                          color: Color(0xFFFFE082),
-                          size: 17,
+                        LiveSvgAudioVisualizer(
+                          isPlaying: audioState.isPlaying,
+                          color: const Color(0xFF64FFDA),
                         ),
-                        SizedBox(height: 2),
-                        Text(
-                          "Özel",
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFFFFE082),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                "${audioState.activeAyah!.surahName} • ${audioState.activeAyah!.numberInSurah}. Ayet",
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFFFFE082),
+                                ),
+                              ),
+                              const Text(
+                                "Mishary Rashid Al-Afasy • Arka Plan Tilaveti",
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 10.5,
+                                  color: Colors.white70,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () => audioNotifier.skipToPrevious(),
+                          child: const Padding(
+                            padding: EdgeInsets.all(6),
+                            child: BespokeVectorIcon(
+                              type: BespokeIconType.skipPrev,
+                              color: Colors.white70,
+                              size: 16,
+                            ),
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () => audioNotifier.togglePlayPause(),
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF64FFDA).withOpacity(0.22),
+                              shape: BoxShape.circle,
+                            ),
+                            child: BespokeVectorIcon(
+                              type: audioState.isPlaying
+                                  ? BespokeIconType.pauseBars
+                                  : BespokeIconType.playTriangle,
+                              color: const Color(0xFF64FFDA),
+                              size: 15,
+                            ),
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () => audioNotifier.skipToNext(),
+                          child: const Padding(
+                            padding: EdgeInsets.all(6),
+                            child: BespokeVectorIcon(
+                              type: BespokeIconType.skipNext,
+                              color: Colors.white70,
+                              size: 16,
+                            ),
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () => audioNotifier.stop(),
+                          child: const Padding(
+                            padding: EdgeInsets.all(6),
+                            child: BespokeVectorIcon(
+                              type: BespokeIconType.closeCross,
+                              color: Color(0xFFFFE082),
+                              size: 15,
+                            ),
                           ),
                         ),
                       ],
                     ),
                   ),
                 ),
-              ],
-            ),
+
+              // Alt Navigasyon Barı (Güçlü Bulanıklık & Koyu Kristal Zemin ile Korunmuş)
+              ClipRRect(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 35, sigmaY: 35),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          widget.palette.deepCosmicMid.withOpacity(0.88),
+                          widget.palette.deepCosmicStart.withOpacity(0.96),
+                        ],
+                      ),
+                      border: Border(
+                        top: BorderSide(
+                          color: Colors.white.withOpacity(0.16),
+                          width: 0.9,
+                        ),
+                      ),
+                    ),
+                    child: SafeArea(
+                      top: false,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: _buildNavItem(
+                                  0, "Huzur", BespokeIconType.crescentOrb),
+                            ),
+                            Expanded(
+                              child: _buildNavItem(
+                                  1, "Kitaplar", BespokeIconType.sacredScroll),
+                            ),
+                            Expanded(
+                              child: _buildNavItem(
+                                  2, "Zikirmatik", BespokeIconType.tasbihRipple),
+                            ),
+                            Expanded(
+                              child: _buildNavItem(
+                                  3, "Kıble & Ses", BespokeIconType.qiblaStar),
+                            ),
+                            const SizedBox(width: 6),
+                            GestureDetector(
+                              onTap: () => LiquidGlassPaywallSheet.show(context),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 11, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color:
+                                      const Color(0xFFFFE082).withOpacity(0.14),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: const Color(0xFFFFE082)
+                                        .withOpacity(0.65),
+                                    width: 1.0,
+                                  ),
+                                ),
+                                child: const Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    BespokeVectorIcon(
+                                      type: BespokeIconType.crownGem,
+                                      color: Color(0xFFFFE082),
+                                      size: 17,
+                                    ),
+                                    SizedBox(height: 2),
+                                    Text(
+                                      "Özel",
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFFFFE082),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -146,7 +282,7 @@ class _LiquidRootShellState extends State< LiquidRootShell > {
 
   Widget _buildNavItem(int index, String label, BespokeIconType iconType) {
     final selected = _currentIndex == index;
-    final color = selected ? widget.palette.crystalAccent : Colors.white60;
+    final color = selected ? widget.palette.crystalAccent : Colors.white70;
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -158,7 +294,7 @@ class _LiquidRootShellState extends State< LiquidRootShell > {
         duration: const Duration(milliseconds: 160),
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
         decoration: BoxDecoration(
-          color: selected ? Colors.white.withOpacity(0.11) : Colors.transparent,
+          color: selected ? Colors.white.withOpacity(0.12) : Colors.transparent,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(

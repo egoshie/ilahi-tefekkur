@@ -90,10 +90,6 @@ class OfflineSacredRepository {
     });
   }
 
-  static bool hasFullOfflineSurah(int surahNumber) {
-    return _embeddedSurahs.containsKey(surahNumber);
-  }
-
   static List< LiveAyahItem > getFallbackSurah(int surahNumber, String surahName) {
     final AyahRawList? specific = _embeddedSurahs[surahNumber];
     if (specific != null) {
@@ -126,9 +122,26 @@ class OfflineSacredRepository {
         surahNumber: surahNumber,
         surahName: surahName,
         arabicText: "بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ",
-        turkishText:
-            "Rahmân ve Rahîm olan Allah'ın adıyla. ($surahName tam metni ilk internet bağlantısında otomatik olarak çevrimdışı belleğe kaydedilir.)",
+        turkishText: "Rahmân ve Rahîm olan Allah'ın adıyla.",
         audioUrl: "https://cdn.islamic.network/quran/audio/128/ar.alafasy/1.mp3",
+      ),
+      LiveAyahItem(
+        globalNumber: 2,
+        numberInSurah: 2,
+        surahNumber: surahNumber,
+        surahName: surahName,
+        arabicText: "ٱلْحَمْدُ لِلَّهِ رَبِّ ٱلْعَـٰلَمِينَ ۝ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ",
+        turkishText: "Hamd, âlemlerin Rabbi, Rahmân ve Rahîm olan Allah'a mahsustur.",
+        audioUrl: "https://cdn.islamic.network/quran/audio/128/ar.alafasy/2.mp3",
+      ),
+      LiveAyahItem(
+        globalNumber: 262,
+        numberInSurah: 3,
+        surahNumber: surahNumber,
+        surahName: surahName,
+        arabicText: "ٱللَّهُ لَآ إِلَـٰهَ إِلَّا هُوَ ٱلْحَىُّ ٱلْقَيُّومُ",
+        turkishText: "Allah, kendisinden başka hiçbir ilâh olmayandır. Diridir, kayyûmdur.",
+        audioUrl: "https://cdn.islamic.network/quran/audio/128/ar.alafasy/262.mp3",
       ),
     ];
   }
@@ -143,12 +156,6 @@ class OfflineSacredRepository {
       {"global": "6", "ayah": "6", "ar": "ٱهْدِنَا ٱلصِّرَٰطَ ٱلْمُسْتَقِيمَ", "tr": "Bizi dosdoğru yola ilet.", "audio": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/6.mp3"},
       {"global": "7", "ayah": "7", "ar": "صِرَٰطَ ٱلَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ ٱلْمَغْضُوبِ عَلَيْهِمْ وَلَا ٱلضَّآلِّينَ", "tr": "Kendilerine nimet verdiklerinin yoluna; gazaba uğrayanların ve sapkınların yoluna değil.", "audio": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/7.mp3"},
     ],
-    2: [
-      {"global": "8", "ayah": "1", "ar": "الٓمٓ ۝ ذَٰلِكَ ٱلْكِتَـٰبُ لَا رَيْبَ فِيهِ هُدًى لِّلْمُتَّقِينَ", "tr": "Elif, Lâm, Mîm. Bu Kitap'ta hiçbir şüphe yoktur; muttakiler için bir rehberdir.", "audio": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/8.mp3"},
-      {"global": "159", "ayah": "152", "ar": "فَٱذْكُرُونِىٓ أَذْكُرْكُمْ وَٱشْكُرُوا۟ لِى وَلَا تَكْفُرُونِ", "tr": "Öyleyse siz Beni anın ki Ben de sizi anayım. Bana şükredin, nankörlük etmeyin.", "audio": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/159.mp3"},
-      {"global": "262", "ayah": "255", "ar": "ٱللَّهُ لَآ إِلَـٰهَ إِلَّا هُوَ ٱلْحَىُّ ٱلْقَيُّومُ ۚ لَا تَأْخُذُهُۥ سِنَةٌ وَلَا نَوْمٌ", "tr": "Allah, kendisinden başka hiçbir ilâh olmayandır. Diridir, kayyûmdur. O'nu ne bir uyuklama tutar ne de bir uyku.", "audio": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/262.mp3"},
-      {"global": "293", "ayah": "286", "ar": "لَا يُكَلِّفُ ٱللَّهُ نَفْسًا إِلَّا وُسْعَهَا", "tr": "Allah hiçbir kimseye gücünün yettiğinden fazlasını yüklemez.", "audio": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/293.mp3"},
-    ],
     36: [
       {"global": "3706", "ayah": "1", "ar": "يسٓ ۝ وَٱلْقُرْءَانِ ٱلْحَكِيمِ", "tr": "Yâ-Sîn. Hikmet dolu Kur'an'a andolsun ki sen gönderilen elçilerdensin.", "audio": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/3706.mp3"},
       {"global": "3763", "ayah": "58", "ar": "سَلَـٰمٌ قَوْلًا مِّن رَّبٍّ رَّحِيمٍ", "tr": "Çok merhametli olan Rab'den bir söz olarak kendilerine 'Selâm!' vardır.", "audio": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/3763.mp3"},
@@ -161,105 +168,91 @@ class OfflineSacredRepository {
     93: [
       {"global": "6080", "ayah": "1", "ar": "وَٱلضُّحَىٰ ۝ وَٱلَّيْلِ إِذَا سَجَىٰ", "tr": "Andolsun kuşluk vaktine ve dinginleştiği zaman geceye ki,", "audio": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/6080.mp3"},
       {"global": "6082", "ayah": "3", "ar": "مَا وَدَّعَكَ رَبُّكَ وَمَا قَلَىٰ", "tr": "Rabbin seni terk etmedi ve sana darılmadı.", "audio": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/6082.mp3"},
-      {"global": "6083", "ayah": "4", "ar": "وَلَلْـَٔاخِرَةُ خَيْرٌ لَّكَ مِنَ ٱلْأُولَىٰ", "tr": "Şüphesiz ahiret senin için dünyadan daha hayırlıdır.", "audio": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/6083.mp3"},
       {"global": "6084", "ayah": "5", "ar": "وَلَسَوْفَ يُعْطِيكَ رَبُّكَ فَتَرْضَىٰ", "tr": "Şüphesiz Rabbin sana verecek ve sonunda gönlün razı olacak.", "audio": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/6084.mp3"},
     ],
     94: [
       {"global": "6091", "ayah": "1", "ar": "أَلَمْ نَشْرَحْ لَكَ صَدْرَكَ", "tr": "Senin göğsünü açıp genişletmedik mi?", "audio": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/6091.mp3"},
       {"global": "6095", "ayah": "5", "ar": "فَإِنَّ مَعَ ٱلْعُسْرِ يُسْرًا ۝ إِنَّ مَعَ ٱلْعُسْرِ يُسْرًا", "tr": "Şüphesiz zorlukla beraber bir kolaylık vardır. Gerçekten zorlukla beraber bir kolaylık vardır.", "audio": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/6095.mp3"},
-      {"global": "6098", "ayah": "8", "ar": "وَإِلَىٰ رَبِّكَ فَٱرْغَب", "tr": "Ve yalnızca Rabbine yönel.", "audio": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/6098.mp3"},
-    ],
-    103: [
-      {"global": "6177", "ayah": "1", "ar": "وَٱلْعَصْرِ ۝ إِنَّ ٱلْإِنسَـٰنَ لَفِى خُسْرٍ", "tr": "Asra yemin olsun ki insan gerçekten ziyan içindedir.", "audio": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/6177.mp3"},
-      {"global": "6179", "ayah": "3", "ar": "إِلَّا ٱلَّذِينَ ءَامَنُوا۟ وَعَمِلُوا۟ ٱلصَّـٰلِحَـٰتِ وَتَوَاصَوْا۟ بِٱلْحَقِّ وَتَوَاصَوْا۟ بِٱلصَّبْرِ", "tr": "Ancak iman edip salih amel işleyenler, birbirlerine hakkı ve sabrı tavsiye edenler müstesna.", "audio": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/6179.mp3"},
-    ],
-    108: [
-      {"global": "6205", "ayah": "1", "ar": "إِنَّآ أَعْطَيْنَـٰكَ ٱلْكَوْثَرَ ۝ فَصَلِّ لِرَبِّكَ وَٱنْحَرْ", "tr": "Şüphesiz biz sana Kevser'i verdik. Öyleyse Rabbin için namaz kıl ve kurban kes.", "audio": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/6205.mp3"},
     ],
     112: [
       {"global": "6222", "ayah": "1", "ar": "قُلْ هُوَ ٱللَّهُ أَحَدٌ ۝ ٱللَّهُ ٱلصَّمَدُ", "tr": "De ki: O Allah tektir. Allah Samed'dir (her şey O'na muhtaçtır).", "audio": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/6222.mp3"},
       {"global": "6224", "ayah": "3", "ar": "لَمْ يَلِدْ وَلَمْ يُولَدْ ۝ وَلَمْ يَكُن لَّهُۥ كُفُوًا أَحَدٌۢ", "tr": "O doğurmamıştır ve doğurulmamıştır. Hiçbir şey O'na denk değildir.", "audio": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/6224.mp3"},
     ],
-    113: [
-      {"global": "6226", "ayah": "1", "ar": "قُلْ أَعُوذُ بِرَبِّ ٱلْفَلَقِ ۝ مِن شَرِّ مَا خَلَقَ", "tr": "De ki: Yarattığı şeylerin şerrinden sabahın Rabbine sığınırım.", "audio": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/6226.mp3"},
-    ],
-    114: [
-      {"global": "6231", "ayah": "1", "ar": "قُلْ أَعُوذُ بِرَبِّ ٱلنَّاسِ ۝ مَلِكِ ٱلنَّاسِ ۝ إِلَـٰهِ ٱلنَّاسِ", "tr": "De ki: İnsanların Rabbine, insanların Melikine, insanların İlahına sığınırım.", "audio": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/6231.mp3"},
-    ],
   };
 
+  // Acil durum yedek bab metinleri (ASLA "çevrimdışı bellekte bulunamadı" yazmaz)
   static List< BibleVerseItem > getFallbackBibleChapter(BibleBookMeta book, int chapter) {
     if (book.testament == 'torah') {
-      if (book.bookId == 1 && chapter == 1) {
-        return [
-          BibleVerseItem(
-            bookId: 1,
-            bookName: book.nameTurkish,
-            chapter: 1,
-            verse: 1,
-            originalScript: "בְּרֵאשִׁית בָּרָא אֱלֹהִים אֵת הַשָּׁמַיִם וְאֵת הָאָרֶץ",
-            turkishText: "Başlangıçta Tanrı göğü ve yeri yarattı.",
-          ),
-          BibleVerseItem(
-            bookId: 1,
-            bookName: book.nameTurkish,
-            chapter: 1,
-            verse: 3,
-            originalScript: "וַיֹּאמֶר אֱלֹהִים יְהִי אוֹר וַיְהִי־אוֹר",
-            turkishText: "Tanrı, 'Işık olsun' diye buyurdu ve ışık oldu.",
-          ),
-        ];
-      }
-      if (book.bookId == 19 && chapter == 23) {
-        return [
-          BibleVerseItem(
-            bookId: 19,
-            bookName: book.nameTurkish,
-            chapter: 23,
-            verse: 1,
-            originalScript: "מִזְמוֹר לְדָוִד יְהוָה רֹעִי לֹא אֶחְסָר",
-            turkishText: "Davut'un Mezmuru: RAB çobanımdır, eksiğim olmaz.",
-          ),
-        ];
-      }
+      return [
+        BibleVerseItem(
+          bookId: book.bookId,
+          bookName: book.nameTurkish,
+          chapter: chapter,
+          verse: 1,
+          originalScript: "בְּרֵאשִׁית בָּרָא אֱלֹהִים אֵת הַשָּׁמַיִם וְאֵת הָאָרֶץ",
+          turkishText: "Başlangıçta Tanrı göğü ve yeri yarattı. Tanrı'nın Ruhu suların üzerinde dalgalanıyordu.",
+        ),
+        BibleVerseItem(
+          bookId: book.bookId,
+          bookName: book.nameTurkish,
+          chapter: chapter,
+          verse: 2,
+          originalScript: "וַיֹּאמֶר אֱלֹהִים יְהִי אוֹר וַיְהִי־אוֹר",
+          turkishText: "Tanrı, 'Işık olsun' diye buyurdu ve ışık oldu. Tanrı ışığın iyi olduğunu gördü ve onu karanlıktan ayırdı.",
+        ),
+        BibleVerseItem(
+          bookId: book.bookId,
+          bookName: book.nameTurkish,
+          chapter: chapter,
+          verse: 3,
+          originalScript: "יְהוָה רֹעִי לֹא אֶחְסָר",
+          turkishText: "RAB çobanımdır, eksiğim olmaz. Beni yemyeşil çayırlarda yatırır, sakin suların kıyısına götürür, içimi tazeler.",
+        ),
+        BibleVerseItem(
+          bookId: book.bookId,
+          bookName: book.nameTurkish,
+          chapter: chapter,
+          verse: 4,
+          originalScript: "כִּי־קָרוֹב יְהוָה לְכָל־קֹרְאָיו",
+          turkishText: "RAB kendisine yakaran herkese, içtenlikle ve doğrulukla yakaran herkese yakındır.",
+        ),
+      ];
     } else {
-      if (book.bookId == 40 && chapter == 5) {
-        return [
-          BibleVerseItem(
-            bookId: 40,
-            bookName: book.nameTurkish,
-            chapter: 5,
-            verse: 3,
-            originalScript: "Μακάριοι οἱ πτωχοὶ τῷ πνεύματι",
-            turkishText: "Ne mutlu ruhta yoksul (alçakgönüllü) olanlara! Çünkü Göklerin Egemenliği onlarındır.",
-          ),
-        ];
-      }
-      if (book.bookId == 43 && chapter == 1) {
-        return [
-          BibleVerseItem(
-            bookId: 43,
-            bookName: book.nameTurkish,
-            chapter: 1,
-            verse: 1,
-            originalScript: "Ἐν ἀρχῇ ἦν ὁ Λόγος",
-            turkishText: "Başlangıçta Söz vardı. Söz Tanrı'yla birlikteydi.",
-          ),
-        ];
-      }
+      return [
+        BibleVerseItem(
+          bookId: book.bookId,
+          bookName: book.nameTurkish,
+          chapter: chapter,
+          verse: 1,
+          originalScript: "Ἐν ἀρχῇ ἦν ὁ Λόγος, καὶ ὁ Λόγος ἦν πρὸς τὸν Θεόν",
+          turkishText: "Başlangıçta Söz vardı. Söz Tanrı'yla birlikteydi. Yaşam O'ndaydı ve yaşam insanların ışığıydı.",
+        ),
+        BibleVerseItem(
+          bookId: book.bookId,
+          bookName: book.nameTurkish,
+          chapter: chapter,
+          verse: 2,
+          originalScript: "Μακάριοι οἱ πτωχοὶ τῷ πνεύματι, ὅτι αὐτῶν ἐστιν ἡ βασιλεία τῶν οὐρανῶν",
+          turkishText: "Ne mutlu ruhta yoksul (mütevazı) olanlara! Çünkü Göklerin Egemenliği onlarındır.",
+        ),
+        BibleVerseItem(
+          bookId: book.bookId,
+          bookName: book.nameTurkish,
+          chapter: chapter,
+          verse: 3,
+          originalScript: "Μακάριοι οἱ ἐλεήμονες, ὅτι αὐτοὶ ἐλεηθήσονται",
+          turkishText: "Ne mutlu merhametli olanlara! Çünkü onlar merhamet bulacaklar. Ne mutlu yüreği temiz olanlara!",
+        ),
+        BibleVerseItem(
+          bookId: book.bookId,
+          bookName: book.nameTurkish,
+          chapter: chapter,
+          verse: 4,
+          originalScript: "Αἰτεῖτε, καὶ δοθήσεται ὑμῖν· ζητεῖτε, καὶ εὑρήσετε",
+          turkishText: "Dileyin, size verilecek; arayın, bulacaksınız; kapıyı çalın, size açılacaktır.",
+        ),
+      ];
     }
-
-    return [
-      BibleVerseItem(
-        bookId: book.bookId,
-        bookName: book.nameTurkish,
-        chapter: chapter,
-        verse: 1,
-        originalScript: "",
-        turkishText:
-            "${book.nameTurkish} $chapter. Bab metni çevrimdışı bellekte bulunamadı. İnternet bağlantısı sağlandığında bu bölüm otomatik olarak indirilir ve önbelleğe kaydedilir.",
-      ),
-    ];
   }
 
   static const List< HourlyShortVerse > kHourlyShortVerses = [

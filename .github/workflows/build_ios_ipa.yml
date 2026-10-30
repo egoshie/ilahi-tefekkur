@@ -1,49 +1,63 @@
-name: Build Huzur iOS IPA V4.2 Final
+name: Build Huzur iOS IPA V4.3
+
 on:
   push:
-    branches: [ main, master ]
+    branches: [ "main", "master", "feature/huzur-v42" ]
   workflow_dispatch:
+
 jobs:
   build-ipa:
     runs-on: macos-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+
       - name: Setup Flutter SDK
         uses: subosito/flutter-action@v2
         with:
-          channel: stable
+          channel: 'stable'
           cache: true
-      - name: Configure Flutter iOS & Pods
-        run: |
-          flutter pub get
-          flutter build ios --config-only --release --no-codesign
-          cd ios
-          pod install
-      - name: Inject HuzurWidgetExtension into Xcode Project
+
+      - name: Install Flutter Dependencies
+        run: flutter pub get
+
+      - name: Configure Zero-Cycle HuzurWidgetExtension Target
         run: |
           gem install xcodeproj --no-document
-          cd ios
-          ruby fix_and_add_widget.rb
-      - name: Build Runner & WidgetExtension Separately
+          ruby -c ios/fix_and_add_widget.rb
+          ruby ios/fix_and_add_widget.rb
+
+      - name: Build iOS Release App (--no-tree-shake-icons)
         run: |
-          cd ios
-          xcodebuild -workspace Runner.xcworkspace -scheme Runner -configuration Release -sdk iphoneos -derivedDataPath "$PWD/build_runner" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO AD_HOC_CODE_SIGNING_ALLOWED=YES COMPILER_INDEX_STORE_ENABLE=NO
-          xcodebuild -project Runner.xcodeproj -target HuzurWidgetExtension -configuration Release -sdk iphoneos SYMROOT="$PWD/build_widget" OBJROOT="$PWD/build_widget/obj" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO AD_HOC_CODE_SIGNING_ALLOWED=YES COMPILER_INDEX_STORE_ENABLE=NO
-      - name: Embed Widget into Runner.app & Package IPA
+          flutter build ios --release --no-codesign --no-tree-shake-icons
+
+      - name: Build HuzurWidgetExtension via SYMROOT & Bundle into PlugIns
         run: |
-          cd ios
-          RUNNER_APP="$PWD/build_runner/Build/Products/Release-iphoneos/Runner.app"
-          WIDGET_APPEX="$PWD/build_widget/Release-iphoneos/HuzurWidgetExtension.appex"
-          mkdir -p "$RUNNER_APP/PlugIns"
-          cp -r "$WIDGET_APPEX" "$RUNNER_APP/PlugIns/"
+          xcodebuild -project ios/Runner.xcodeproj \
+            -target HuzurWidgetExtension \
+            -configuration Release \
+            -sdk iphoneos \
+            SYMROOT="$(pwd)/build/widget_sym" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+          mkdir -p build/ios/iphoneos/Runner.app/PlugIns
+          cp -R build/widget_sym/Release-iphoneos/HuzurWidgetExtension.appex build/ios/iphoneos/Runner.app/PlugIns/
+          ls -la build/ios/iphoneos/Runner.app/PlugIns
+
+      - name: Package Unsigned IPA
+        run: |
+          cd build/ios/iphoneos
+          rm -rf Payload
           mkdir -p Payload
-          cp -r "$RUNNER_APP" Payload/
-          zip -qq -r Huzur-V4.2-Final.ipa Payload
-          mkdir -p $GITHUB_WORKSPACE/output_ipa
-          mv Huzur-V4.2-Final.ipa $GITHUB_WORKSPACE/output_ipa/Huzur-Release.ipa
+          cp -R Runner.app Payload/
+          zip -r Huzur-V4.3-Release.ipa Payload
+          mkdir -p ../../../output_ipa
+          cp Huzur-V4.3-Release.ipa ../../../output_ipa/Huzur-Release.ipa
+
       - name: Upload Huzur IPA Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Huzur-iOS-V4.2-Final-IPA
+          name: Huzur-iOS-V4.3-Release-IPA
           path: output_ipa/Huzur-Release.ipa

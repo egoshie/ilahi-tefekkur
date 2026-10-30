@@ -61,7 +61,7 @@ class _EsmaulHusnaSheetState extends ConsumerState< EsmaulHusnaSheet > {
         return GlassContainer(
           borderRadius: 34,
           enableBlur: true,
-          blurSigma: 24,
+          blurSigma: 26,
           emeraldGlow: true,
           padding: const EdgeInsets.fromLTRB(18, 14, 18, 20),
           child: Column(
@@ -120,7 +120,6 @@ class _EsmaulHusnaSheetState extends ConsumerState< EsmaulHusnaSheet > {
               ),
               const SizedBox(height: 12),
 
-              // Türkçe Karakter Duyarsız Arama Çubuğu
               GlassContainer(
                 borderRadius: 16,
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
@@ -198,18 +197,13 @@ class _EsmaulHusnaSheetState extends ConsumerState< EsmaulHusnaSheet > {
                             ),
                           ),
                           const SizedBox(height: 10),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                "Zikir Adedi: ${esma.dhikrCount} • Kaynak: ${esma.reference}",
-                                style: TextStyle(
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white.withOpacity(0.65),
-                                ),
-                              ),
-                            ],
+                          Text(
+                            "Zikir Adedi: ${esma.dhikrCount} • Kaynak: ${esma.reference}",
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white.withOpacity(0.65),
+                            ),
                           ),
                           const SizedBox(height: 12),
                           Row(

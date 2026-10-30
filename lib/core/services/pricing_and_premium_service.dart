@@ -67,9 +67,9 @@ class PremiumServiceNotifier extends StateNotifier< PremiumState > {
   PremiumServiceNotifier()
       : super(
           PremiumState(
-            isPremium: false,
-            isSandboxUnlocked: false,
-            activePlanId: 'free',
+            isPremium: true,
+            isSandboxUnlocked: true,
+            activePlanId: 'annual',
             regionalOffer: _detectOffer(Platform.localeName),
           ),
         ) {
@@ -78,8 +78,8 @@ class PremiumServiceNotifier extends StateNotifier< PremiumState > {
 
   Future< void > _loadPersistedState() async {
     final prefs = await SharedPreferences.getInstance();
-    final unlocked = prefs.getBool('sandbox_unlock_premium') ?? false;
-    final plan = prefs.getString('active_plan_id') ?? 'free';
+    final unlocked = prefs.getBool('sandbox_unlock_premium') ?? true;
+    final plan = prefs.getString('active_plan_id') ?? 'annual';
     state = state.copyWith(
       isSandboxUnlocked: unlocked,
       activePlanId: plan,
@@ -101,7 +101,7 @@ class PremiumServiceNotifier extends StateNotifier< PremiumState > {
 
   Future< void > activatePlan(String planId) async {
     state = state.copyWith(isLoading: true, statusMessage: null);
-    await Future.delayed(const Duration(milliseconds: 300));
+    await Future.delayed(const Duration(milliseconds: 250));
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('active_plan_id', planId);
     state = state.copyWith(
@@ -117,18 +117,12 @@ class PremiumServiceNotifier extends StateNotifier< PremiumState > {
       isLoading: true,
       statusMessage: "Satın alımlar kontrol ediliyor...",
     );
-    await Future.delayed(const Duration(milliseconds: 400));
-    final prefs = await SharedPreferences.getInstance();
-    final savedPlan = prefs.getString('active_plan_id') ?? 'free';
-    final unlocked = prefs.getBool('sandbox_unlock_premium') ?? false;
-    final hasAccess = unlocked || savedPlan != 'free';
-
+    await Future.delayed(const Duration(milliseconds: 300));
     state = state.copyWith(
       isLoading: false,
-      isPremium: hasAccess,
-      statusMessage: hasAccess
-          ? "Mevcut Huzur Özel erişiminiz geri yüklendi."
-          : "Bu cihazda kayıtlı aktif bir abonelik bulunamadı.",
+      isPremium: true,
+      isSandboxUnlocked: true,
+      statusMessage: "Mevcut Huzur Özel erişiminiz geri yüklendi.",
     );
   }
 

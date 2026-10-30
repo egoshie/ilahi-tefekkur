@@ -1,15 +1,13 @@
-import 'dart:async';
 import 'dart:ui';
-import 'package:audio_session/audio_session.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:just_audio/just_audio.dart';
 import '../../core/models/v42_models.dart';
 import '../../core/services/database_seeder.dart';
 import '../../core/services/notification_service.dart';
 import '../../core/services/offline_sacred_repository.dart';
 import '../../core/services/pricing_and_premium_service.dart';
+import '../../core/services/quran_background_audio_service.dart';
 import '../../core/services/user_progress_service.dart';
 import '../../core/theme/glass_container.dart';
 import '../../core/theme/liquid_glass_theme.dart';
@@ -32,7 +30,6 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
   SurahMeta? _selectedSurah;
   List< LiveAyahItem > _ayahs = [];
   bool _loadingQuran = false;
-  String? _audioErrorBanner;
 
   late BibleBookMeta _selectedTorahBook;
   int _selectedTorahChapter = 1;
@@ -43,11 +40,6 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
   int _selectedGospelChapter = 1;
   List< BibleVerseItem > _gospelVerses = [];
   bool _loadingGospel = false;
-
-  final AudioPlayer _quranAudioPlayer = AudioPlayer();
-  StreamSubscription< PlayerState >? _playerSub;
-  int? _playingAyahIndex;
-  bool _isPaused = false;
 
   @override
   void initState() {
@@ -61,29 +53,7 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
     _selectedTorahBook = torahBooks.first;
     _selectedGospelBook = gospelBooks.first;
 
-    _setupAudioListener();
     _loadInitialCatalogs();
-  }
-
-  Future< void > _setupAudioListener() async {
-    final session = await AudioSession.instance;
-    await session.configure(const AudioSessionConfiguration.music());
-
-    _playerSub = _quranAudioPlayer.playerStateStream.listen((state) {
-      if (state.processingState == ProcessingState.completed) {
-        if (_playingAyahIndex != null &&
-            _playingAyahIndex! + 1 < _ayahs.length) {
-          _playAyahAtIndex(_playingAyahIndex! + 1);
-        } else {
-          if (mounted) {
-            setState(() {
-              _playingAyahIndex = null;
-              _isPaused = false;
-            });
-          }
-        }
-      }
-    });
   }
 
   Future< void > _loadInitialCatalogs() async {
@@ -102,13 +72,7 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
   }
 
   Future< void > _loadSurahAyahs(int surahNum) async {
-    await _quranAudioPlayer.stop();
-    setState(() {
-      _loadingQuran = true;
-      _playingAyahIndex = null;
-      _isPaused = false;
-      _audioErrorBanner = null;
-    });
+    setState(() => _loadingQuran = true);
     try {
       final ayahs =
           await ref.read(databaseServiceProvider).fetchSurahAyahs(surahNum);
@@ -167,56 +131,8 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
     }
   }
 
-  Future< void > _playAyahAtIndex(int index) async {
-    if (index < 0 || index >= _ayahs.length) return;
-    final ayah = _ayahs[index];
-    setState(() {
-      _playingAyahIndex = index;
-      _isPaused = false;
-      _audioErrorBanner = null;
-    });
-
-    final primaryUrl = ayah.audioUrl.isNotEmpty
-        ? ayah.audioUrl
-        : 'https://cdn.islamic.network/quran/audio/128/ar.alafasy/${ayah.globalNumber}.mp3';
-
-    try {
-      await _quranAudioPlayer.setUrl(primaryUrl);
-      await _quranAudioPlayer.play();
-    } catch (_) {
-      try {
-        final fallbackUrl =
-            'https://cdn.islamic.network/quran/audio/64/ar.alafasy/${ayah.globalNumber}.mp3';
-        await _quranAudioPlayer.setUrl(fallbackUrl);
-        await _quranAudioPlayer.play();
-      } catch (_) {
-        if (mounted) {
-          setState(() {
-            _playingAyahIndex = null;
-            _isPaused = false;
-            _audioErrorBanner =
-                "Ses akışı için internet bağlantısı gereklidir.";
-          });
-        }
-      }
-    }
-  }
-
-  Future< void > _togglePauseOrResume() async {
-    if (_playingAyahIndex == null) return;
-    if (_quranAudioPlayer.playing) {
-      await _quranAudioPlayer.pause();
-      if (mounted) setState(() => _isPaused = true);
-    } else {
-      await _quranAudioPlayer.play();
-      if (mounted) setState(() => _isPaused = false);
-    }
-  }
-
   @override
   void dispose() {
-    _playerSub?.cancel();
-    _quranAudioPlayer.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -256,7 +172,7 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
         !premium.isPremium;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(18, 12, 18, 135),
+      padding: const EdgeInsets.fromLTRB(18, 12, 18, 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -266,12 +182,11 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
           ),
           const SizedBox(height: 4),
           const Text(
-            "Kur'ân-ı Kerîm • Tevrat • İncil • Kaydedilen Ayetler",
+            "Kur'ân-ı Kerîm • Tevrat • İncil • Karşılaştırmalı Kıssalar",
             style: TextStyle(fontSize: 12, color: Colors.white70),
           ),
           const SizedBox(height: 10),
 
-          // Canlı Türkçe Karakter Duyarsız Arama Çubuğu
           GlassContainer(
             borderRadius: 16,
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
@@ -315,20 +230,23 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
           ),
           const SizedBox(height: 10),
 
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            child: Row(
+          // Kesilmeyen Yatay Sekme Barı
+          SizedBox(
+            height: 40,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.only(right: 16),
               children: [
                 _buildTraditionTab("quran", "Kur'ân-ı Kerîm", false),
-                const SizedBox(width: 8),
-                _buildTraditionTab("saved", "Favori & Yer İmi", false),
                 const SizedBox(width: 8),
                 _buildTraditionTab("torah", "Tevrat (39 Kitap)", !premium.isPremium),
                 const SizedBox(width: 8),
                 _buildTraditionTab("gospel", "İncil (27 Kitap)", !premium.isPremium),
                 const SizedBox(width: 8),
                 _buildTraditionTab("cross_ref", "Karşılaştırma", !premium.isPremium),
+                const SizedBox(width: 8),
+                _buildTraditionTab("saved", "Favorilerim", false),
               ],
             ),
           ),
@@ -369,23 +287,24 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
     return GestureDetector(
       onTap: () => setState(() => _selectedTab = id),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
         decoration: BoxDecoration(
           color: selected
-              ? const Color(0xFF64FFDA).withOpacity(0.18)
-              : Colors.white.withOpacity(0.06),
-          borderRadius: BorderRadius.circular(16),
+              ? const Color(0xFF64FFDA).withOpacity(0.22)
+              : Colors.white.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: selected ? const Color(0xFF64FFDA) : Colors.white24,
-            width: 0.9,
+            width: 1.0,
           ),
         ),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               title,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w700,
                 color: selected ? const Color(0xFF64FFDA) : Colors.white,
               ),
@@ -407,13 +326,18 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
   Widget _buildQuranLiveReader() {
     final progress = ref.watch(userProgressProvider);
     final progressNotifier = ref.read(userProgressProvider.notifier);
+    final audioState = ref.watch(quranAudioProvider);
+    final audioNotifier = ref.read(quranAudioProvider.notifier);
+
     final matchedSurahs = _matchingSurahs;
     final ayahsToDisplay = _filteredAyahs;
+    final isCurrentSurahPlaying = audioState.activeAyah != null &&
+        _selectedSurah != null &&
+        audioState.activeAyah!.surahNumber == _selectedSurah!.number;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Arama sorgusu bir sure adıyla eşleşiyorsa (örn: duha, fatiha, yasin, insirah) hızlı geçiş çipleri
         if (matchedSurahs.isNotEmpty) ...[
           SizedBox(
             height: 36,
@@ -434,11 +358,13 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                     _loadSurahAyahs(s.number);
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: const Color(0xFFFFE082).withOpacity(0.18),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFFFE082), width: 0.9),
+                      border:
+                          Border.all(color: const Color(0xFFFFE082), width: 0.9),
                     ),
                     child: Center(
                       child: Text(
@@ -490,47 +416,24 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                   ),
                 ),
               ),
-              if (_playingAyahIndex != null) ...[
-                GestureDetector(
-                  onTap: _togglePauseOrResume,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-                    margin: const EdgeInsets.only(right: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.10),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: BespokeVectorIcon(
-                      type: _isPaused
-                          ? BespokeIconType.playTriangle
-                          : BespokeIconType.pauseBars,
-                      color: const Color(0xFF64FFDA),
-                      size: 13,
-                    ),
-                  ),
-                ),
-              ],
               GestureDetector(
                 onTap: () async {
-                  if (_playingAyahIndex != null) {
-                    await _quranAudioPlayer.stop();
-                    setState(() {
-                      _playingAyahIndex = null;
-                      _isPaused = false;
-                    });
+                  if (isCurrentSurahPlaying) {
+                    await audioNotifier.togglePlayPause();
                   } else if (_ayahs.isNotEmpty) {
-                    _playAyahAtIndex(0);
+                    await audioNotifier.startSurahPlaylist(_ayahs, startIndex: 0);
                   }
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                   decoration: BoxDecoration(
-                    color: _playingAyahIndex != null
-                        ? const Color(0xFFFFE082).withOpacity(0.22)
-                        : const Color(0xFF64FFDA).withOpacity(0.18),
+                    color: isCurrentSurahPlaying && audioState.isPlaying
+                        ? const Color(0xFFFFE082).withOpacity(0.24)
+                        : const Color(0xFF64FFDA).withOpacity(0.20),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: _playingAyahIndex != null
+                      color: isCurrentSurahPlaying && audioState.isPlaying
                           ? const Color(0xFFFFE082)
                           : const Color(0xFF64FFDA),
                       width: 0.9,
@@ -539,17 +442,19 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                   child: Row(
                     children: [
                       BespokeVectorIcon(
-                        type: _playingAyahIndex != null
-                            ? BespokeIconType.stopSquare
+                        type: isCurrentSurahPlaying && audioState.isPlaying
+                            ? BespokeIconType.pauseBars
                             : BespokeIconType.playTriangle,
-                        color: _playingAyahIndex != null
+                        color: isCurrentSurahPlaying && audioState.isPlaying
                             ? const Color(0xFFFFE082)
                             : const Color(0xFF64FFDA),
                         size: 13,
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        _playingAyahIndex != null ? "Durdur" : "Sureyi Dinle",
+                        isCurrentSurahPlaying && audioState.isPlaying
+                            ? "Duraklat"
+                            : "Sureyi Dinle",
                         style: const TextStyle(
                             fontSize: 11, fontWeight: FontWeight.bold),
                       ),
@@ -560,10 +465,10 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
             ],
           ),
         ),
-        if (_audioErrorBanner != null) ...[
+        if (audioState.errorMessage != null) ...[
           const SizedBox(height: 6),
           Text(
-            _audioErrorBanner!,
+            audioState.errorMessage!,
             style: const TextStyle(fontSize: 11.5, color: Color(0xFFFFE082)),
           ),
         ],
@@ -576,12 +481,14 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                 )
               : ListView.separated(
                   physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.only(bottom: 24),
                   itemCount: ayahsToDisplay.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
                     final a = ayahsToDisplay[index];
                     final origIdx = _ayahs.indexOf(a);
-                    final isPlaying = _playingAyahIndex == origIdx;
+                    final isPlaying = audioState.activeAyah?.uniqueKey ==
+                        a.uniqueKey;
                     final isFav = progress.isFavorite(a.uniqueKey);
                     final isBm = progress.isBookmarked(a.uniqueKey);
 
@@ -614,12 +521,11 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                                     Padding(
                                       padding: const EdgeInsets.only(right: 8),
                                       child: LiveSvgAudioVisualizer(
-                                        isPlaying: !_isPaused,
+                                        isPlaying: audioState.isPlaying,
                                       ),
                                     ),
-                                  // Sesli Dinle
                                   _buildActionButton(
-                                    icon: isPlaying && !_isPaused
+                                    icon: isPlaying && audioState.isPlaying
                                         ? BespokeIconType.pauseBars
                                         : BespokeIconType.playTriangle,
                                     color: isPlaying
@@ -627,14 +533,16 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                                         : Colors.white70,
                                     onTap: () {
                                       if (isPlaying) {
-                                        _togglePauseOrResume();
+                                        audioNotifier.togglePlayPause();
                                       } else {
-                                        _playAyahAtIndex(origIdx);
+                                        audioNotifier.startSurahPlaylist(
+                                          _ayahs,
+                                          startIndex: origIdx >= 0 ? origIdx : 0,
+                                        );
                                       }
                                     },
                                   ),
                                   const SizedBox(width: 6),
-                                  // Favori
                                   _buildActionButton(
                                     icon: BespokeIconType.heartFavorite,
                                     color: isFav
@@ -657,7 +565,6 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                                     },
                                   ),
                                   const SizedBox(width: 6),
-                                  // Yer İmi & Kaldığım Yer
                                   _buildActionButton(
                                     icon: BespokeIconType.bookmarkStar,
                                     color: isBm
@@ -688,7 +595,6 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                                     },
                                   ),
                                   const SizedBox(width: 6),
-                                  // Widget Yap
                                   _buildActionButton(
                                     icon: BespokeIconType.widgetSpark,
                                     color: const Color(0xFF64FFDA),
@@ -704,7 +610,6 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                                     },
                                   ),
                                   const SizedBox(width: 6),
-                                  // Paylaş
                                   _buildActionButton(
                                     icon: BespokeIconType.instagramStory,
                                     color: const Color(0xFFFFE082),
@@ -777,6 +682,7 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
 
     return ListView.separated(
       physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.only(bottom: 24),
       itemCount: combined.length,
       separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (context, idx) {
@@ -978,6 +884,7 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                 )
               : ListView.separated(
                   physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.only(bottom: 24),
                   itemCount: verses.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 10),
                   itemBuilder: (context, index) {
@@ -1080,6 +987,7 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
 
     return ListView.separated(
       physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.only(bottom: 24),
       itemCount: topics.length,
       separatorBuilder: (_, __) => const SizedBox(height: 14),
       itemBuilder: (context, index) {
@@ -1185,12 +1093,14 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                         child: TextField(
                           style: const TextStyle(fontSize: 13),
                           decoration: const InputDecoration(
-                            hintText: "Sure adı veya numarası yazın (örn: duha, yasin)...",
+                            hintText:
+                                "Sure adı veya numarası yazın (örn: duha, yasin)...",
                             hintStyle:
                                 TextStyle(color: Colors.white54, fontSize: 12),
                             border: InputBorder.none,
                           ),
-                          onChanged: (v) => setModalState(() => modalSearch = v),
+                          onChanged: (v) =>
+                              setModalState(() => modalSearch = v),
                         ),
                       ),
                       const SizedBox(height: 10),

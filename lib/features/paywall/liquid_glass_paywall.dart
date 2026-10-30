@@ -85,7 +85,8 @@ class _LiquidGlassPaywallSheetState
 
               GlassContainer(
                 emeraldGlow: premium.isSandboxUnlocked,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 borderRadius: 18,
                 child: Row(
                   children: [
@@ -104,7 +105,8 @@ class _LiquidGlassPaywallSheetState
                           SizedBox(height: 2),
                           Text(
                             "Tevrat, İncil ve Karşılaştırmalı Kıssalar erişimini bu cihazda açar.",
-                            style: TextStyle(fontSize: 11, color: Colors.white70),
+                            style:
+                                TextStyle(fontSize: 11, color: Colors.white70),
                           ),
                         ],
                       ),
@@ -119,11 +121,16 @@ class _LiquidGlassPaywallSheetState
               ),
               const SizedBox(height: 16),
 
-              _buildFeatureRow("Tevrat (39 Kitap) ve İncil (27 Kitap) Tam Külliyat"),
-              _buildFeatureRow("15 Büyük Kıssada 3'lü Karşılaştırmalı İnceleme"),
-              _buildFeatureRow("Çevrimdışı Meditatif Ambiyans Ses Mikseri"),
-              _buildFeatureRow("Kilit Ekranı Geniş Ayet Kartı & Hikâye Stüdyosu"),
-              _buildFeatureRow("Sınırsız Zikirmatik & 99 Esmaül Hüsna Rehberi"),
+              _buildFeatureRow(
+                  "Tevrat (39 Kitap) ve İncil (27 Kitap) Canlı Külliyat"),
+              _buildFeatureRow(
+                  "15 Büyük Kıssada 3'lü Karşılaştırmalı İnceleme"),
+              _buildFeatureRow(
+                  "Arka Plan Kur'ân Tilaveti & Dynamic Island Medya"),
+              _buildFeatureRow(
+                  "Kilit Ekranı Geniş Ayet Kartı & Hikâye Stüdyosu"),
+              _buildFeatureRow(
+                  "Sınırsız Zikirmatik & 99 Esmaül Hüsna Rehberi"),
               const SizedBox(height: 18),
 
               _buildPlanCard(
@@ -138,7 +145,8 @@ class _LiquidGlassPaywallSheetState
                 id: 'annual',
                 title: "Yıllık Huzur Planı",
                 price: offer.annualPrice,
-                subtitle: "${offer.annualMonthlyEquivalent} • 7 Gün Ücretsiz Deneme",
+                subtitle:
+                    "${offer.annualMonthlyEquivalent} • 7 Gün Ücretsiz Deneme",
                 badge: "EN ÇOK TERCİH EDİLEN",
               ),
               const SizedBox(height: 12),

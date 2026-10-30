@@ -21,7 +21,7 @@ class DatabaseService {
 
   Future< Database > _initDatabase() async {
     final dbPath = await getDatabasesPath();
-    final path = join(dbPath, 'ilahi_tefekkur_v3_master.db');
+    final path = join(dbPath, 'huzur_v43_live_cache.db');
 
     return openDatabase(
       path,
@@ -38,14 +38,6 @@ class DatabaseService {
           CREATE TABLE cached_bible_chapters (
             cache_key TEXT PRIMARY KEY,
             payload TEXT
-          )
-        ''');
-
-        await db.execute('''
-          CREATE TABLE verse_notes (
-            verse_key TEXT PRIMARY KEY,
-            note TEXT,
-            is_bookmarked INTEGER DEFAULT 1
           )
         ''');
 
@@ -120,10 +112,11 @@ class DatabaseService {
         }
       }
 
+      // 1. Birincil Canlı API: AlQuran Cloud (Arapça Hat + Diyanet Meal + Alafasy MP3)
       final url =
           'https://api.alquran.cloud/v1/surah/$surahNumber/editions/quran-uthmani,tr.diyanet,ar.alafasy';
       final res =
-          await http.get(Uri.parse(url)).timeout(const Duration(seconds: 8));
+          await http.get(Uri.parse(url)).timeout(const Duration(seconds: 12));
 
       if (res.statusCode == 200) {
         final decoded = jsonDecode(res.body) as Map< String, dynamic >;
@@ -170,6 +163,47 @@ class DatabaseService {
           );
           return result;
         }
+      }
+    } catch (_) {}
+
+    // 2. İkincil Canlı API: Quran.com V4
+    try {
+      final resAr = await http
+          .get(Uri.parse(
+              'https://api.quran.com/api/v4/quran/verses/uthmani?chapter_number=$surahNumber'))
+          .timeout(const Duration(seconds: 10));
+      final resTr = await http
+          .get(Uri.parse(
+              'https://api.quran.com/api/v4/quran/translations/77?chapter_number=$surahNumber'))
+          .timeout(const Duration(seconds: 10));
+
+      if (resAr.statusCode == 200 && resTr.statusCode == 200) {
+        final versesAr = jsonDecode(resAr.body)['verses'] as List< dynamic >;
+        final versesTr =
+            jsonDecode(resTr.body)['translations'] as List< dynamic >;
+        final List< LiveAyahItem > backup = [];
+        for (int i = 0; i < versesAr.length; i++) {
+          final arObj = versesAr[i] as Map< String, dynamic >;
+          final trObj = (i < versesTr.length)
+              ? (versesTr[i] as Map< String, dynamic >)
+              : < String, dynamic >{};
+          final id = int.tryParse(arObj['id'].toString()) ?? (i + 1);
+          backup.add(
+            LiveAyahItem(
+              globalNumber: id,
+              numberInSurah: i + 1,
+              surahNumber: surahNumber,
+              surahName: trSurahTitle,
+              arabicText: (arObj['text_uthmani'] ?? '').toString(),
+              turkishText: (trObj['text'] ?? '')
+                  .toString()
+                  .replaceAll(RegExp('<' '[^>]*>'), ''),
+              audioUrl:
+                  'https://cdn.islamic.network/quran/audio/128/ar.alafasy/$id.mp3',
+            ),
+          );
+        }
+        if (backup.isNotEmpty) return backup;
       }
     } catch (_) {}
 
@@ -245,11 +279,13 @@ class DatabaseService {
     BibleBookMeta(bookId: 66, testament: 'gospel', nameTurkish: 'Vahiy (Esinleme)', sefariaName: 'Revelation', totalChapters: 22),
   ];
 
+  // %100 CANLI MULTI-API TEVRAT & İNCİL GETİRİCİ (bolls.life -> Sefaria -> Bible-API)
   Future< List< BibleVerseItem > > fetchBibleChapter(
       BibleBookMeta book, int chapter) async {
+    final db = await database;
+    final key = '${book.bookId}_$chapter';
+
     try {
-      final db = await database;
-      final key = '${book.bookId}_$chapter';
       final cached = await db.query(
         'cached_bible_chapters',
         where: 'cache_key = ?',
@@ -273,25 +309,122 @@ class DatabaseService {
           }).toList();
         }
       }
+    } catch (_) {}
 
-      final trUrl =
-          'https://bolls.life/get-text/TCL02/${book.bookId}/$chapter/';
-      final trRes =
-          await http.get(Uri.parse(trUrl)).timeout(const Duration(seconds: 7));
+    final headers = < String, String >{
+      'Accept': 'application/json',
+      'User-Agent': 'HuzurApp/4.3 (iOS; Flutter)',
+    };
 
-      if (trRes.statusCode == 200) {
-        final decodedBody = jsonDecode(trRes.body);
-        if (decodedBody is List && decodedBody.isNotEmpty) {
+    // 1. Birincil Canlı API: Bolls.life TCL02 (Türkçe Kutsal Kitap)
+    for (final endpoint in [
+      'https://bolls.life/get-text/TCL02/${book.bookId}/$chapter/',
+      'https://bolls.life/get-chapter/TCL02/${book.bookId}/$chapter/',
+    ]) {
+      try {
+        final trRes = await http
+            .get(Uri.parse(endpoint), headers: headers)
+            .timeout(const Duration(seconds: 12));
+
+        if (trRes.statusCode == 200) {
+          final decodedBody = jsonDecode(utf8.decode(trRes.bodyBytes));
+          if (decodedBody is List && decodedBody.isNotEmpty) {
+            final List< BibleVerseItem > verses = [];
+            for (int i = 0; i < decodedBody.length; i++) {
+              final item = Map< String, dynamic >.from(decodedBody[i] as Map);
+              final vNum = int.tryParse(item['verse'].toString()) ?? (i + 1);
+              final cleanTr = (item['text'] ?? '')
+                  .toString()
+                  .replaceAll(RegExp('<' '[^>]*>'), '')
+                  .trim();
+
+              if (cleanTr.isNotEmpty) {
+                verses.add(
+                  BibleVerseItem(
+                    bookId: book.bookId,
+                    bookName: book.nameTurkish,
+                    chapter: chapter,
+                    verse: vNum,
+                    originalScript: '',
+                    turkishText: cleanTr,
+                  ),
+                );
+              }
+            }
+
+            if (verses.isNotEmpty) {
+              await _cacheBibleVerses(db, key, verses);
+              return verses;
+            }
+          }
+        }
+      } catch (_) {}
+    }
+
+    // 2. İkincil Canlı API: Sefaria API
+    try {
+      final sefUrl =
+          'https://www.sefaria.org/api/texts/${book.sefariaName}.$chapter?context=0';
+      final sefRes = await http
+          .get(Uri.parse(sefUrl), headers: headers)
+          .timeout(const Duration(seconds: 10));
+      if (sefRes.statusCode == 200) {
+        final sefMap =
+            jsonDecode(utf8.decode(sefRes.bodyBytes)) as Map< String, dynamic >;
+        final textList = sefMap['text'];
+        final heList = sefMap['he'];
+        if (textList is List && textList.isNotEmpty) {
           final List< BibleVerseItem > verses = [];
-          for (int i = 0; i < decodedBody.length; i++) {
-            final item = Map< String, dynamic >.from(decodedBody[i] as Map);
-            final vNum = int.tryParse(item['verse'].toString()) ?? (i + 1);
-            final cleanTr = (item['text'] ?? '')
+          for (int i = 0; i < textList.length; i++) {
+            final cleanText = textList[i]
                 .toString()
                 .replaceAll(RegExp('<' '[^>]*>'), '')
                 .trim();
+            final orig = (heList is List && i < heList.length)
+                ? heList[i]
+                    .toString()
+                    .replaceAll(RegExp('<' '[^>]*>'), '')
+                    .trim()
+                : '';
+            if (cleanText.isNotEmpty) {
+              verses.add(
+                BibleVerseItem(
+                  bookId: book.bookId,
+                  bookName: book.nameTurkish,
+                  chapter: chapter,
+                  verse: i + 1,
+                  originalScript: orig,
+                  turkishText: cleanText,
+                ),
+              );
+            }
+          }
+          if (verses.isNotEmpty) {
+            await _cacheBibleVerses(db, key, verses);
+            return verses;
+          }
+        }
+      }
+    } catch (_) {}
 
-            if (cleanTr.isNotEmpty) {
+    // 3. Üçüncül Canlı API: bible-api.com
+    try {
+      final cleanBookName = book.sefariaName.replaceAll('_', '+');
+      final bUrl = 'https://bible-api.com/$cleanBookName+$chapter';
+      final bRes = await http
+          .get(Uri.parse(bUrl), headers: headers)
+          .timeout(const Duration(seconds: 10));
+      if (bRes.statusCode == 200) {
+        final bMap =
+            jsonDecode(utf8.decode(bRes.bodyBytes)) as Map< String, dynamic >;
+        final vList = bMap['verses'];
+        if (vList is List && vList.isNotEmpty) {
+          final List< BibleVerseItem > verses = [];
+          for (int i = 0; i < vList.length; i++) {
+            final row = Map< String, dynamic >.from(vList[i] as Map);
+            final vNum = int.tryParse(row['verse'].toString()) ?? (i + 1);
+            final txt = (row['text'] ?? '').toString().trim();
+            if (txt.isNotEmpty) {
               verses.add(
                 BibleVerseItem(
                   bookId: book.bookId,
@@ -299,32 +432,13 @@ class DatabaseService {
                   chapter: chapter,
                   verse: vNum,
                   originalScript: '',
-                  turkishText: cleanTr,
+                  turkishText: txt,
                 ),
               );
             }
           }
-
           if (verses.isNotEmpty) {
-            await db.insert(
-              'cached_bible_chapters',
-              {
-                'cache_key': key,
-                'payload': jsonEncode(
-                  verses
-                      .map((v) => {
-                            'bookId': v.bookId,
-                            'bookName': v.bookName,
-                            'chapter': v.chapter,
-                            'verse': v.verse,
-                            'originalScript': v.originalScript,
-                            'turkishText': v.turkishText,
-                          })
-                      .toList(),
-                ),
-              },
-              conflictAlgorithm: ConflictAlgorithm.replace,
-            );
+            await _cacheBibleVerses(db, key, verses);
             return verses;
           }
         }
@@ -332,6 +446,34 @@ class DatabaseService {
     } catch (_) {}
 
     return OfflineSacredRepository.getFallbackBibleChapter(book, chapter);
+  }
+
+  Future< void > _cacheBibleVerses(
+    Database db,
+    String key,
+    List< BibleVerseItem > verses,
+  ) async {
+    try {
+      await db.insert(
+        'cached_bible_chapters',
+        {
+          'cache_key': key,
+          'payload': jsonEncode(
+            verses
+                .map((v) => {
+                      'bookId': v.bookId,
+                      'bookName': v.bookName,
+                      'chapter': v.chapter,
+                      'verse': v.verse,
+                      'originalScript': v.originalScript,
+                      'turkishText': v.turkishText,
+                    })
+                .toList(),
+          ),
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    } catch (_) {}
   }
 
   Future< List< EsmaulHusnaItem > > fetchEsmaulHusna() async {

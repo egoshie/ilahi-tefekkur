@@ -75,7 +75,7 @@ class _QiblaAndToolsScreenState extends ConsumerState< QiblaAndToolsScreen > {
 
     return ListView(
       physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(18, 12, 18, 138),
+      padding: const EdgeInsets.fromLTRB(18, 12, 18, 32),
       children: [
         const Text(
           "Kıble, Ambiyans Mikseri & İbadet Çetelesi",
@@ -83,7 +83,6 @@ class _QiblaAndToolsScreenState extends ConsumerState< QiblaAndToolsScreen > {
         ),
         const SizedBox(height: 14),
 
-        // 1. Vektörel Kıble Pusulası & Kalibrasyon
         GlassContainer(
           borderRadius: 28,
           goldAccentBorder: true,
@@ -158,7 +157,6 @@ class _QiblaAndToolsScreenState extends ConsumerState< QiblaAndToolsScreen > {
         ),
         const SizedBox(height: 16),
 
-        // 2. Çevrimdışı WAV Ambiyans Ses Mikseri
         GlassContainer(
           borderRadius: 28,
           emeraldGlow: true,
@@ -188,7 +186,7 @@ class _QiblaAndToolsScreenState extends ConsumerState< QiblaAndToolsScreen > {
               ),
               const SizedBox(height: 4),
               const Text(
-                "Çevrimdışı çalışan döngüsel meditatif ses katmanları",
+                "Arka planda kesintisiz çalışan döngüsel meditatif ses katmanları",
                 style: TextStyle(fontSize: 11, color: Colors.white70),
               ),
               const SizedBox(height: 12),
@@ -290,7 +288,6 @@ class _QiblaAndToolsScreenState extends ConsumerState< QiblaAndToolsScreen > {
         ),
         const SizedBox(height: 16),
 
-        // 3. Kaza Namazı & Orucu Takibi
         GlassContainer(
           borderRadius: 28,
           goldAccentBorder: true,
@@ -386,7 +383,6 @@ class _QiblaAndToolsScreenState extends ConsumerState< QiblaAndToolsScreen > {
         ),
         const SizedBox(height: 16),
 
-        // 4. 30 Cüz Hatim Çizelgesi
         GlassContainer(
           borderRadius: 28,
           padding: const EdgeInsets.all(18),

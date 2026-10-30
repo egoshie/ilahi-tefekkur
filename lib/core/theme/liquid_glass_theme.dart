@@ -1,7 +1,9 @@
 import 'dart:math' as math;
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'huzur_vector_icons.dart';
+
+export 'huzur_vector_icons.dart';
 
 enum PrayerPeriod { imsak, gunes, ogle, ikindi, aksam, yatsi }
 
@@ -32,21 +34,21 @@ class LiquidGlassPalette {
     switch (period) {
       case PrayerPeriod.imsak:
         return const LiquidGlassPalette(
-          deepCosmicStart: Color(0xFF030914),
-          deepCosmicMid: Color(0xFF071B2E),
-          deepCosmicEnd: Color(0xFF0A2838),
+          deepCosmicStart: Color(0xFF040C1C),
+          deepCosmicMid: Color(0xFF0A243C),
+          deepCosmicEnd: Color(0xFF0F364C),
           auroraPrimary: Color(0xFF64FFDA),
           auroraSecondary: Color(0xFF40C4FF),
-          crystalAccent: Color(0xFF80CBC4),
+          crystalAccent: Color(0xFF80FFE5),
           specularHighlight: Color(0xFFE0F7FA),
           periodTitle: "Seher Vakti",
           spiritualSubtitle: "Dingin seher serinliği",
         );
       case PrayerPeriod.gunes:
         return const LiquidGlassPalette(
-          deepCosmicStart: Color(0xFF040B18),
-          deepCosmicMid: Color(0xFF092230),
-          deepCosmicEnd: Color(0xFF0F313A),
+          deepCosmicStart: Color(0xFF061022),
+          deepCosmicMid: Color(0xFF0D2C3E),
+          deepCosmicEnd: Color(0xFF14404A),
           auroraPrimary: Color(0xFFFFD54F),
           auroraSecondary: Color(0xFF64FFDA),
           crystalAccent: Color(0xFFFFE082),
@@ -56,9 +58,9 @@ class LiquidGlassPalette {
         );
       case PrayerPeriod.ogle:
         return const LiquidGlassPalette(
-          deepCosmicStart: Color(0xFF030A14),
-          deepCosmicMid: Color(0xFF07222B),
-          deepCosmicEnd: Color(0xFF0A323A),
+          deepCosmicStart: Color(0xFF04101E),
+          deepCosmicMid: Color(0xFF0A2C38),
+          deepCosmicEnd: Color(0xFF10424C),
           auroraPrimary: Color(0xFF64FFDA),
           auroraSecondary: Color(0xFF18FFFF),
           crystalAccent: Color(0xFF64FFDA),
@@ -68,9 +70,9 @@ class LiquidGlassPalette {
         );
       case PrayerPeriod.ikindi:
         return const LiquidGlassPalette(
-          deepCosmicStart: Color(0xFF040914),
-          deepCosmicMid: Color(0xFF081E28),
-          deepCosmicEnd: Color(0xFF0C2B34),
+          deepCosmicStart: Color(0xFF060E1E),
+          deepCosmicMid: Color(0xFF0D2634),
+          deepCosmicEnd: Color(0xFF143844),
           auroraPrimary: Color(0xFFFFD54F),
           auroraSecondary: Color(0xFF64FFDA),
           crystalAccent: Color(0xFFFFE082),
@@ -80,9 +82,9 @@ class LiquidGlassPalette {
         );
       case PrayerPeriod.aksam:
         return const LiquidGlassPalette(
-          deepCosmicStart: Color(0xFF040814),
-          deepCosmicMid: Color(0xFF091B29),
-          deepCosmicEnd: Color(0xFF0E2933),
+          deepCosmicStart: Color(0xFF070B1C),
+          deepCosmicMid: Color(0xFF112336),
+          deepCosmicEnd: Color(0xFF183644),
           auroraPrimary: Color(0xFFFFAB40),
           auroraSecondary: Color(0xFF64FFDA),
           crystalAccent: Color(0xFFFFD180),
@@ -92,11 +94,11 @@ class LiquidGlassPalette {
         );
       case PrayerPeriod.yatsi:
         return const LiquidGlassPalette(
-          deepCosmicStart: Color(0xFF030914),
-          deepCosmicMid: Color(0xFF071E26),
-          deepCosmicEnd: Color(0xFF0A2E36),
+          deepCosmicStart: Color(0xFF030B18),
+          deepCosmicMid: Color(0xFF092430),
+          deepCosmicEnd: Color(0xFF0E3842),
           auroraPrimary: Color(0xFF64FFDA),
-          auroraSecondary: Color(0xFF00B0FF),
+          auroraSecondary: Color(0xFF00E5FF),
           crystalAccent: Color(0xFF64FFDA),
           specularHighlight: Color(0xFFB2DFDB),
           periodTitle: "Gece Vakti",
@@ -149,7 +151,7 @@ class _LiquidMeshBackgroundState extends State< LiquidMeshBackground >
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 28),
+      duration: const Duration(seconds: 24),
     )..repeat();
   }
 
@@ -207,43 +209,43 @@ class _AuroraCosmicPainter extends CustomPainter {
           palette.deepCosmicMid,
           palette.deepCosmicEnd,
         ],
-        stops: const [0.0, 0.55, 1.0],
+        stops: const [0.0, 0.52, 1.0],
       ).createShader(rect);
     canvas.drawRect(rect, bgPaint);
 
     final angle = progress * 2 * math.pi;
 
     final center1 = Offset(
-      size.width * (0.25 + 0.15 * math.sin(angle)),
-      size.height * (0.18 + 0.08 * math.cos(angle * 1.1)),
+      size.width * (0.24 + 0.16 * math.sin(angle)),
+      size.height * (0.18 + 0.09 * math.cos(angle * 1.1)),
     );
     _drawSilkyAurora(
       canvas,
       center1,
-      size.width * 0.70,
-      palette.auroraPrimary.withOpacity(0.15),
+      size.width * 0.78,
+      palette.auroraPrimary.withOpacity(0.24),
     );
 
     final center2 = Offset(
-      size.width * (0.76 + 0.13 * math.cos(angle * 0.8)),
-      size.height * (0.48 + 0.10 * math.sin(angle * 1.2)),
+      size.width * (0.78 + 0.14 * math.cos(angle * 0.8)),
+      size.height * (0.46 + 0.10 * math.sin(angle * 1.2)),
     );
     _drawSilkyAurora(
       canvas,
       center2,
-      size.width * 0.65,
-      palette.auroraSecondary.withOpacity(0.12),
+      size.width * 0.72,
+      palette.auroraSecondary.withOpacity(0.20),
     );
 
     final center3 = Offset(
-      size.width * (0.42 + 0.16 * math.sin(angle * 0.9 + 1.4)),
-      size.height * (0.82 + 0.07 * math.cos(angle)),
+      size.width * (0.40 + 0.18 * math.sin(angle * 0.9 + 1.4)),
+      size.height * (0.80 + 0.08 * math.cos(angle)),
     );
     _drawSilkyAurora(
       canvas,
       center3,
-      size.width * 0.72,
-      palette.crystalAccent.withOpacity(0.10),
+      size.width * 0.76,
+      const Color(0xFFFFE082).withOpacity(0.14),
     );
   }
 
@@ -257,10 +259,10 @@ class _AuroraCosmicPainter extends CustomPainter {
       ..shader = RadialGradient(
         colors: [
           color,
-          color.withOpacity(0.04),
+          color.withOpacity(0.06),
           Colors.transparent,
         ],
-        stops: const [0.0, 0.52, 1.0],
+        stops: const [0.0, 0.55, 1.0],
       ).createShader(Rect.fromCircle(center: center, radius: radius));
     canvas.drawCircle(center, radius, paint);
   }
@@ -268,113 +270,6 @@ class _AuroraCosmicPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _AuroraCosmicPainter oldDelegate) {
     return oldDelegate.progress != progress || oldDelegate.palette != palette;
-  }
-}
-
-enum BespokeIconType {
-  crescentOrb,
-  sacredScroll,
-  tasbihRipple,
-  qiblaStar,
-  crownGem,
-  playTriangle,
-  stopSquare,
-  pauseBars,
-  lockShield,
-  bookmarkStar,
-  heartFavorite,
-  widgetSpark,
-  searchLens,
-  audioWave,
-  gpsTarget,
-  shareCard,
-  checkBadge,
-  plusCircle,
-  minusCircle,
-  refreshSpark,
-  expandFrame,
-  instagramStory,
-  whatsappShare,
-  downloadCard,
-  verifiedSeal,
-  esmaGrid,
-}
-
-class BespokeVectorIcon extends StatelessWidget {
-  final BespokeIconType type;
-  final Color color;
-  final double size;
-
-  const BespokeVectorIcon({
-    super.key,
-    required this.type,
-    required this.color,
-    this.size = 22,
-  });
-
-  IconData _resolveIconData() {
-    switch (type) {
-      case BespokeIconType.crescentOrb:
-        return CupertinoIcons.moon_stars_fill;
-      case BespokeIconType.sacredScroll:
-        return CupertinoIcons.book_fill;
-      case BespokeIconType.tasbihRipple:
-        return CupertinoIcons.circle_grid_hex_fill;
-      case BespokeIconType.qiblaStar:
-        return CupertinoIcons.compass_fill;
-      case BespokeIconType.crownGem:
-        return CupertinoIcons.sparkles;
-      case BespokeIconType.playTriangle:
-        return CupertinoIcons.play_arrow_solid;
-      case BespokeIconType.stopSquare:
-        return CupertinoIcons.stop_fill;
-      case BespokeIconType.pauseBars:
-        return CupertinoIcons.pause_fill;
-      case BespokeIconType.lockShield:
-        return CupertinoIcons.lock_shield_fill;
-      case BespokeIconType.bookmarkStar:
-        return CupertinoIcons.bookmark_fill;
-      case BespokeIconType.heartFavorite:
-        return CupertinoIcons.heart_fill;
-      case BespokeIconType.widgetSpark:
-        return CupertinoIcons.square_grid_2x2_fill;
-      case BespokeIconType.searchLens:
-        return CupertinoIcons.search;
-      case BespokeIconType.audioWave:
-        return CupertinoIcons.waveform;
-      case BespokeIconType.gpsTarget:
-        return CupertinoIcons.location_fill;
-      case BespokeIconType.shareCard:
-        return CupertinoIcons.share;
-      case BespokeIconType.checkBadge:
-      case BespokeIconType.verifiedSeal:
-        return CupertinoIcons.checkmark_seal_fill;
-      case BespokeIconType.plusCircle:
-        return CupertinoIcons.add_circled;
-      case BespokeIconType.minusCircle:
-        return CupertinoIcons.minus_circled;
-      case BespokeIconType.refreshSpark:
-        return CupertinoIcons.arrow_2_circlepath;
-      case BespokeIconType.expandFrame:
-        return CupertinoIcons.fullscreen;
-      case BespokeIconType.instagramStory:
-        return CupertinoIcons.camera_viewfinder;
-      case BespokeIconType.whatsappShare:
-        return CupertinoIcons.paperplane_fill;
-      case BespokeIconType.downloadCard:
-        return CupertinoIcons.arrow_down_to_line;
-      case BespokeIconType.esmaGrid:
-        return CupertinoIcons.sparkles;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Icon(
-      _resolveIconData(),
-      color: color,
-      size: size,
-    );
   }
 }
 
@@ -401,7 +296,7 @@ class _LiveSvgAudioVisualizerState extends State< LiveSvgAudioVisualizer >
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 650),
+      duration: const Duration(milliseconds: 620),
     );
     if (widget.isPlaying) {
       _controller.repeat();

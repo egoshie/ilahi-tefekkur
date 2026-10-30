@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../core/models/v42_models.dart';
 import '../../core/services/notification_service.dart';
 import '../../core/services/prayer_service.dart';
 import '../../core/services/user_progress_service.dart';
@@ -110,9 +109,8 @@ class _MainDashboardScreenState extends ConsumerState< MainDashboardScreen >
 
     return ListView(
       physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(18, 14, 18, 138),
+      padding: const EdgeInsets.fromLTRB(18, 14, 18, 32),
       children: [
-        // 1. Üst Başlık: Huzur & Şehir / Hicri Tarih + Huzur Özel
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -137,7 +135,7 @@ class _MainDashboardScreenState extends ConsumerState< MainDashboardScreen >
                     style: TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w500,
-                      color: Colors.white.withOpacity(0.75),
+                      color: Colors.white.withOpacity(0.78),
                     ),
                   ),
                 ],
@@ -173,7 +171,6 @@ class _MainDashboardScreenState extends ConsumerState< MainDashboardScreen >
         ),
         const SizedBox(height: 16),
 
-        // 2. Kristal Dairesel Vakit Sayacı ve 6 Vakit Çizelgesi
         GlassContainer(
           borderRadius: 32,
           emeraldGlow: true,
@@ -202,7 +199,7 @@ class _MainDashboardScreenState extends ConsumerState< MainDashboardScreen >
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,
-                                  color: Colors.white.withOpacity(0.78),
+                                  color: Colors.white.withOpacity(0.82),
                                 ),
                               ),
                               const SizedBox(height: 6),
@@ -221,14 +218,14 @@ class _MainDashboardScreenState extends ConsumerState< MainDashboardScreen >
                                   vertical: 3,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.08),
+                                  color: Colors.white.withOpacity(0.10),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Text(
                                   palette.periodTitle,
                                   style: TextStyle(
                                     fontSize: 11,
-                                    fontWeight: FontWeight.w600,
+                                    fontWeight: FontWeight.w700,
                                     color: palette.crystalAccent,
                                   ),
                                 ),
@@ -357,7 +354,6 @@ class _MainDashboardScreenState extends ConsumerState< MainDashboardScreen >
         ),
         const SizedBox(height: 16),
 
-        // 3. Günün İlhamı / Saatlik Huzur Ayeti Kartı
         GlassContainer(
           borderRadius: 30,
           goldAccentBorder: true,
@@ -541,7 +537,6 @@ class _MainDashboardScreenState extends ConsumerState< MainDashboardScreen >
         ),
         const SizedBox(height: 16),
 
-        // 4. Hızlı Erişim Alanı: 99 Esmaül Hüsna & Kutsal Metinler / Kaldığım Yer
         Row(
           children: [
             Expanded(
@@ -656,7 +651,6 @@ class _MainDashboardScreenState extends ConsumerState< MainDashboardScreen >
         ),
         const SizedBox(height: 16),
 
-        // 5. Vakit Atmosferi (Taşma yapmayan yatay kaydırmalı bar)
         GlassContainer(
           borderRadius: 24,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -707,14 +701,14 @@ class _MainDashboardScreenState extends ConsumerState< MainDashboardScreen >
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
         color: isActive
-            ? Colors.white.withOpacity(0.14)
-            : Colors.white.withOpacity(0.03),
+            ? Colors.white.withOpacity(0.16)
+            : Colors.white.withOpacity(0.04),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: isActive
-              ? palette.crystalAccent.withOpacity(0.75)
-              : Colors.white.withOpacity(0.10),
-          width: 0.9,
+              ? palette.crystalAccent.withOpacity(0.85)
+              : Colors.white.withOpacity(0.12),
+          width: 1.0,
         ),
       ),
       child: Column(
@@ -752,11 +746,11 @@ class _MainDashboardScreenState extends ConsumerState< MainDashboardScreen >
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.07),
+            color: Colors.white.withOpacity(0.08),
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: Colors.white.withOpacity(0.18),
-              width: 0.8,
+              color: Colors.white.withOpacity(0.20),
+              width: 0.9,
             ),
           ),
           child: Text(
@@ -919,8 +913,8 @@ class _CrystalOrbGaugePainter extends CustomPainter {
         center: const Alignment(-0.35, -0.45),
         radius: 1.1,
         colors: [
-          Colors.white.withOpacity(0.14),
-          Colors.white.withOpacity(0.03),
+          Colors.white.withOpacity(0.18),
+          Colors.white.withOpacity(0.04),
           Colors.transparent,
         ],
       ).createShader(Rect.fromCircle(center: center, radius: radius));
@@ -946,8 +940,8 @@ class _CrystalOrbGaugePainter extends CustomPainter {
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
         colors: [
-          accentColor.withOpacity(0.32),
-          const Color(0xFF00B0FF).withOpacity(0.10),
+          accentColor.withOpacity(0.38),
+          const Color(0xFF00E5FF).withOpacity(0.14),
         ],
       ).createShader(Offset.zero & size);
 
@@ -956,14 +950,14 @@ class _CrystalOrbGaugePainter extends CustomPainter {
 
     final rimPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.6
+      ..strokeWidth = 1.8
       ..shader = LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: [
-          Colors.white.withOpacity(0.65),
-          Colors.white.withOpacity(0.10),
-          accentColor.withOpacity(0.55),
+          Colors.white.withOpacity(0.75),
+          Colors.white.withOpacity(0.15),
+          accentColor.withOpacity(0.65),
         ],
       ).createShader(Rect.fromCircle(center: center, radius: radius));
     canvas.drawCircle(center, radius, rimPaint);
