@@ -124,6 +124,8 @@ class _LiquidGlassPaywallSheetState
               _buildFeatureRow("Tefekkür Ambiyans Sesleri (432Hz Ney, Yağmur, Harem)"),
               _buildFeatureRow("Kilit Ekranı Geniş Ayet Kartı & Hikaye Paylaşım Stüdyosu"),
               _buildFeatureRow("Sınırsız Zikirmatik & 99 Esmaül Hüsna Rehberi"),
+              _buildFeatureRow("Favori ayetler, kaldığın yer ve 30 cüz hatim takibi"),
+              _buildFeatureRow("Favori ayetler, kaldığın yer ve 30 cüz hatim takibi"),
               const SizedBox(height: 18),
 
               _buildPlanCard(
@@ -163,7 +165,7 @@ class _LiquidGlassPaywallSheetState
                 },
                 child: Center(
                   child: Row(
-                    mainAxisSize: MainAxisSize.min,
+                    mainAxisSize: MainAxisAlignment.min,
                     children: [
                       const BespokeVectorIcon(
                         type: BespokeIconType.checkBadge,

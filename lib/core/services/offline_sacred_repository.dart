@@ -1,404 +1,323 @@
-import '../models/app_models.dart';
+import 'dart:convert';
+import 'package:flutter/services.dart' show rootBundle;
+import '../models/v42_models.dart';
 
+/// Çevrimdışı katalog: sure/kitap adları ve 99 Esma uygulama içine gömülüdür.
+/// Tam ayet/bab metinleri, lisanslı JSON varlıkları assets/data/ altına eklendiğinde okunur.
 class OfflineSacredRepository {
-  // Herhangi bir API gecikmesinde veya çevrimdışı durumda 0ms gecikmeyle açılan sure verileri
-  static List<LiveAyahItem> getFallbackSurah(int surahNumber, String surahName) {
-    final specific = _embeddedSurahs[surahNumber];
-    if (specific != null) {
-      return specific
-          .asMap()
-          .entries
-          .map(
-            (e) => LiveAyahItem(
-              globalNumber: ((surahNumber * 100) + e.key + 1).toInt(),
-              numberInSurah: e.key + 1,
-              surahNumber: surahNumber,
-              surahName: surahName,
-              arabicText: e.value['ar']!,
-              turkishText: e.value['tr']!,
-              audioUrl: e.value['audio'] ??
-                  'https://cdn.islamic.network/quran/audio/128/ar.alafasy/1.mp3',
-            ),
-          )
-          .toList();
-    }
+  OfflineSacredRepository._();
+  static final OfflineSacredRepository instance = OfflineSacredRepository._();
 
-    return [
-      LiveAyahItem(
-        globalNumber: 1,
-        numberInSurah: 1,
-        surahNumber: surahNumber,
-        surahName: surahName,
-        arabicText: "بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ",
-        turkishText: "Rahmân ve Rahîm olan Allah'ın adıyla.",
-        audioUrl: "https://cdn.islamic.network/quran/audio/128/ar.alafasy/1.mp3",
-      ),
-      LiveAyahItem(
-        globalNumber: 2,
-        numberInSurah: 2,
-        surahNumber: surahNumber,
-        surahName: surahName,
-        arabicText: "ٱلْحَمْدُ لِلَّهِ رَبِّ ٱلْعَـٰلَمِينَ ۝ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ",
-        turkishText: "$surahName tefekkür metni: Hamd, âlemlerin Rabbi, Rahmân ve Rahîm olan Allah'a mahsustur.",
-        audioUrl: "https://cdn.islamic.network/quran/audio/128/ar.alafasy/2.mp3",
-      ),
-      LiveAyahItem(
-        globalNumber: 262,
-        numberInSurah: 3,
-        surahNumber: surahNumber,
-        surahName: surahName,
-        arabicText: "ٱللَّهُ لَآ إِلَـٰهَ إِلَّا هُوَ ٱلْحَىُّ ٱلْقَيُّومُ ۚ لَا تَأْخُذُهُۥ سِنَةٌ وَلَا نَوْمٌ",
-        turkishText: "Allah, kendisinden başka hiçbir ilâh olmayandır. Diridir, kayyûmdur. Göklerde ve yerde ne varsa hepsi O'nundur.",
-        audioUrl: "https://cdn.islamic.network/quran/audio/128/ar.alafasy/262.mp3",
-      ),
-      LiveAyahItem(
-        globalNumber: 3788,
-        numberInSurah: 4,
-        surahNumber: surahNumber,
-        surahName: surahName,
-        arabicText: "إِنَّمَآ أَمْرُهُۥٓ إِذَآ أَرَادَ شَيْـًٔا أَن يَقُولَ لَهُۥ كُن فَيَكُونُ",
-        turkishText: "Bir şeyi dilediğinde O'nun emri yalnızca 'Ol!' demektir; o da hemen oluverir. Her şeyin hükümranlığı elinde olan Allah yücedir.",
-        audioUrl: "https://cdn.islamic.network/quran/audio/128/ar.alafasy/3788.mp3",
-      ),
-    ];
+  static const List<V42SurahMeta> surahs = [
+    V42SurahMeta(number:1,nameArabic:'الفاتحة',nameTurkish:'Fâtiha',ayahCount:7,revelation:'Mekkî'),
+    V42SurahMeta(number:2,nameArabic:'البقرة',nameTurkish:'Bakara',ayahCount:286,revelation:'Medenî'),
+    V42SurahMeta(number:3,nameArabic:'آل عمران',nameTurkish:'Âl-i İmrân',ayahCount:200,revelation:'Medenî'),
+    V42SurahMeta(number:4,nameArabic:'النساء',nameTurkish:'Nisâ',ayahCount:176,revelation:'Medenî'),
+    V42SurahMeta(number:5,nameArabic:'المائدة',nameTurkish:'Mâide',ayahCount:120,revelation:'Medenî'),
+    V42SurahMeta(number:6,nameArabic:'الأنعام',nameTurkish:'En‘âm',ayahCount:165,revelation:'Mekkî'),
+    V42SurahMeta(number:7,nameArabic:'الأعراف',nameTurkish:'A‘râf',ayahCount:206,revelation:'Mekkî'),
+    V42SurahMeta(number:8,nameArabic:'الأنفال',nameTurkish:'Enfâl',ayahCount:75,revelation:'Medenî'),
+    V42SurahMeta(number:9,nameArabic:'التوبة',nameTurkish:'Tevbe',ayahCount:129,revelation:'Medenî'),
+    V42SurahMeta(number:10,nameArabic:'يونس',nameTurkish:'Yûnus',ayahCount:109,revelation:'Mekkî'),
+    V42SurahMeta(number:11,nameArabic:'هود',nameTurkish:'Hûd',ayahCount:123,revelation:'Mekkî'),
+    V42SurahMeta(number:12,nameArabic:'يوسف',nameTurkish:'Yûsuf',ayahCount:111,revelation:'Mekkî'),
+    V42SurahMeta(number:13,nameArabic:'الرعد',nameTurkish:'Ra‘d',ayahCount:43,revelation:'Medenî'),
+    V42SurahMeta(number:14,nameArabic:'إبراهيم',nameTurkish:'İbrâhîm',ayahCount:52,revelation:'Mekkî'),
+    V42SurahMeta(number:15,nameArabic:'الحجر',nameTurkish:'Hicr',ayahCount:99,revelation:'Mekkî'),
+    V42SurahMeta(number:16,nameArabic:'النحل',nameTurkish:'Nahl',ayahCount:128,revelation:'Mekkî'),
+    V42SurahMeta(number:17,nameArabic:'الإسراء',nameTurkish:'İsrâ',ayahCount:111,revelation:'Mekkî'),
+    V42SurahMeta(number:18,nameArabic:'الكهف',nameTurkish:'Kehf',ayahCount:110,revelation:'Mekkî'),
+    V42SurahMeta(number:19,nameArabic:'مريم',nameTurkish:'Meryem',ayahCount:98,revelation:'Mekkî'),
+    V42SurahMeta(number:20,nameArabic:'طه',nameTurkish:'Tâhâ',ayahCount:135,revelation:'Mekkî'),
+    V42SurahMeta(number:21,nameArabic:'الأنبياء',nameTurkish:'Enbiyâ',ayahCount:112,revelation:'Mekkî'),
+    V42SurahMeta(number:22,nameArabic:'الحج',nameTurkish:'Hac',ayahCount:78,revelation:'Medenî'),
+    V42SurahMeta(number:23,nameArabic:'المؤمنون',nameTurkish:'Mü’minûn',ayahCount:118,revelation:'Mekkî'),
+    V42SurahMeta(number:24,nameArabic:'النور',nameTurkish:'Nûr',ayahCount:64,revelation:'Medenî'),
+    V42SurahMeta(number:25,nameArabic:'الفرقان',nameTurkish:'Furkân',ayahCount:77,revelation:'Mekkî'),
+    V42SurahMeta(number:26,nameArabic:'الشعراء',nameTurkish:'Şuarâ',ayahCount:227,revelation:'Mekkî'),
+    V42SurahMeta(number:27,nameArabic:'النمل',nameTurkish:'Neml',ayahCount:93,revelation:'Mekkî'),
+    V42SurahMeta(number:28,nameArabic:'القصص',nameTurkish:'Kasas',ayahCount:88,revelation:'Mekkî'),
+    V42SurahMeta(number:29,nameArabic:'العنكبوت',nameTurkish:'Ankebût',ayahCount:69,revelation:'Mekkî'),
+    V42SurahMeta(number:30,nameArabic:'الروم',nameTurkish:'Rûm',ayahCount:60,revelation:'Mekkî'),
+    V42SurahMeta(number:31,nameArabic:'لقمان',nameTurkish:'Lokmân',ayahCount:34,revelation:'Mekkî'),
+    V42SurahMeta(number:32,nameArabic:'السجدة',nameTurkish:'Secde',ayahCount:30,revelation:'Mekkî'),
+    V42SurahMeta(number:33,nameArabic:'الأحزاب',nameTurkish:'Ahzâb',ayahCount:73,revelation:'Medenî'),
+    V42SurahMeta(number:34,nameArabic:'سبأ',nameTurkish:'Sebe’',ayahCount:54,revelation:'Mekkî'),
+    V42SurahMeta(number:35,nameArabic:'فاطر',nameTurkish:'Fâtır',ayahCount:45,revelation:'Mekkî'),
+    V42SurahMeta(number:36,nameArabic:'يس',nameTurkish:'Yâsîn',ayahCount:83,revelation:'Mekkî'),
+    V42SurahMeta(number:37,nameArabic:'الصافات',nameTurkish:'Sâffât',ayahCount:182,revelation:'Mekkî'),
+    V42SurahMeta(number:38,nameArabic:'ص',nameTurkish:'Sâd',ayahCount:88,revelation:'Mekkî'),
+    V42SurahMeta(number:39,nameArabic:'الزمر',nameTurkish:'Zümer',ayahCount:75,revelation:'Mekkî'),
+    V42SurahMeta(number:40,nameArabic:'غافر',nameTurkish:'Mü’min',ayahCount:85,revelation:'Mekkî'),
+    V42SurahMeta(number:41,nameArabic:'فصلت',nameTurkish:'Fussilet',ayahCount:54,revelation:'Mekkî'),
+    V42SurahMeta(number:42,nameArabic:'الشورى',nameTurkish:'Şûrâ',ayahCount:53,revelation:'Mekkî'),
+    V42SurahMeta(number:43,nameArabic:'الزخرف',nameTurkish:'Zuhruf',ayahCount:89,revelation:'Mekkî'),
+    V42SurahMeta(number:44,nameArabic:'الدخان',nameTurkish:'Duhân',ayahCount:59,revelation:'Mekkî'),
+    V42SurahMeta(number:45,nameArabic:'الجاثية',nameTurkish:'Câsiye',ayahCount:37,revelation:'Mekkî'),
+    V42SurahMeta(number:46,nameArabic:'الأحقاف',nameTurkish:'Ahkâf',ayahCount:35,revelation:'Mekkî'),
+    V42SurahMeta(number:47,nameArabic:'محمد',nameTurkish:'Muhammed',ayahCount:38,revelation:'Medenî'),
+    V42SurahMeta(number:48,nameArabic:'الفتح',nameTurkish:'Fetih',ayahCount:29,revelation:'Medenî'),
+    V42SurahMeta(number:49,nameArabic:'الحجرات',nameTurkish:'Hucurât',ayahCount:18,revelation:'Medenî'),
+    V42SurahMeta(number:50,nameArabic:'ق',nameTurkish:'Kâf',ayahCount:45,revelation:'Mekkî'),
+    V42SurahMeta(number:51,nameArabic:'الذاريات',nameTurkish:'Zâriyât',ayahCount:60,revelation:'Mekkî'),
+    V42SurahMeta(number:52,nameArabic:'الطور',nameTurkish:'Tûr',ayahCount:49,revelation:'Mekkî'),
+    V42SurahMeta(number:53,nameArabic:'النجم',nameTurkish:'Necm',ayahCount:62,revelation:'Mekkî'),
+    V42SurahMeta(number:54,nameArabic:'القمر',nameTurkish:'Kamer',ayahCount:55,revelation:'Mekkî'),
+    V42SurahMeta(number:55,nameArabic:'الرحمن',nameTurkish:'Rahmân',ayahCount:78,revelation:'Medenî'),
+    V42SurahMeta(number:56,nameArabic:'الواقعة',nameTurkish:'Vâkıa',ayahCount:96,revelation:'Mekkî'),
+    V42SurahMeta(number:57,nameArabic:'الحديد',nameTurkish:'Hadîd',ayahCount:29,revelation:'Medenî'),
+    V42SurahMeta(number:58,nameArabic:'المجادلة',nameTurkish:'Mücâdele',ayahCount:22,revelation:'Medenî'),
+    V42SurahMeta(number:59,nameArabic:'الحشر',nameTurkish:'Haşr',ayahCount:24,revelation:'Medenî'),
+    V42SurahMeta(number:60,nameArabic:'الممتحنة',nameTurkish:'Mümtehine',ayahCount:13,revelation:'Medenî'),
+    V42SurahMeta(number:61,nameArabic:'الصف',nameTurkish:'Saff',ayahCount:14,revelation:'Medenî'),
+    V42SurahMeta(number:62,nameArabic:'الجمعة',nameTurkish:'Cum‘a',ayahCount:11,revelation:'Medenî'),
+    V42SurahMeta(number:63,nameArabic:'المنافقون',nameTurkish:'Münâfikûn',ayahCount:11,revelation:'Medenî'),
+    V42SurahMeta(number:64,nameArabic:'التغابن',nameTurkish:'Teğâbün',ayahCount:18,revelation:'Medenî'),
+    V42SurahMeta(number:65,nameArabic:'الطلاق',nameTurkish:'Talâk',ayahCount:12,revelation:'Medenî'),
+    V42SurahMeta(number:66,nameArabic:'التحريم',nameTurkish:'Tahrîm',ayahCount:12,revelation:'Medenî'),
+    V42SurahMeta(number:67,nameArabic:'الملك',nameTurkish:'Mülk',ayahCount:30,revelation:'Mekkî'),
+    V42SurahMeta(number:68,nameArabic:'القلم',nameTurkish:'Kalem',ayahCount:52,revelation:'Mekkî'),
+    V42SurahMeta(number:69,nameArabic:'الحاقة',nameTurkish:'Hâkka',ayahCount:52,revelation:'Mekkî'),
+    V42SurahMeta(number:70,nameArabic:'المعارج',nameTurkish:'Meâric',ayahCount:44,revelation:'Mekkî'),
+    V42SurahMeta(number:71,nameArabic:'نوح',nameTurkish:'Nûh',ayahCount:28,revelation:'Mekkî'),
+    V42SurahMeta(number:72,nameArabic:'الجن',nameTurkish:'Cin',ayahCount:28,revelation:'Mekkî'),
+    V42SurahMeta(number:73,nameArabic:'المزمل',nameTurkish:'Müzzemmil',ayahCount:20,revelation:'Mekkî'),
+    V42SurahMeta(number:74,nameArabic:'المدثر',nameTurkish:'Müddessir',ayahCount:56,revelation:'Mekkî'),
+    V42SurahMeta(number:75,nameArabic:'القيامة',nameTurkish:'Kıyâmet',ayahCount:40,revelation:'Mekkî'),
+    V42SurahMeta(number:76,nameArabic:'الإنسان',nameTurkish:'İnsân',ayahCount:31,revelation:'Medenî'),
+    V42SurahMeta(number:77,nameArabic:'المرسلات',nameTurkish:'Mürselât',ayahCount:50,revelation:'Mekkî'),
+    V42SurahMeta(number:78,nameArabic:'النبأ',nameTurkish:'Nebe’',ayahCount:40,revelation:'Mekkî'),
+    V42SurahMeta(number:79,nameArabic:'النازعات',nameTurkish:'Nâziât',ayahCount:46,revelation:'Mekkî'),
+    V42SurahMeta(number:80,nameArabic:'عبس',nameTurkish:'Abese',ayahCount:42,revelation:'Mekkî'),
+    V42SurahMeta(number:81,nameArabic:'التكوير',nameTurkish:'Tekvîr',ayahCount:29,revelation:'Mekkî'),
+    V42SurahMeta(number:82,nameArabic:'الإنفطار',nameTurkish:'İnfitâr',ayahCount:19,revelation:'Mekkî'),
+    V42SurahMeta(number:83,nameArabic:'المطففين',nameTurkish:'Mutaffifîn',ayahCount:36,revelation:'Mekkî'),
+    V42SurahMeta(number:84,nameArabic:'الإنشقاق',nameTurkish:'İnşikâk',ayahCount:25,revelation:'Mekkî'),
+    V42SurahMeta(number:85,nameArabic:'البروج',nameTurkish:'Bürûc',ayahCount:22,revelation:'Mekkî'),
+    V42SurahMeta(number:86,nameArabic:'الطارق',nameTurkish:'Târık',ayahCount:17,revelation:'Mekkî'),
+    V42SurahMeta(number:87,nameArabic:'الأعلى',nameTurkish:'A‘lâ',ayahCount:19,revelation:'Mekkî'),
+    V42SurahMeta(number:88,nameArabic:'الغاشية',nameTurkish:'Gâşiye',ayahCount:26,revelation:'Mekkî'),
+    V42SurahMeta(number:89,nameArabic:'الفجر',nameTurkish:'Fecr',ayahCount:30,revelation:'Mekkî'),
+    V42SurahMeta(number:90,nameArabic:'البلد',nameTurkish:'Beled',ayahCount:20,revelation:'Mekkî'),
+    V42SurahMeta(number:91,nameArabic:'الشمس',nameTurkish:'Şems',ayahCount:15,revelation:'Mekkî'),
+    V42SurahMeta(number:92,nameArabic:'الليل',nameTurkish:'Leyl',ayahCount:21,revelation:'Mekkî'),
+    V42SurahMeta(number:93,nameArabic:'الضحى',nameTurkish:'Duhâ',ayahCount:11,revelation:'Mekkî'),
+    V42SurahMeta(number:94,nameArabic:'الشرح',nameTurkish:'İnşirah',ayahCount:8,revelation:'Mekkî'),
+    V42SurahMeta(number:95,nameArabic:'التين',nameTurkish:'Tîn',ayahCount:8,revelation:'Mekkî'),
+    V42SurahMeta(number:96,nameArabic:'العلق',nameTurkish:'Alak',ayahCount:19,revelation:'Mekkî'),
+    V42SurahMeta(number:97,nameArabic:'القدر',nameTurkish:'Kadir',ayahCount:5,revelation:'Mekkî'),
+    V42SurahMeta(number:98,nameArabic:'البينة',nameTurkish:'Beyyine',ayahCount:8,revelation:'Medenî'),
+    V42SurahMeta(number:99,nameArabic:'الزلزلة',nameTurkish:'Zilzâl',ayahCount:8,revelation:'Medenî'),
+    V42SurahMeta(number:100,nameArabic:'العاديات',nameTurkish:'Âdiyât',ayahCount:11,revelation:'Mekkî'),
+    V42SurahMeta(number:101,nameArabic:'القارعة',nameTurkish:'Kâria',ayahCount:11,revelation:'Mekkî'),
+    V42SurahMeta(number:102,nameArabic:'التكاثر',nameTurkish:'Tekâsür',ayahCount:8,revelation:'Mekkî'),
+    V42SurahMeta(number:103,nameArabic:'العصر',nameTurkish:'Asr',ayahCount:3,revelation:'Mekkî'),
+    V42SurahMeta(number:104,nameArabic:'الهمزة',nameTurkish:'Hümeze',ayahCount:9,revelation:'Mekkî'),
+    V42SurahMeta(number:105,nameArabic:'الفيل',nameTurkish:'Fîl',ayahCount:5,revelation:'Mekkî'),
+    V42SurahMeta(number:106,nameArabic:'قريش',nameTurkish:'Kureyş',ayahCount:4,revelation:'Mekkî'),
+    V42SurahMeta(number:107,nameArabic:'الماعون',nameTurkish:'Mâûn',ayahCount:7,revelation:'Mekkî'),
+    V42SurahMeta(number:108,nameArabic:'الكوثر',nameTurkish:'Kevser',ayahCount:3,revelation:'Mekkî'),
+    V42SurahMeta(number:109,nameArabic:'الكافرون',nameTurkish:'Kâfirûn',ayahCount:6,revelation:'Mekkî'),
+    V42SurahMeta(number:110,nameArabic:'النصر',nameTurkish:'Nasr',ayahCount:3,revelation:'Medenî'),
+    V42SurahMeta(number:111,nameArabic:'المسد',nameTurkish:'Tebbet',ayahCount:5,revelation:'Mekkî'),
+    V42SurahMeta(number:112,nameArabic:'الإخلاص',nameTurkish:'İhlâs',ayahCount:4,revelation:'Mekkî'),
+    V42SurahMeta(number:113,nameArabic:'الفلق',nameTurkish:'Felak',ayahCount:5,revelation:'Mekkî'),
+    V42SurahMeta(number:114,nameArabic:'الناس',nameTurkish:'Nâs',ayahCount:6,revelation:'Mekkî'),
+  ];
+
+  static const List<V42BibleBookMeta> torahBooks = [
+    V42BibleBookMeta(bookId:1,nameTurkish:'Yaratılış',testament:'torah',totalChapters:50),
+    V42BibleBookMeta(bookId:2,nameTurkish:'Mısır\'dan Çıkış',testament:'torah',totalChapters:40),
+    V42BibleBookMeta(bookId:3,nameTurkish:'Levililer',testament:'torah',totalChapters:27),
+    V42BibleBookMeta(bookId:4,nameTurkish:'Çölde Sayım',testament:'torah',totalChapters:36),
+    V42BibleBookMeta(bookId:5,nameTurkish:'Yasa\'nın Tekrarı',testament:'torah',totalChapters:34),
+    V42BibleBookMeta(bookId:6,nameTurkish:'Yeşu',testament:'torah',totalChapters:24),
+    V42BibleBookMeta(bookId:7,nameTurkish:'Hâkimler',testament:'torah',totalChapters:21),
+    V42BibleBookMeta(bookId:8,nameTurkish:'Rut',testament:'torah',totalChapters:4),
+    V42BibleBookMeta(bookId:9,nameTurkish:'1. Samuel',testament:'torah',totalChapters:31),
+    V42BibleBookMeta(bookId:10,nameTurkish:'2. Samuel',testament:'torah',totalChapters:24),
+    V42BibleBookMeta(bookId:11,nameTurkish:'1. Krallar',testament:'torah',totalChapters:22),
+    V42BibleBookMeta(bookId:12,nameTurkish:'2. Krallar',testament:'torah',totalChapters:25),
+    V42BibleBookMeta(bookId:13,nameTurkish:'1. Tarihler',testament:'torah',totalChapters:29),
+    V42BibleBookMeta(bookId:14,nameTurkish:'2. Tarihler',testament:'torah',totalChapters:36),
+    V42BibleBookMeta(bookId:15,nameTurkish:'Ezra',testament:'torah',totalChapters:10),
+    V42BibleBookMeta(bookId:16,nameTurkish:'Nehemya',testament:'torah',totalChapters:13),
+    V42BibleBookMeta(bookId:17,nameTurkish:'Ester',testament:'torah',totalChapters:10),
+    V42BibleBookMeta(bookId:18,nameTurkish:'Eyüp',testament:'torah',totalChapters:42),
+    V42BibleBookMeta(bookId:19,nameTurkish:'Mezmurlar',testament:'torah',totalChapters:150),
+    V42BibleBookMeta(bookId:20,nameTurkish:'Özdeyişler',testament:'torah',totalChapters:31),
+    V42BibleBookMeta(bookId:21,nameTurkish:'Vaiz',testament:'torah',totalChapters:12),
+    V42BibleBookMeta(bookId:22,nameTurkish:'Ezgiler Ezgisi',testament:'torah',totalChapters:8),
+    V42BibleBookMeta(bookId:23,nameTurkish:'Yeşaya',testament:'torah',totalChapters:66),
+    V42BibleBookMeta(bookId:24,nameTurkish:'Yeremya',testament:'torah',totalChapters:52),
+    V42BibleBookMeta(bookId:25,nameTurkish:'Ağıtlar',testament:'torah',totalChapters:5),
+    V42BibleBookMeta(bookId:26,nameTurkish:'Hezekiel',testament:'torah',totalChapters:48),
+    V42BibleBookMeta(bookId:27,nameTurkish:'Daniel',testament:'torah',totalChapters:12),
+    V42BibleBookMeta(bookId:28,nameTurkish:'Hoşea',testament:'torah',totalChapters:14),
+    V42BibleBookMeta(bookId:29,nameTurkish:'Yoel',testament:'torah',totalChapters:3),
+    V42BibleBookMeta(bookId:30,nameTurkish:'Amos',testament:'torah',totalChapters:9),
+    V42BibleBookMeta(bookId:31,nameTurkish:'Ovadya',testament:'torah',totalChapters:1),
+    V42BibleBookMeta(bookId:32,nameTurkish:'Yunus',testament:'torah',totalChapters:4),
+    V42BibleBookMeta(bookId:33,nameTurkish:'Mika',testament:'torah',totalChapters:7),
+    V42BibleBookMeta(bookId:34,nameTurkish:'Nahum',testament:'torah',totalChapters:3),
+    V42BibleBookMeta(bookId:35,nameTurkish:'Habakkuk',testament:'torah',totalChapters:3),
+    V42BibleBookMeta(bookId:36,nameTurkish:'Sefanya',testament:'torah',totalChapters:3),
+    V42BibleBookMeta(bookId:37,nameTurkish:'Hagay',testament:'torah',totalChapters:2),
+    V42BibleBookMeta(bookId:38,nameTurkish:'Zekeriya',testament:'torah',totalChapters:14),
+    V42BibleBookMeta(bookId:39,nameTurkish:'Malaki',testament:'torah',totalChapters:4),
+  ];
+
+  static const List<V42BibleBookMeta> gospelBooks = [
+    V42BibleBookMeta(bookId:40,nameTurkish:'Matta',testament:'gospel',totalChapters:28),
+    V42BibleBookMeta(bookId:41,nameTurkish:'Markos',testament:'gospel',totalChapters:16),
+    V42BibleBookMeta(bookId:42,nameTurkish:'Luka',testament:'gospel',totalChapters:24),
+    V42BibleBookMeta(bookId:43,nameTurkish:'Yuhanna',testament:'gospel',totalChapters:21),
+    V42BibleBookMeta(bookId:44,nameTurkish:'Elçilerin İşleri',testament:'gospel',totalChapters:28),
+    V42BibleBookMeta(bookId:45,nameTurkish:'Romalılar',testament:'gospel',totalChapters:16),
+    V42BibleBookMeta(bookId:46,nameTurkish:'1. Korintliler',testament:'gospel',totalChapters:16),
+    V42BibleBookMeta(bookId:47,nameTurkish:'2. Korintliler',testament:'gospel',totalChapters:13),
+    V42BibleBookMeta(bookId:48,nameTurkish:'Galatyalılar',testament:'gospel',totalChapters:6),
+    V42BibleBookMeta(bookId:49,nameTurkish:'Efesliler',testament:'gospel',totalChapters:6),
+    V42BibleBookMeta(bookId:50,nameTurkish:'Filipililer',testament:'gospel',totalChapters:4),
+    V42BibleBookMeta(bookId:51,nameTurkish:'Koloseliler',testament:'gospel',totalChapters:4),
+    V42BibleBookMeta(bookId:52,nameTurkish:'1. Selanikliler',testament:'gospel',totalChapters:5),
+    V42BibleBookMeta(bookId:53,nameTurkish:'2. Selanikliler',testament:'gospel',totalChapters:3),
+    V42BibleBookMeta(bookId:54,nameTurkish:'1. Timoteos',testament:'gospel',totalChapters:6),
+    V42BibleBookMeta(bookId:55,nameTurkish:'2. Timoteos',testament:'gospel',totalChapters:4),
+    V42BibleBookMeta(bookId:56,nameTurkish:'Titus',testament:'gospel',totalChapters:3),
+    V42BibleBookMeta(bookId:57,nameTurkish:'Filimon',testament:'gospel',totalChapters:1),
+    V42BibleBookMeta(bookId:58,nameTurkish:'İbraniler',testament:'gospel',totalChapters:13),
+    V42BibleBookMeta(bookId:59,nameTurkish:'Yakup',testament:'gospel',totalChapters:5),
+    V42BibleBookMeta(bookId:60,nameTurkish:'1. Petrus',testament:'gospel',totalChapters:5),
+    V42BibleBookMeta(bookId:61,nameTurkish:'2. Petrus',testament:'gospel',totalChapters:3),
+    V42BibleBookMeta(bookId:62,nameTurkish:'1. Yuhanna',testament:'gospel',totalChapters:5),
+    V42BibleBookMeta(bookId:63,nameTurkish:'2. Yuhanna',testament:'gospel',totalChapters:1),
+    V42BibleBookMeta(bookId:64,nameTurkish:'3. Yuhanna',testament:'gospel',totalChapters:1),
+    V42BibleBookMeta(bookId:65,nameTurkish:'Yahuda',testament:'gospel',totalChapters:1),
+    V42BibleBookMeta(bookId:66,nameTurkish:'Vahiy',testament:'gospel',totalChapters:22),
+  ];
+
+  static const List<EsmaItem> esma = [
+    EsmaItem(number:1,arabic:'الله',transliteration:'Allah',meaning:'Bütün güzel isimleri kendinde toplayan, tek ilah.'),
+    EsmaItem(number:2,arabic:'الرحمن',transliteration:'Er-Rahmân',meaning:'Rahmeti bütün varlıkları kuşatan.'),
+    EsmaItem(number:3,arabic:'الرحيم',transliteration:'Er-Rahîm',meaning:'Rahmeti sürekli ve bol olan.'),
+    EsmaItem(number:4,arabic:'الملك',transliteration:'El-Melik',meaning:'Mutlak hükümranlığın sahibi.'),
+    EsmaItem(number:5,arabic:'القدوس',transliteration:'El-Kuddûs',meaning:'Her türlü eksiklikten uzak olan.'),
+    EsmaItem(number:6,arabic:'السلام',transliteration:'Es-Selâm',meaning:'Esenlik ve güven veren.'),
+    EsmaItem(number:7,arabic:'المؤمن',transliteration:'El-Mü’min',meaning:'Güven veren ve tasdik eden.'),
+    EsmaItem(number:8,arabic:'المهيمن',transliteration:'El-Müheymin',meaning:'Her şeyi gözetip koruyan.'),
+    EsmaItem(number:9,arabic:'العزيز',transliteration:'El-Azîz',meaning:'Mutlak güç ve izzet sahibi.'),
+    EsmaItem(number:10,arabic:'الجبار',transliteration:'El-Cebbâr',meaning:'Dilediğini gerçekleştirmeye gücü yeten.'),
+    EsmaItem(number:11,arabic:'المتكبر',transliteration:'El-Mütekebbir',meaning:'Büyüklükte eşi olmayan.'),
+    EsmaItem(number:12,arabic:'الخالق',transliteration:'El-Hâlık',meaning:'Yaratan ve varlığı takdir eden.'),
+    EsmaItem(number:13,arabic:'البارئ',transliteration:'El-Bâri’',meaning:'Varlıkları örneksiz meydana getiren.'),
+    EsmaItem(number:14,arabic:'المصور',transliteration:'El-Musavvir',meaning:'Varlıklara şekil ve özellik veren.'),
+    EsmaItem(number:15,arabic:'الغفار',transliteration:'El-Gaffâr',meaning:'Günahları tekrar tekrar bağışlayan.'),
+    EsmaItem(number:16,arabic:'القهار',transliteration:'El-Kahhâr',meaning:'Her şeye galip gelen.'),
+    EsmaItem(number:17,arabic:'الوهاب',transliteration:'El-Vehhâb',meaning:'Karşılıksız ve bolca ihsan eden.'),
+    EsmaItem(number:18,arabic:'الرزاق',transliteration:'Er-Rezzâk',meaning:'Bütün canlıların rızkını veren.'),
+    EsmaItem(number:19,arabic:'الفتاح',transliteration:'El-Fettâh',meaning:'Hayır kapılarını açan ve hüküm veren.'),
+    EsmaItem(number:20,arabic:'العليم',transliteration:'El-Alîm',meaning:'Her şeyi hakkıyla bilen.'),
+    EsmaItem(number:21,arabic:'القابض',transliteration:'El-Kâbıd',meaning:'Dilediğinde daraltan.'),
+    EsmaItem(number:22,arabic:'الباسط',transliteration:'El-Bâsıt',meaning:'Dilediğinde genişleten.'),
+    EsmaItem(number:23,arabic:'الخافض',transliteration:'El-Hâfıd',meaning:'Dilediğini alçaltan.'),
+    EsmaItem(number:24,arabic:'الرافع',transliteration:'Er-Râfi',meaning:'Dilediğini yükselten.'),
+    EsmaItem(number:25,arabic:'المعز',transliteration:'El-Muiz',meaning:'İzzet ve şeref veren.'),
+    EsmaItem(number:26,arabic:'المذل',transliteration:'El-Müzil',meaning:'Dilediğini zillete düşüren.'),
+    EsmaItem(number:27,arabic:'السميع',transliteration:'Es-Semî',meaning:'Her şeyi işiten.'),
+    EsmaItem(number:28,arabic:'البصير',transliteration:'El-Basîr',meaning:'Her şeyi gören.'),
+    EsmaItem(number:29,arabic:'الحكم',transliteration:'El-Hakem',meaning:'Mutlak hüküm ve hikmet sahibi.'),
+    EsmaItem(number:30,arabic:'العدل',transliteration:'El-Adl',meaning:'Mutlak adalet sahibi.'),
+    EsmaItem(number:31,arabic:'اللطيف',transliteration:'El-Latîf',meaning:'Kullarına lütuf ve incelikle muamele eden.'),
+    EsmaItem(number:32,arabic:'الخبير',transliteration:'El-Habîr',meaning:'Her şeyin iç yüzünden haberdar olan.'),
+    EsmaItem(number:33,arabic:'الحليم',transliteration:'El-Halîm',meaning:'Cezalandırmada acele etmeyen.'),
+    EsmaItem(number:34,arabic:'العظيم',transliteration:'El-Azîm',meaning:'Yüceliği sonsuz olan.'),
+    EsmaItem(number:35,arabic:'الغفور',transliteration:'El-Gafûr',meaning:'Bağışlaması bol olan.'),
+    EsmaItem(number:36,arabic:'الشكور',transliteration:'Eş-Şekûr',meaning:'Az amele çok karşılık veren.'),
+    EsmaItem(number:37,arabic:'العلي',transliteration:'El-Aliyy',meaning:'Yücelerin yücesi olan.'),
+    EsmaItem(number:38,arabic:'الكبير',transliteration:'El-Kebîr',meaning:'Büyüklüğü sınırsız olan.'),
+    EsmaItem(number:39,arabic:'الحفيظ',transliteration:'El-Hafîz',meaning:'Her şeyi koruyup gözeten.'),
+    EsmaItem(number:40,arabic:'المقيت',transliteration:'El-Mukît',meaning:'Yaratılmışlara güç ve rızık ulaştıran.'),
+    EsmaItem(number:41,arabic:'الحسيب',transliteration:'El-Hasîb',meaning:'Hesaba çeken ve kullarına yeten.'),
+    EsmaItem(number:42,arabic:'الجليل',transliteration:'El-Celîl',meaning:'Azamet ve ululuk sahibi.'),
+    EsmaItem(number:43,arabic:'الكريم',transliteration:'El-Kerîm',meaning:'Cömertliği ve ikramı bol olan.'),
+    EsmaItem(number:44,arabic:'الرقيب',transliteration:'Er-Rakîb',meaning:'Her an gözeten.'),
+    EsmaItem(number:45,arabic:'المجيب',transliteration:'El-Mücîb',meaning:'Dualara karşılık veren.'),
+    EsmaItem(number:46,arabic:'الواسع',transliteration:'El-Vâsi',meaning:'Rahmeti ve ilmi geniş olan.'),
+    EsmaItem(number:47,arabic:'الحكيم',transliteration:'El-Hakîm',meaning:'Her işi hikmetli olan.'),
+    EsmaItem(number:48,arabic:'الودود',transliteration:'El-Vedûd',meaning:'Kullarını seven ve sevilmeye layık olan.'),
+    EsmaItem(number:49,arabic:'المجيد',transliteration:'El-Mecîd',meaning:'Şanı ve keremi yüce olan.'),
+    EsmaItem(number:50,arabic:'الباعث',transliteration:'El-Bâis',meaning:'Ölüleri diriltip kaldıran.'),
+    EsmaItem(number:51,arabic:'الشهيد',transliteration:'Eş-Şehîd',meaning:'Her şeye tanık olan.'),
+    EsmaItem(number:52,arabic:'الحق',transliteration:'El-Hakk',meaning:'Varlığı ve sözü gerçek olan.'),
+    EsmaItem(number:53,arabic:'الوكيل',transliteration:'El-Vekîl',meaning:'Kendisine güvenilip dayanılan.'),
+    EsmaItem(number:54,arabic:'القوي',transliteration:'El-Kaviyy',meaning:'Kudreti eksiksiz olan.'),
+    EsmaItem(number:55,arabic:'المتين',transliteration:'El-Metîn',meaning:'Kuvveti ve kudreti sarsılmaz olan.'),
+    EsmaItem(number:56,arabic:'الولي',transliteration:'El-Veliyy',meaning:'İnananların dostu ve yardımcısı olan.'),
+    EsmaItem(number:57,arabic:'الحميد',transliteration:'El-Hamîd',meaning:'Övgüye layık olan.'),
+    EsmaItem(number:58,arabic:'المحصي',transliteration:'El-Muhsî',meaning:'Her şeyi tek tek bilen ve sayan.'),
+    EsmaItem(number:59,arabic:'المبدئ',transliteration:'El-Mübdi',meaning:'Yaratmayı başlatan.'),
+    EsmaItem(number:60,arabic:'المعيد',transliteration:'El-Muîd',meaning:'Yaratmayı tekrar eden.'),
+    EsmaItem(number:61,arabic:'المحيي',transliteration:'El-Muhyî',meaning:'Hayat veren.'),
+    EsmaItem(number:62,arabic:'المميت',transliteration:'El-Mümît',meaning:'Ölümü yaratan.'),
+    EsmaItem(number:63,arabic:'الحي',transliteration:'El-Hayy',meaning:'Diri ve hayat sahibi olan.'),
+    EsmaItem(number:64,arabic:'القيوم',transliteration:'El-Kayyûm',meaning:'Varlığı kendinden, her şeyi ayakta tutan.'),
+    EsmaItem(number:65,arabic:'الواجد',transliteration:'El-Vâcid',meaning:'Dilediğini bulan, hiçbir şeye muhtaç olmayan.'),
+    EsmaItem(number:66,arabic:'الماجد',transliteration:'El-Mâcid',meaning:'Şerefi ve cömertliği yüce olan.'),
+    EsmaItem(number:67,arabic:'الواحد',transliteration:'El-Vâhid',meaning:'Bir ve tek olan.'),
+    EsmaItem(number:68,arabic:'الصمد',transliteration:'Es-Samed',meaning:'Her şeyin kendisine muhtaç olduğu.'),
+    EsmaItem(number:69,arabic:'القادر',transliteration:'El-Kâdir',meaning:'Her şeye gücü yeten.'),
+    EsmaItem(number:70,arabic:'المقتدر',transliteration:'El-Muktedir',meaning:'Kudreti her şeye yeten.'),
+    EsmaItem(number:71,arabic:'المقدم',transliteration:'El-Mukaddim',meaning:'Dilediğini öne alan.'),
+    EsmaItem(number:72,arabic:'المؤخر',transliteration:'El-Muahhir',meaning:'Dilediğini erteleyen.'),
+    EsmaItem(number:73,arabic:'الأول',transliteration:'El-Evvel',meaning:'Başlangıcı olmayan.'),
+    EsmaItem(number:74,arabic:'الآخر',transliteration:'El-Âhir',meaning:'Sonu olmayan.'),
+    EsmaItem(number:75,arabic:'الظاهر',transliteration:'Ez-Zâhir',meaning:'Varlığı apaçık olan.'),
+    EsmaItem(number:76,arabic:'الباطن',transliteration:'El-Bâtın',meaning:'Mahiyeti duyularla kavranamayan.'),
+    EsmaItem(number:77,arabic:'الوالي',transliteration:'El-Vâlî',meaning:'Kâinatı yöneten.'),
+    EsmaItem(number:78,arabic:'المتعالي',transliteration:'El-Müteâlî',meaning:'Her türlü noksanlıktan yüce olan.'),
+    EsmaItem(number:79,arabic:'البر',transliteration:'El-Berr',meaning:'İyiliği ve ihsanı bol olan.'),
+    EsmaItem(number:80,arabic:'التواب',transliteration:'Et-Tevvâb',meaning:'Tövbeleri kabul eden.'),
+    EsmaItem(number:81,arabic:'المنتقم',transliteration:'El-Müntakim',meaning:'Adaletiyle karşılık veren.'),
+    EsmaItem(number:82,arabic:'العفو',transliteration:'El-Afüvv',meaning:'Günahları silip affeden.'),
+    EsmaItem(number:83,arabic:'الرؤوف',transliteration:'Er-Raûf',meaning:'Çok şefkatli olan.'),
+    EsmaItem(number:84,arabic:'مالك الملك',transliteration:'Mâlikü’l-Mülk',meaning:'Mülkün ve hükümranlığın sahibi.'),
+    EsmaItem(number:85,arabic:'ذو الجلال والإكرام',transliteration:'Zül-Celâli ve’l-İkrâm',meaning:'Azamet ve ikram sahibi.'),
+    EsmaItem(number:86,arabic:'المقسط',transliteration:'El-Muksit',meaning:'Adaletle hükmeden.'),
+    EsmaItem(number:87,arabic:'الجامع',transliteration:'El-Câmi',meaning:'Dilediğini bir araya getiren.'),
+    EsmaItem(number:88,arabic:'الغني',transliteration:'El-Ganiyy',meaning:'Hiçbir şeye muhtaç olmayan.'),
+    EsmaItem(number:89,arabic:'المغني',transliteration:'El-Mugnî',meaning:'Dilediğini zengin kılan.'),
+    EsmaItem(number:90,arabic:'المانع',transliteration:'El-Mâni',meaning:'Dilediğini engelleyen ve koruyan.'),
+    EsmaItem(number:91,arabic:'الضار',transliteration:'Ed-Dârr',meaning:'Hikmetiyle darlık ve zarar yaratan.'),
+    EsmaItem(number:92,arabic:'النافع',transliteration:'En-Nâfi',meaning:'Fayda ve hayır veren.'),
+    EsmaItem(number:93,arabic:'النور',transliteration:'En-Nûr',meaning:'Âlemleri aydınlatan.'),
+    EsmaItem(number:94,arabic:'الهادي',transliteration:'El-Hâdî',meaning:'Doğru yola ileten.'),
+    EsmaItem(number:95,arabic:'البديع',transliteration:'El-Bedî',meaning:'Eşsiz ve örneksiz yaratan.'),
+    EsmaItem(number:96,arabic:'الباقي',transliteration:'El-Bâkî',meaning:'Varlığının sonu olmayan.'),
+    EsmaItem(number:97,arabic:'الوارث',transliteration:'El-Vâris',meaning:'Her şeyin gerçek sahibi olarak kalan.'),
+    EsmaItem(number:98,arabic:'الرشيد',transliteration:'Er-Reşîd',meaning:'Doğru yolu gösteren.'),
+    EsmaItem(number:99,arabic:'الصبور',transliteration:'Es-Sabûr',meaning:'Cezalandırmada acele etmeyen.'),
+  ];
+
+  static const List<V42HourlyVerse> hourlyVerses = [
+    V42HourlyVerse(arabicShort:'مَا وَدَّعَكَ رَبُّكَ',turkishShort:'Rabbin seni terk etmedi.',reference:'Duhâ, 3'),
+    V42HourlyVerse(arabicShort:'إِنَّ مَعَ الْعُسْرِ يُسْرًا',turkishShort:'Zorlukla beraber kolaylık vardır.',reference:'İnşirah, 6'),
+    V42HourlyVerse(arabicShort:'أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ',turkishShort:'Kalpler Allah’ı anmakla huzur bulur.',reference:'Ra‘d, 28'),
+    V42HourlyVerse(arabicShort:'فَإِنِّي قَرِيبٌ',turkishShort:'Şüphesiz Ben çok yakınım.',reference:'Bakara, 186'),
+  ];
+
+  Future<List<V42Verse>> loadJsonAsset(String assetPath) async {
+    try {
+      final raw = await rootBundle.loadString(assetPath);
+      final decoded = jsonDecode(raw);
+      final rows = decoded is List ? decoded : (decoded['verses'] as List? ?? const []);
+      return rows.whereType<Map>().map((e) => V42Verse.fromJson(Map<String, dynamic>.from(e))).toList(growable: false);
+    } catch (_) {
+      return const [];
+    }
   }
 
-  static final Map<int, List<dynamic>> _embeddedSurahs = {
-    1: [
-      {
-        "ar": "بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ",
-        "tr": "Rahmân ve Rahîm olan Allah'ın adıyla.",
-        "audio": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/1.mp3"
-      },
-      {
-        "ar": "ٱلْحَمْدُ لِلَّهِ رَبِّ ٱلْعَـٰلَمِينَ",
-        "tr": "Hamd, âlemlerin Rabbi olan Allah'a mahsustur.",
-        "audio": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/2.mp3"
-      },
-      {
-        "ar": "ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ",
-        "tr": "O, Rahmân ve Rahîm'dir.",
-        "audio": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/3.mp3"
-      },
-      {
-        "ar": "مَـٰلِكِ يَوْمِ ٱلدِّينِ",
-        "tr": "Hesap ve ceza (din) gününün mâlikidir.",
-        "audio": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/4.mp3"
-      },
-      {
-        "ar": "إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ",
-        "tr": "(Rabbimiz!) Yalnız Sana kulluk eder ve yalnız Senden yardım dileriz.",
-        "audio": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/5.mp3"
-      },
-      {
-        "ar": "ٱهْدِنَا ٱلصِّرَٰطَ ٱلْمُسْتَقِيمَ",
-        "tr": "Bizi dosdoğru yola (Sırât-ı Müstakîm'e) ilet.",
-        "audio": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/6.mp3"
-      },
-      {
-        "ar": "صِرَٰطَ ٱلَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ ٱلْمَغْضُوبِ عَلَيْهِمْ وَلَا ٱلضَّآلِّينَ",
-        "tr": "Kendilerine nimet verdiklerinin yoluna; gazaba uğrayanların ve sapkınların yoluna değil.",
-        "audio": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/7.mp3"
-      },
-    ],
-    2: [
-      {
-        "ar": "الٓمٓ ۝ ذَٰلِكَ ٱلْكِتَـٰبُ لَا رَيْبَ  فِيهِ  هُدًى لِّلْمُتَّقِينَ",
-        "tr": "Elif, Lâm, Mîm. Bu Kitap'ta hiçbir şüphe yoktur; o, muttakiler (Allah'a karşı sorumluluk bilinci taşıyanlar) için bir rehberdir.",
-        "audio": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/8.mp3"
-      },
-      {
-        "ar": "ٱللَّهُ لَآ إِلَـٰهَ إِلَّا هُوَ ٱلْحَىُّ ٱلْقَيُّومُ ۚ لَا تَأْخُذُهُۥ سِنَةٌ وَلَا نَوْمٌ",
-        "tr": "Allah, kendisinden başka hiçbir ilâh olmayandır. Diridir, kayyûmdur (her şeyi ayakta tutandır). O'nu ne bir uyuklama tutar ne de bir uyku.",
-        "audio": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/262.mp3"
-      },
-      {
-        "ar": "لَا يُكَلِّفُ ٱللَّهُ نَفْسًا إِلَّا وُسْعَهَا ۚ لَهَا مَا كَسَبَتْ وَعَلَيْهَا مَا ٱكْتَسَبَتْ",
-        "tr": "Allah hiçbir kimseye gücünün yettiğinden fazlasını yüklemez. Herkesin kazandığı iyilik kendi yararına, kötülük de kendi zararınadır.",
-        "audio": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/293.mp3"
-      },
-    ],
-    36: [
-      {
-        "ar": "يسٓ ۝ وَٱلْقُرْءَانِ ٱلْحَكِيمِ ۝ إِنَّكَ لَمِنَ ٱلْمُرْسَلِينَ",
-        "tr": "Yâ-Sîn. Hikmet dolu Kur'an'a andolsun ki, sen şüphesiz gönderilen elçilerdensin.",
-        "audio": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/3706.mp3"
-      },
-      {
-        "ar": "سَلَـٰمٌ قَوْلًا مِّن رَّبٍّ رَّحِيمٍ",
-        "tr": "Çok merhametli olan Rab'den bir söz olarak kendilerine 'Selâm!' vardır.",
-        "audio": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/3763.mp3"
-      },
-      {
-        "ar": "إِنَّمَآ أَمْرُهُۥٓ إِذَآ أَرَادَ شَيْـًٔا أَن يَقُولَ لَهُۥ كُن فَيَكُونُ",
-        "tr": "Bir şeyi dilediğinde O'nun emri yalnızca 'Ol!' demektir; o da hemen oluverir.",
-        "audio": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/3787.mp3"
-      },
-    ],
-    67: [
-      {
-        "ar": "تَبَـٰرَكَ ٱلَّذِى بِيَدِهِ ٱلْمُلْكُ وَهُوَ عَلَىٰ كُلِّ شَىْءٍ قَدِيرٌ",
-        "tr": "Mülk (hükümranlık) elinde olan Allah yücedir ve O her şeye kadirdir.",
-        "audio": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/5242.mp3"
-      },
-      {
-        "ar": "ٱلَّذِى خَلَقَ ٱلْمَوْتَ وَٱلْحَيَوٰةَ لِيَبْلُوَكُمْ أَيُّكُمْ أَحْسَنُ عَمَلًا",
-        "tr": "O, hanginizin daha güzel amel yapacağını sınamak için ölümü ve hayatı yaratandır.",
-        "audio": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/5243.mp3"
-      },
-    ],
-    93: [
-      {
-        "ar": "وَٱلضُّحَىٰ ۝ وَٱلَّيْلِ إِذَا سَجَىٰ",
-        "tr": "Andolsun kuşluk vaktine ve dinginleştiği zaman geceye ki,",
-        "audio": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/6080.mp3"
-      },
-      {
-        "ar": "مَا وَدَّعَكَ رَبُّكَ وَمَا قَلَىٰ",
-        "tr": "Rabbin seni terk etmedi ve sana darılmadı.",
-        "audio": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/6082.mp3"
-      },
-      {
-        "ar": "وَلَسَوْفَ يُعْطِيكَ رَبُّكَ فَتَرْضَىٰ",
-        "tr": "Şüphesiz Rabbin sana verecek ve sonunda gönlün razı olacak.",
-        "audio": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/6084.mp3"
-      },
-    ],
-    94: [
-      {
-        "ar": "أَلَمْ نَشْرَحْ لَكَ صَدْرَكَ",
-        "tr": "Senin göğsünü açıp genişletmedik mi?",
-        "audio": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/6091.mp3"
-      },
-      {
-        "ar": "فَإِنَّ مَعَ ٱلْعُسْرِ يُسْرًا ۝ إِنَّ مَعَ ٱلْعُسْرِ يُسْرًا",
-        "tr": "Şüphesiz zorlukla beraber bir kolaylık vardır. Gerçekten zorlukla beraber bir kolaylık vardır.",
-        "audio": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/6095.mp3"
-      },
-    ],
-    112: [
-      {
-        "ar": "قُلْ هُوَ ٱللَّهُ أَحَدٌ ۝ ٱللَّهُ ٱلصَّمَدُ",
-        "tr": "De ki: O Allah tektir. Allah Samed'dir (her şey O'na muhtaçtır, O hiçbir şeye muhtaç değildir).",
-        "audio": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/6222.mp3"
-      },
-      {
-        "ar": "لَمْ يَلِدْ وَلَمْ يُولَدْ ۝ وَلَمْ يَكُن لَّهُۥ كُفُوًا أَحَدٌۢ",
-        "tr": "O doğurmamıştır ve doğurulmamıştır. Hiçbir şey O'na denk ve benzer değildir.",
-        "audio": "https://cdn.islamic.network/quran/audio/128/ar.alafasy/6224.mp3"
-      },
-    ],
-  };
-
-  // Tevrat (39 Kitap) ve İncil (27 Kitap) için %100 Açılma Garantili Gömülü Metin Havuzu
-  static List<BibleVerseItem> getFallbackBibleChapter(BibleBookMeta book, int chapter) {
-    if (book.testament == 'torah') {
-      return _buildTorahChapter(book, chapter);
-    } else {
-      return _buildGospelChapter(book, chapter);
-    }
-  }
-
-  static List<BibleVerseItem> _buildTorahChapter(BibleBookMeta book, int chapter) {
-    if (book.bookId == 1) {
-      return [
-        BibleVerseItem(
-          bookId: book.bookId,
-          bookName: book.nameTurkish,
-          chapter: chapter,
-          verse: 1,
-          originalScript: "בְּרֵאשִׁית בָּרָא אֱלֹהִים אֵת הַשָּׁמַיִם וְאֵת הָאָרֶץ",
-          turkishText: "Başlangıçta Tanrı göğü ve yeri yarattı. Yer boştu, yeryüzü şekilsizdi; engin karanlıklarla kaplıydı.",
-        ),
-        BibleVerseItem(
-          bookId: book.bookId,
-          bookName: book.nameTurkish,
-          chapter: chapter,
-          verse: 2,
-          originalScript: "וַיֹּאמֶר אֱלֹהִים יְהִי אוֹר וַיְהִי־אוֹר",
-          turkishText: "Tanrı, 'Işık olsun' diye buyurdu ve ışık oldu. Tanrı ışığın iyi olduğunu gördü ve onu karanlıktan ayırdı.",
-        ),
-        BibleVerseItem(
-          bookId: book.bookId,
-          bookName: book.nameTurkish,
-          chapter: chapter,
-          verse: 3,
-          originalScript: "וַיִּבְרָא אֱלֹהִים אֶת־הָאָדָם בְּצַלְמוֹ",
-          turkishText: "Tanrı insanı yarattı ve onlara yeryüzünü imar etme, adalet ve hikmetle yaşama sorumluluğu verdi.",
-        ),
-      ];
-    }
-
-    if (book.bookId == 2) {
-      return [
-        BibleVerseItem(
-          bookId: book.bookId,
-          bookName: book.nameTurkish,
-          chapter: chapter,
-          verse: 1,
-          originalScript: "שַׁל־נְעָלֶיךָ מֵעַל רַגְלֶיךָ כִּי הַמָּקוֹם אַדְמַת־קֹדֶשׁ הוּא",
-          turkishText: "Tanrı Musa'ya seslendi: 'Çarığını çıkar. Çünkü bastığın yer kutsal topraktır. Ben İbrahim'in, İshak'ın ve Yakup'un Tanrısıyım.'",
-        ),
-        BibleVerseItem(
-          bookId: book.bookId,
-          bookName: book.nameTurkish,
-          chapter: chapter,
-          verse: 2,
-          originalScript: "אָנֹכִי יְהוָה אֱלֹהֶיךָ",
-          turkishText: "Seni Mısır'dan, kölelik evinden çıkaran Tanrın RAB benim. Benden başka tanrın olmayacak.",
-        ),
-        BibleVerseItem(
-          bookId: book.bookId,
-          bookName: book.nameTurkish,
-          chapter: chapter,
-          verse: 3,
-          originalScript: "כַּבֵּד אֶת־אָבִיךָ וְאֶת־אִמֶּךָ",
-          turkishText: "Annene ve babana saygı göster ki ömrün bereketli olsun. Adam öldürmeyeceksin, çalmayacaksın, yalan tanıklık etmeyeceksin.",
-        ),
-      ];
-    }
-
-    if (book.bookId == 19) {
-      return [
-        BibleVerseItem(
-          bookId: book.bookId,
-          bookName: book.nameTurkish,
-          chapter: chapter,
-          verse: 1,
-          originalScript: "מִזְמוֹר לְדָוִד יְהוָה רֹעִי לֹא אֶחְסָר",
-          turkishText: "Davut'un Mezmuru: RAB çobanımdır, eksiğim olmaz. Beni yemyeşil çayırlarda yatırır, sakin suların kıyısına götürür.",
-        ),
-        BibleVerseItem(
-          bookId: book.bookId,
-          bookName: book.nameTurkish,
-          chapter: chapter,
-          verse: 2,
-          originalScript: "גַּם כִּי־אֵלֵךְ בְּגֵיא צַלְמָוֶת לֹא־אִירָא רָע",
-          turkishText: "Karanlık ölüm gölgesi vadisinden geçsem bile kötülükten korkmam; çünkü Sen benimlesin.",
-        ),
-        BibleVerseItem(
-          bookId: book.bookId,
-          bookName: book.nameTurkish,
-          chapter: chapter,
-          verse: 3,
-          originalScript: "לֵב טָהוֹר בְּרָא־לִי אֱלֹהִים",
-          turkishText: "Ey Tanrı, içimde temiz bir yürek yarat ve içimdeki ruhu doğrulukla yenile.",
-        ),
-      ];
-    }
-
-    return [
-      BibleVerseItem(
-        bookId: book.bookId,
-        bookName: book.nameTurkish,
-        chapter: chapter,
-        verse: 1,
-        originalScript: "שְׁמַע יִשְׂרָאֵל יְהוָה אֱלֹהֵינוּ יְהוָה אֶחָד",
-        turkishText: "${book.nameTurkish} (Bab $chapter): Dinle! Tanrımız RAB tek RAB'dir. Tanrın RAB'bi bütün yüreğinle, bütün canınla ve bütün gücünle seveceksin.",
-      ),
-      BibleVerseItem(
-        bookId: book.bookId,
-        bookName: book.nameTurkish,
-        chapter: chapter,
-        verse: 2,
-        originalScript: "כִּי־קָרוֹב יְהוָה לְכָל־קֹרְאָיו",
-        turkishText: "RAB kendisine yakaran herkese, içtenlikle ve doğrulukla yakaran herkese yakındır.",
-      ),
-      BibleVerseItem(
-        bookId: book.bookId,
-        bookName: book.nameTurkish,
-        chapter: chapter,
-        verse: 3,
-        originalScript: "עֲשׂוֹת מִשְׁפָּט וְאַהֲבַת חֶסֶד וְהַצְנֵעַ לֶכֶת עִם־אֱלֹהֶיךָ",
-        turkishText: "RAB senden adil davranmandan, merhameti sevmenden ve Tanrın'ın önünde alçakgönüllü yürümen dışında ne ister?",
-      ),
-    ];
-  }
-
-  static List<BibleVerseItem> _buildGospelChapter(BibleBookMeta book, int chapter) {
-    if (book.bookId == 40) {
-      return [
-        BibleVerseItem(
-          bookId: book.bookId,
-          bookName: book.nameTurkish,
-          chapter: chapter,
-          verse: 1,
-          originalScript: "Μακάριοι οἱ πτωχοὶ τῷ πνεύματι, ὅτι αὐτῶν ἐστιν ἡ βασιλεία τῶν οὐρανῶν",
-          turkishText: "Ne mutlu ruhta yoksul (alçakgönüllü) olanlara! Çünkü Göklerin Egemenliği onlarındır.",
-        ),
-        BibleVerseItem(
-          bookId: book.bookId,
-          bookName: book.nameTurkish,
-          chapter: chapter,
-          verse: 2,
-          originalScript: "Μακάριοι οἱ ἐλεήμονες, ὅτι αὐτοὶ ἐλεηθήσονται",
-          turkishText: "Ne mutlu merhametli olanlara! Çünkü onlar merhamet bulacaklar. Ne mutlu yüreği temiz olanlara!",
-        ),
-        BibleVerseItem(
-          bookId: book.bookId,
-          bookName: book.nameTurkish,
-          chapter: chapter,
-          verse: 3,
-          originalScript: "Αἰτεῖτε, καὶ δοθήσεται ὑμῖν· ζητεῖτε, καὶ εὑρήσετε",
-          turkishText: "Dileyin, size verilecek; arayın, bulacaksınız; kapıyı çalın, size açılacaktır.",
-        ),
-      ];
-    }
-
-    if (book.bookId == 43) {
-      return [
-        BibleVerseItem(
-          bookId: book.bookId,
-          bookName: book.nameTurkish,
-          chapter: chapter,
-          verse: 1,
-          originalScript: "Ἐν ἀρχῇ ἦν ὁ Λόγος, καὶ ὁ Λόγος ἦν πρὸς τὸν Θεόν",
-          turkishText: "Başlangıçta Söz vardı. Söz Tanrı'yla birlikteydi. Yaşam O'ndaydı ve yaşam insanların ışığıydı.",
-        ),
-        BibleVerseItem(
-          bookId: book.bookId,
-          bookName: book.nameTurkish,
-          chapter: chapter,
-          verse: 2,
-          originalScript: "καὶ τὸ φῶς ἐν τῇ σκοτίᾳ φαίνει",
-          turkishText: "Işık karanlıkta parlar ve karanlık onu alt edememiştir.",
-        ),
-        BibleVerseItem(
-          bookId: book.bookId,
-          bookName: book.nameTurkish,
-          chapter: chapter,
-          verse: 3,
-          originalScript: "καὶ γνώσεσθε τὴν ἀλήθειαν, καὶ ἡ ἀλήθεια ἐλευθερώσει ὑμᾶς",
-          turkishText: "Gerçeği bileceksiniz ve gerçek sizi özgür kılacaktır.",
-        ),
-      ];
-    }
-
-    return [
-      BibleVerseItem(
-        bookId: book.bookId,
-        bookName: book.nameTurkish,
-        chapter: chapter,
-        verse: 1,
-        originalScript: "Ἀγαπήσεις Κύριον τὸν Θεόν σου ἐν ὅλῃ τῇ καρδίᾳ σου",
-        turkishText: "${book.nameTurkish} (Bab $chapter): Tanrın Rab'bi bütün yüreğinle, bütün canınla ve bütün aklınla seveceksin.",
-      ),
-      BibleVerseItem(
-        bookId: book.bookId,
-        bookName: book.nameTurkish,
-        chapter: chapter,
-        verse: 2,
-        originalScript: "ἡ ἀγάπη μακροθυμεῖ, χρηστεύεται",
-        turkishText: "Sevgi sabırlıdır, sevgi şefkatlidir; sevgi kıskanmaz, övünmez, böbürlenmez, haksızlığa sevinmez, gerçekle sevinir.",
-      ),
-      BibleVerseItem(
-        bookId: book.bookId,
-        bookName: book.nameTurkish,
-        chapter: chapter,
-        verse: 3,
-        originalScript: "Εἰρήνην ἀφίημι ὑμῖν, εἰρήνην τὴν ἐμὴν δίδωμι ὑμῖν",
-        turkishText: "Size esenlik bırakıyorum, kendi esenliğimi veriyorum. Yüreğiniz sıkılmasın ve korkmasın.",
-      ),
-    ];
-  }
+  Future<List<V42Verse>> loadQuranVerses() => loadJsonAsset('assets/data/quran_tr.json');
+  Future<List<V42Verse>> loadTorahVerses() => loadJsonAsset('assets/data/torah_tr.json');
+  Future<List<V42Verse>> loadGospelVerses() => loadJsonAsset('assets/data/gospel_tr.json');
 }

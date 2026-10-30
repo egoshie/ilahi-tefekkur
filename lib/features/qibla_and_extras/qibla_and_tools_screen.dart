@@ -8,6 +8,7 @@ import 'package:sensors_plus/sensors_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/services/ambiance_mixer_service.dart';
 import '../../core/services/prayer_service.dart';
+import '../esma/esmaul_husna_sheet.dart';
 import '../../core/theme/glass_container.dart';
 import '../../core/theme/liquid_glass_theme.dart';
 
@@ -27,6 +28,9 @@ class _QiblaAndToolsScreenState extends ConsumerState<QiblaAndToolsScreen> {
   int _remainingPrayers = 18;
   int _dailyPace = 2;
   int _remainingFasts = 4;
+  int _completedJuz = 0;
+  int _dailyReadJuz = 0;
+  static const int _dailyJuzGoal = 1;
 
   @override
   void initState() {
@@ -52,8 +56,31 @@ class _QiblaAndToolsScreenState extends ConsumerState<QiblaAndToolsScreen> {
         _remainingPrayers = prefs.getInt('kaza_prayers') ?? 18;
         _dailyPace = prefs.getInt('kaza_daily_pace') ?? 2;
         _remainingFasts = prefs.getInt('kaza_fasts') ?? 4;
+        _completedJuz = prefs.getInt('huzur_hatim_juz') ?? 0;
+        final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+        final savedDay = prefs.getString('huzur_daily_juz_date');
+        _dailyReadJuz = savedDay == today ? (prefs.getInt('huzur_daily_juz_count') ?? 0) : 0;
       });
     }
+  }
+
+  Future<void> _updateHatim(int value) async {
+    final next = value.clamp(0, 30).toInt();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('huzur_hatim_juz', next);
+    if (mounted) setState(() => _completedJuz = next);
+  }
+
+  Future<void> _recordDailyJuz() async {
+    final prefs = await SharedPreferences.getInstance();
+    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final savedDay = prefs.getString('huzur_daily_juz_date');
+    final current = savedDay == today ? (prefs.getInt('huzur_daily_juz_count') ?? 0) : 0;
+    final nextDaily = current + 1;
+    await prefs.setString('huzur_daily_juz_date', today);
+    await prefs.setInt('huzur_daily_juz_count', nextDaily);
+    await _updateHatim(_completedJuz + 1);
+    if (mounted) setState(() => _dailyReadJuz = nextDaily);
   }
 
   Future<void> _updateKaza({
@@ -62,9 +89,9 @@ class _QiblaAndToolsScreenState extends ConsumerState<QiblaAndToolsScreen> {
     int? dailyPace,
   }) async {
     final prefs = await SharedPreferences.getInstance();
-    final nextPrayers = (remainingPrayers ?? _remainingPrayers).clamp(0, 99999);
-    final nextFasts = (remainingFasts ?? _remainingFasts).clamp(0, 9999);
-    final nextPace = (dailyPace ?? _dailyPace).clamp(1, 20);
+    final nextPrayers = (remainingPrayers ?? _remainingPrayers).clamp(0, 99999).toInt();
+    final nextFasts = (remainingFasts ?? _remainingFasts).clamp(0, 9999).toInt();
+    final nextPace = (dailyPace ?? _dailyPace).clamp(1, 20).toInt();
     final nextInitial =
         nextPrayers > _initialPrayers ? nextPrayers : _initialPrayers;
 
@@ -73,6 +100,7 @@ class _QiblaAndToolsScreenState extends ConsumerState<QiblaAndToolsScreen> {
     await prefs.setInt('kaza_fasts', nextFasts);
     await prefs.setInt('kaza_daily_pace', nextPace);
 
+    if (!mounted) return;
     setState(() {
       _initialPrayers = nextInitial;
       _remainingPrayers = nextPrayers;
@@ -100,7 +128,8 @@ class _QiblaAndToolsScreenState extends ConsumerState<QiblaAndToolsScreen> {
     final completedRatio = _initialPrayers == 0
         ? 1.0
         : ((_initialPrayers - _remainingPrayers) / _initialPrayers)
-            .clamp(0.0, 1.0);
+            .clamp(0.0, 1.0)
+            .toDouble();
     final daysLeft = (_remainingPrayers / _dailyPace).ceil();
     final finishDate = DateTime.now().add(Duration(days: daysLeft));
     final finishFormatted = DateFormat('dd.MM.yyyy').format(finishDate);
@@ -112,6 +141,20 @@ class _QiblaAndToolsScreenState extends ConsumerState<QiblaAndToolsScreen> {
         const Text(
           "Kıble Pusulası, Ambiyans Sesleri & Kaza Takibi",
           style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 14),
+        GlassContainer(
+          borderRadius: 20, emeraldGlow: true, padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
+          onTap: () => EsmaulHusnaSheet.show(context),
+          child: const Row(children: [
+            Icon(Icons.auto_awesome, color: Color(0xFFFFE082), size: 24),
+            SizedBox(width: 12),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('99 Esmaül Hüsna', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFFFFE082))),
+              SizedBox(height: 3), Text('İsimleri keşfet • Ebced değerini gör • Zikirmatik hedefi kur', style: TextStyle(fontSize: 11, color: Colors.white70)),
+            ])),
+            Icon(Icons.chevron_right, color: Color(0xFF64FFDA)),
+          ]),
         ),
         const SizedBox(height: 14),
 
@@ -361,6 +404,30 @@ class _QiblaAndToolsScreenState extends ConsumerState<QiblaAndToolsScreen> {
               ),
             ],
           ),
+        ),
+        const SizedBox(height: 16),
+
+        GlassContainer(
+          borderRadius: 26, emeraldGlow: true, padding: const EdgeInsets.all(18),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Text('Hatim İlerleme Takibi', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFFFFE082))),
+            const SizedBox(height: 12),
+            Row(children: [
+              SizedBox(width: 74, height: 74, child: Stack(alignment: Alignment.center, children: [CircularProgressIndicator(value: _completedJuz / 30, strokeWidth: 7, backgroundColor: Colors.white12, valueColor: const AlwaysStoppedAnimation(Color(0xFF64FFDA))), SizedBox(width: 56, height: 56, child: CircularProgressIndicator(value: (_dailyReadJuz / _dailyJuzGoal).clamp(0.0, 1.0).toDouble(), strokeWidth: 3, backgroundColor: Colors.transparent, valueColor: const AlwaysStoppedAnimation(Color(0xFFFFE082))) )])),
+              const SizedBox(width: 14),
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(_completedJuz.toString() + ' / 30 cüz tamamlandı', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 4), Text('%' + ((_completedJuz / 30) * 100).toStringAsFixed(0) + ' toplam hatim ilerlemesi', style: const TextStyle(fontSize: 11, color: Colors.white60)),
+                const SizedBox(height: 5), Text('Bugün: ' + _dailyReadJuz.toString() + ' cüz • Hedef: ' + _dailyJuzGoal.toString(), style: const TextStyle(fontSize: 11, color: Color(0xFF64FFDA))),
+              ])),
+            ]),
+            const SizedBox(height: 12),
+            Row(children: [
+              Expanded(child: OutlinedButton.icon(onPressed: () => _updateHatim(_completedJuz - 1), icon: const Icon(Icons.remove), label: const Text('Cüz azalt'))),
+              const SizedBox(width: 8),
+              Expanded(child: ElevatedButton.icon(onPressed: _recordDailyJuz, icon: const Icon(Icons.add), label: const Text('Bugünkü cüzü kaydet'), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF64FFDA), foregroundColor: const Color(0xFF04221F)))),
+            ]),
+          ]),
         ),
         const SizedBox(height: 16),
 

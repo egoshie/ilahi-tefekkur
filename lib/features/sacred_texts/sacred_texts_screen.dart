@@ -1,11 +1,14 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:ui';
 import 'package:audio_session/audio_session.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/models/app_models.dart';
 import '../../core/services/database_seeder.dart';
+import '../../core/services/notification_service.dart';
 import '../../core/services/pricing_and_premium_service.dart';
 import '../../core/theme/glass_container.dart';
 import '../../core/theme/liquid_glass_theme.dart';
@@ -36,6 +39,12 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
   List<BibleVerseItem> _gospelVerses = [];
   bool _loadingGospel = false;
 
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  int? _focusVerseNumber;
+  List<Map<String, dynamic>> _bookmarks = [];
+  Map<String, dynamic>? _lastPlace;
+
   final AudioPlayer _quranAudioPlayer = AudioPlayer();
   StreamSubscription<PlayerState>? _playerSub;
   int? _playingAyahIndex;
@@ -54,7 +63,131 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
     _selectedGospelBook = gospelBooks.first;
 
     _setupAudioListener();
+    _loadSavedReadingState();
     _loadInitialCatalogs();
+  }
+
+  String _normalizeSearch(String value) {
+    const replacements = {'İ':'i','I':'i','ı':'i','Ş':'s','ş':'s','Ğ':'g','ğ':'g','Ü':'u','ü':'u','Ö':'o','ö':'o','Ç':'c','ç':'c','Â':'a','â':'a','Î':'i','î':'i','Û':'u','û':'u','Ê':'e','ê':'e'};
+    var result = value;
+    replacements.forEach((from, to) { result = result.replaceAll(from, to); });
+    return result.toLowerCase();
+  }
+
+  bool _matchesSearch(String value) => _searchQuery.trim().isEmpty || _normalizeSearch(value).contains(_normalizeSearch(_searchQuery.trim()));
+
+  Future<void> _loadSavedReadingState() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getStringList('huzur_v42_bookmarks') ?? const <String>[];
+    final parsed = <Map<String, dynamic>>[];
+    for (final value in saved) {
+      try { parsed.add(Map<String, dynamic>.from(jsonDecode(value) as Map)); } catch (_) {}
+    }
+    final rawLast = prefs.getString('huzur_v42_last_place');
+    if (!mounted) return;
+    setState(() {
+      _bookmarks = parsed;
+      if (rawLast != null) {
+        try { _lastPlace = Map<String, dynamic>.from(jsonDecode(rawLast) as Map); } catch (_) {}
+      }
+    });
+  }
+
+  Future<void> _saveLastPlace(Map<String, dynamic> place) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('huzur_v42_last_place', jsonEncode(place));
+    if (mounted) setState(() => _lastPlace = place);
+  }
+
+  bool _hasBookmark(String id) => _bookmarks.any((item) => item['id'] == id);
+
+  Future<void> _toggleBookmark(Map<String, dynamic> item) async {
+    final id = item['id'].toString();
+    final next = List<Map<String, dynamic>>.from(_bookmarks);
+    if (next.any((value) => value['id'] == id)) {
+      next.removeWhere((value) => value['id'] == id);
+    } else {
+      next.insert(0, item);
+    }
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('huzur_v42_bookmarks', next.map((value) => jsonEncode(value)).toList());
+    if (mounted) setState(() => _bookmarks = next);
+  }
+
+  Widget _highlightSearchText(String value, TextStyle style) {
+    final query = _searchQuery.trim();
+    if (query.isEmpty) return Text(value, style: style);
+    final folded = _normalizeSearch(value);
+    final foldedQuery = _normalizeSearch(query);
+    final start = folded.indexOf(foldedQuery);
+    if (start < 0 || start + foldedQuery.length > value.length) return Text(value, style: style);
+    final end = start + foldedQuery.length;
+    return Text.rich(TextSpan(children: [
+      TextSpan(text: value.substring(0, start), style: style),
+      TextSpan(text: value.substring(start, end), style: style.copyWith(backgroundColor: const Color(0xFFFFD54F).withOpacity(0.28), color: const Color(0xFFFFE082))),
+      TextSpan(text: value.substring(end), style: style),
+    ]));
+  }
+
+  Future<void> _openSavedPlace(Map<String, dynamic> place) async {
+    final tab = (place['tab'] ?? 'quran').toString();
+    if (tab == 'quran') {
+      final number = int.tryParse((place['surah'] ?? '1').toString()) ?? 1;
+      final found = _surahs.where((s) => s.number == number).toList();
+      if (found.isEmpty) return;
+      final verse = int.tryParse((place['verse'] ?? '').toString());
+      setState(() { _selectedTab = 'quran'; _selectedSurah = found.first; _searchQuery = ''; _searchController.clear(); _focusVerseNumber = verse; });
+      await _loadSurahAyahs(number);
+    } else {
+      final bookId = int.tryParse((place['bookId'] ?? '').toString());
+      final chapter = int.tryParse((place['chapter'] ?? '1').toString()) ?? 1;
+      final books = DatabaseService.kAllBibleBooks.where((b) => b.testament == tab && (bookId == null || b.bookId == bookId)).toList();
+      if (books.isEmpty) return;
+      final verse = int.tryParse((place['verse'] ?? '').toString());
+      setState(() {
+        _selectedTab = tab; _searchQuery = ''; _searchController.clear(); _focusVerseNumber = verse;
+        if (tab == 'torah') { _selectedTorahBook = books.first; _selectedTorahChapter = chapter; }
+        else { _selectedGospelBook = books.first; _selectedGospelChapter = chapter; }
+      });
+      await _loadBibleChapter(tab);
+    }
+  }
+
+  void _showBookmarksAndLastPlace() {
+    showModalBottomSheet<void>(
+      context: context, backgroundColor: Colors.transparent, isScrollControlled: true,
+      builder: (sheetContext) => DraggableScrollableSheet(
+        initialChildSize: 0.72, maxChildSize: 0.92, minChildSize: 0.5,
+        builder: (context, controller) => GlassContainer(
+          borderRadius: 28, enableBlur: true, padding: const EdgeInsets.all(18),
+          child: ListView(controller: controller, children: [
+            const Text('Kaldığım Yer & Favoriler', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Color(0xFFFFE082))),
+            const SizedBox(height: 10),
+            if (_lastPlace != null) ListTile(
+              leading: const Icon(Icons.history, color: Color(0xFF64FFDA)),
+              title: const Text('Kaldığın yere dön'),
+              subtitle: Text((_lastPlace!['label'] ?? 'Son okuma konumu').toString()),
+              onTap: () { Navigator.pop(sheetContext); _openSavedPlace(_lastPlace!); },
+            ) else const Text('Henüz kayıtlı bir okuma konumu yok.', style: TextStyle(color: Colors.white60, fontSize: 12)),
+            const Divider(color: Colors.white24),
+            if (_bookmarks.isEmpty) const Text('Henüz favori ayet eklemedin.', style: TextStyle(color: Colors.white60, fontSize: 12)),
+            ..._bookmarks.map((item) => ListTile(
+              leading: const Icon(Icons.bookmark, color: Color(0xFFFFE082)),
+              title: Text((item['label'] ?? 'Favori ayet').toString(), maxLines: 1, overflow: TextOverflow.ellipsis),
+              subtitle: Text((item['text'] ?? '').toString(), maxLines: 2, overflow: TextOverflow.ellipsis),
+              onTap: () { Navigator.pop(sheetContext); _openSavedPlace(item); },
+              trailing: IconButton(icon: const Icon(Icons.delete_outline, color: Colors.white60), onPressed: () async {
+                final id = (item['id'] ?? '').toString();
+                final next = List<Map<String, dynamic>>.from(_bookmarks)..removeWhere((value) => value['id'] == id);
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setStringList('huzur_v42_bookmarks', next.map((value) => jsonEncode(value)).toList());
+                if (mounted) setState(() => _bookmarks = next);
+              }),
+            )),
+          ]),
+        ),
+      ),
+    );
   }
 
   Future<void> _setupAudioListener() async {
@@ -105,6 +238,12 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
           _ayahs = ayahs;
           _loadingQuran = false;
         });
+        await _saveLastPlace({
+          'tab': 'quran',
+          'surah': surahNum.toString(),
+          if (_focusVerseNumber != null) 'verse': _focusVerseNumber.toString(),
+          'label': (_selectedSurah?.nameTurkish ?? 'Sure') + ' • ' + surahNum.toString(),
+        });
       }
     } catch (_) {
       if (mounted) setState(() => _loadingQuran = false);
@@ -123,6 +262,7 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
             _torahVerses = list;
             _loadingTorah = false;
           });
+          await _saveLastPlace({'tab':'torah','bookId':_selectedTorahBook.bookId,'chapter':_selectedTorahChapter, if (_focusVerseNumber != null) 'verse': _focusVerseNumber.toString(), 'label':_selectedTorahBook.nameTurkish + ' • Bab ' + _selectedTorahChapter.toString()});
         }
       } catch (_) {
         if (mounted) setState(() => _loadingTorah = false);
@@ -137,6 +277,7 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
             _gospelVerses = list;
             _loadingGospel = false;
           });
+          await _saveLastPlace({'tab':'gospel','bookId':_selectedGospelBook.bookId,'chapter':_selectedGospelChapter, if (_focusVerseNumber != null) 'verse': _focusVerseNumber.toString(), 'label':_selectedGospelBook.nameTurkish + ' • Bab ' + _selectedGospelChapter.toString()});
         }
       } catch (_) {
         if (mounted) setState(() => _loadingGospel = false);
@@ -170,6 +311,7 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
 
   @override
   void dispose() {
+    _searchController.dispose();
     _playerSub?.cancel();
     _quranAudioPlayer.dispose();
     super.dispose();
@@ -195,6 +337,33 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
             style: TextStyle(fontSize: 12, color: Colors.white70),
           ),
           const SizedBox(height: 12),
+          GlassContainer(
+            borderRadius: 16, padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+            child: Row(children: [
+              const Icon(Icons.search, color: Color(0xFF64FFDA), size: 20),
+              const SizedBox(width: 8),
+              Expanded(child: TextField(
+                controller: _searchController,
+                onChanged: (value) => setState(() { _searchQuery = value; _focusVerseNumber = null; }),
+                style: const TextStyle(fontSize: 13, color: Colors.white),
+                decoration: const InputDecoration(
+                  border: InputBorder.none, hintText: 'Sure adı, numarası veya ayet kelimesi ara... Örn: Yasin, Bakara, 36, Sabır',
+                  hintStyle: TextStyle(fontSize: 11, color: Colors.white54),
+                ),
+              )),
+              if (_searchQuery.isNotEmpty) IconButton(
+                visualDensity: VisualDensity.compact, icon: const Icon(Icons.close, size: 18, color: Colors.white70),
+                onPressed: () { _searchController.clear(); setState(() { _searchQuery = ''; _focusVerseNumber = null; }); },
+              ),
+            ]),
+          ),
+          const SizedBox(height: 7),
+          Align(alignment: Alignment.centerRight, child: TextButton.icon(
+            onPressed: _showBookmarksAndLastPlace,
+            icon: const Icon(Icons.bookmarks_outlined, size: 16, color: Color(0xFFFFE082)),
+            label: Text('Kaldığım Yer & Favoriler (' + _bookmarks.length.toString() + ')', style: const TextStyle(fontSize: 11, color: Color(0xFFFFE082))),
+          )),
+          const SizedBox(height: 4),
 
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
@@ -244,7 +413,7 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
   Widget _buildTraditionTab(String id, String title, bool showLock) {
     final selected = _selectedTab == id;
     return GestureDetector(
-      onTap: () => setState(() => _selectedTab = id),
+      onTap: () => setState(() { _selectedTab = id; _focusVerseNumber = null; }),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
         decoration: BoxDecoration(
@@ -282,8 +451,22 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
   }
 
   Widget _buildQuranLiveReader() {
+    final matchingSurahs = _searchQuery.trim().isEmpty ? const [] : _surahs.where((s) => _matchesSearch(s.nameTurkish + ' ' + s.number.toString() + ' ' + s.nameArabic)).take(8).toList();
+    final visibleAyahs = _ayahs.where((a) {
+      if (_focusVerseNumber != null) return a.numberInSurah == _focusVerseNumber;
+      return _matchesSearch(a.surahName + ' ' + a.numberInSurah.toString() + ' ' + (_selectedSurah?.number.toString() ?? '') + ' ' + a.turkishText);
+    }).toList();
     return Column(
       children: [
+        if (matchingSurahs.isNotEmpty) SizedBox(height: 48, child: ListView.separated(
+          scrollDirection: Axis.horizontal, itemCount: matchingSurahs.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 7),
+          itemBuilder: (context, index) { final s = matchingSurahs[index]; return ActionChip(
+            backgroundColor: const Color(0xFF64FFDA).withOpacity(0.12),
+            label: Text(s.number.toString() + '. ' + s.nameTurkish, style: const TextStyle(fontSize: 11, color: Color(0xFF64FFDA))),
+            onPressed: () { setState(() => _selectedSurah = s); _loadSurahAyahs(s.number); },
+          ); },
+        )),
         GlassContainer(
           borderRadius: 18,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -370,24 +553,25 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                 )
               : ListView.separated(
                   physics: const BouncingScrollPhysics(),
-                  itemCount: _ayahs.length,
+                  itemCount: visibleAyahs.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
-                    final a = _ayahs[index];
-                    final isPlaying = _playingAyahIndex == index;
+                    final a = visibleAyahs[index];
+                    final sourceIndex = _ayahs.indexOf(a);
+                    final isPlaying = _playingAyahIndex == sourceIndex;
 
                     return GlassContainer(
                       borderRadius: 24,
                       emeraldGlow: isPlaying,
                       goldAccentBorder: isPlaying,
                       padding: const EdgeInsets.all(16),
-                      onTap: () => HuzurStoryShareSheet.show(
+                      onTap: () { _saveLastPlace({'tab':'quran','surah':_selectedSurah?.number.toString() ?? '1','verse':a.numberInSurah.toString(),'label':a.surahName + ' • Ayet ' + a.numberInSurah.toString()}); HuzurStoryShareSheet.show(
                         context,
                         arabic: a.arabicText,
                         turkish: a.turkishText,
                         reference: "${a.surahName}, ${a.numberInSurah}",
                         category: "Kur'ân-ı Kerîm",
-                      ),
+                      ); },
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -417,7 +601,7 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                                         await _quranAudioPlayer.stop();
                                         setState(() => _playingAyahIndex = null);
                                       } else {
-                                        _playAyahAtIndex(index);
+                                        _playAyahAtIndex(sourceIndex);
                                       }
                                     },
                                     child: Container(
@@ -450,7 +634,32 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(width: 6),
+                                  const SizedBox(width: 4),
+                                  IconButton(
+                                    visualDensity: VisualDensity.compact, padding: EdgeInsets.zero,
+                                    icon: Icon(_hasBookmark('quran|' + (_selectedSurah?.number.toString() ?? '0') + '|' + a.numberInSurah.toString()) ? Icons.bookmark : Icons.bookmark_border, color: const Color(0xFFFFE082), size: 20),
+                                    onPressed: () => _toggleBookmark({
+                                      'id':'quran|' + (_selectedSurah?.number.toString() ?? '0') + '|' + a.numberInSurah.toString(),
+                                      'tab':'quran','surah':_selectedSurah?.number.toString() ?? '1','verse':a.numberInSurah.toString(),
+                                      'label':a.surahName + ' • Ayet ' + a.numberInSurah.toString(),
+                                      'text':a.turkishText,'arabic':a.arabicText,
+                                    }),
+                                  ),
+                                  IconButton(
+                                    tooltip: 'Widget yap',
+                                    visualDensity: VisualDensity.compact,
+                                    padding: EdgeInsets.zero,
+                                    icon: const Icon(Icons.widgets_outlined, color: Color(0xFF64FFDA), size: 19),
+                                    onPressed: () async {
+                                      await NotificationAndWidgetService.instance.updateWidgetVerse(
+                                        arabic: a.arabicText,
+                                        turkish: a.turkishText,
+                                        reference: a.surahName + ', ' + a.numberInSurah.toString(),
+                                      );
+                                      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ayet Huzur widget’ına aktarıldı.')));
+                                    },
+                                  ),
+                                  const SizedBox(width: 3),
                                   GestureDetector(
                                     onTap: () => HuzurStoryShareSheet.show(
                                       context,
@@ -493,10 +702,7 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                             ),
                           ),
                           const SizedBox(height: 10),
-                          Text(
-                            a.turkishText,
-                            style: const TextStyle(fontSize: 14, height: 1.45),
-                          ),
+                          _highlightSearchText(a.turkishText, const TextStyle(fontSize: 14, height: 1.45)),
                         ],
                       ),
                     );
@@ -515,7 +721,11 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
         testament == 'torah' ? _selectedTorahBook : _selectedGospelBook;
     final activeChapter =
         testament == 'torah' ? _selectedTorahChapter : _selectedGospelChapter;
-    final verses = testament == 'torah' ? _torahVerses : _gospelVerses;
+    final allVerses = testament == 'torah' ? _torahVerses : _gospelVerses;
+    final verses = allVerses.where((v) {
+      if (_focusVerseNumber != null) return v.verse == _focusVerseNumber;
+      return _matchesSearch(v.bookName + ' ' + v.chapter.toString() + ':' + v.verse.toString() + ' ' + v.turkishText);
+    }).toList();
     final loading = testament == 'torah' ? _loadingTorah : _loadingGospel;
     final categoryLabel =
         testament == 'torah' ? "Tevrat • Tanah" : "İncil • Yeni Ahit";
@@ -558,6 +768,7 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                     onTap: () {
                       if (activeChapter > 1) {
                         setState(() {
+                          _focusVerseNumber = null;
                           if (testament == 'torah') {
                             _selectedTorahChapter--;
                           } else {
@@ -581,6 +792,7 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                     onTap: () {
                       if (activeChapter < activeBook.totalChapters) {
                         setState(() {
+                          _focusVerseNumber = null;
                           if (testament == 'torah') {
                             _selectedTorahChapter++;
                           } else {
@@ -626,13 +838,15 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                     return GlassContainer(
                       borderRadius: 20,
                       padding: const EdgeInsets.all(15),
-                      onTap: () => HuzurStoryShareSheet.show(
+                      onTap: () {
+                        _saveLastPlace({'tab':testament,'bookId':activeBook.bookId.toString(),'chapter':activeChapter.toString(),'verse':v.verse.toString(),'label':v.bookName + ' ' + v.chapter.toString() + ':' + v.verse.toString()});
+                        HuzurStoryShareSheet.show(
                         context,
                         arabic: v.originalScript,
                         turkish: v.turkishText,
                         reference: "${v.bookName} ${v.chapter}:${v.verse}",
                         category: categoryLabel,
-                      ),
+                      ); },
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -647,7 +861,32 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                                   color: Color(0xFFFFE082),
                                 ),
                               ),
-                              GestureDetector(
+                              Row(children: [
+                                IconButton(
+                                  visualDensity: VisualDensity.compact, padding: EdgeInsets.zero,
+                                  icon: Icon(_hasBookmark(testament + '|' + activeBook.bookId.toString() + '|' + activeChapter.toString() + '|' + v.verse.toString()) ? Icons.bookmark : Icons.bookmark_border, color: const Color(0xFFFFE082), size: 19),
+                                  onPressed: () => _toggleBookmark({
+                                    'id':testament + '|' + activeBook.bookId.toString() + '|' + activeChapter.toString() + '|' + v.verse.toString(),
+                                    'tab':testament,'bookId':activeBook.bookId.toString(),'chapter':activeChapter.toString(),
+                                    'label':v.bookName + ' ' + v.chapter.toString() + ':' + v.verse.toString(),
+                                    'text':v.turkishText,'arabic':v.originalScript,
+                                  }),
+                                ),
+                                IconButton(
+                                  tooltip: 'Widget yap',
+                                  visualDensity: VisualDensity.compact,
+                                  padding: EdgeInsets.zero,
+                                  icon: const Icon(Icons.widgets_outlined, color: Color(0xFF64FFDA), size: 18),
+                                  onPressed: () async {
+                                    await NotificationAndWidgetService.instance.updateWidgetVerse(
+                                      arabic: v.originalScript,
+                                      turkish: v.turkishText,
+                                      reference: v.bookName + ' ' + v.chapter.toString() + ':' + v.verse.toString(),
+                                    );
+                                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Metin Huzur widget’ına aktarıldı.')));
+                                  },
+                                ),
+                                GestureDetector(
                                 onTap: () => HuzurStoryShareSheet.show(
                                   context,
                                   arabic: v.originalScript,
@@ -661,6 +900,7 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                                   size: 16,
                                 ),
                               ),
+                              ]),
                             ],
                           ),
                           if (v.originalScript.isNotEmpty) ...[
@@ -678,10 +918,7 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                             ),
                           ],
                           const SizedBox(height: 8),
-                          Text(
-                            v.turkishText,
-                            style: const TextStyle(fontSize: 14, height: 1.45),
-                          ),
+                          _highlightSearchText(v.turkishText, const TextStyle(fontSize: 14, height: 1.45)),
                         ],
                       ),
                     );
@@ -785,9 +1022,10 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                   Expanded(
                     child: ListView.builder(
                       controller: ctrl,
-                      itemCount: _surahs.length,
+                      itemCount: _surahs.where((s) => _matchesSearch(s.nameTurkish + ' ' + s.nameArabic + ' ' + s.number.toString())).length,
                       itemBuilder: (context, i) {
-                        final s = _surahs[i];
+                        final filtered = _surahs.where((s) => _matchesSearch(s.nameTurkish + ' ' + s.nameArabic + ' ' + s.number.toString())).toList();
+                        final s = filtered[i];
                         return ListTile(
                           dense: true,
                           title: Text(
@@ -804,7 +1042,8 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                           ),
                           onTap: () {
                             Navigator.pop(context);
-                            setState(() => _selectedSurah = s);
+                            setState(() { _selectedSurah = s; _focusVerseNumber = null; });
+                            _saveLastPlace({'tab':'quran','surah':s.number.toString(),'label':s.nameTurkish + ' • Sure'});
                             _loadSurahAyahs(s.number);
                           },
                         );
@@ -864,6 +1103,7 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                           onTap: () {
                             Navigator.pop(context);
                             setState(() {
+                              _focusVerseNumber = null;
                               if (testament == 'torah') {
                                 _selectedTorahBook = b;
                                 _selectedTorahChapter = 1;
@@ -872,6 +1112,7 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                                 _selectedGospelChapter = 1;
                               }
                             });
+                            _saveLastPlace({'tab':testament,'bookId':b.bookId.toString(),'chapter':'1','label':b.nameTurkish + ' • Bab 1'});
                             _loadBibleChapter(testament);
                           },
                         );

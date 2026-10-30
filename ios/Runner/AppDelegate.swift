@@ -1,60 +1,74 @@
-import UIKit
 import Flutter
-import UserNotifications
-#if canImport(WidgetKit)
+import UIKit
 import WidgetKit
-#endif
 
 @main
-@objc class AppDelegate: FlutterAppDelegate {
-    override func application(
-        _ application: UIApplication,
-        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
-    ) -> Bool {
-        if #available(iOS 10.0, *) {
-            UNUserNotificationCenter.current().delegate = self as? UNUserNotificationCenterDelegate
+@objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
+    private static let mediaChannelName = "com.ilahi.tefekkur/media"
+    private static let appGroupIdentifier = "group.com.ilahi.tefekkur"
+    private var pendingGalleryResult: FlutterResult?
+
+    func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
+        GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
+        guard let pluginRegistrar = engineBridge.pluginRegistry.registrar(forPlugin: "HuzurMediaBridge") else {
+            return
         }
-
-        let controller: FlutterViewController = window?.rootViewController as! FlutterViewController
-        let bridgeChannel = FlutterMethodChannel(
-            name: "com.ilahi.tefekkur/native_bridge",
-            binaryMessenger: controller.binaryMessenger
+        let channel = FlutterMethodChannel(
+            name: AppDelegate.mediaChannelName,
+            binaryMessenger: pluginRegistrar.messenger()
         )
-
-        bridgeChannel.setMethodCallHandler { (call: FlutterMethodCall, result: @escaping FlutterResult) in
+        channel.setMethodCallHandler { [weak self] call, result in
+            guard let self = self else {
+                result(FlutterError(code: "APP_DEALLOCATED", message: "Uygulama köprüsü kullanılamıyor.", details: nil))
+                return
+            }
             switch call.method {
-            case "enableHourlyLockScreenVerse":
-                if let args = call.arguments as? [String: Any] {
-                    let arabic = args["arabic"] as? String ?? ""
-                    let translation = args["translation"] as? String ?? ""
-                    let reference = args["reference"] as? String ?? ""
-
-                    let defaults = UserDefaults.standard
-                    defaults.set(arabic, forKey: "hourly_arabic")
-                    defaults.set(translation, forKey: "hourly_translation")
-                    defaults.set(reference, forKey: "hourly_reference")
-
-                    if #available(iOS 14.0, *) {
-                        #if canImport(WidgetKit)
-                        WidgetCenter.shared.reloadAllTimelines()
-                        #endif
-                    }
+            case "saveImageToGallery":
+                guard let typedData = call.arguments as? FlutterStandardTypedData,
+                      let image = UIImage(data: typedData.data) else {
+                    result(FlutterError(code: "INVALID_IMAGE", message: "PNG verisi okunamadı.", details: nil))
+                    return
                 }
+                guard self.pendingGalleryResult == nil else {
+                    result(FlutterError(code: "SAVE_IN_PROGRESS", message: "Önceki galeri kaydı tamamlanıyor.", details: nil))
+                    return
+                }
+                self.pendingGalleryResult = result
+                UIImageWriteToSavedPhotosAlbum(
+                    image,
+                    self,
+                    #selector(self.image(_:didFinishSavingWithError:contextInfo:)),
+                    nil
+                )
+            case "updateWidgetVerse":
+                guard let payload = call.arguments as? [String: String] else {
+                    result(FlutterError(code: "INVALID_WIDGET_DATA", message: "Widget verisi geçersiz.", details: nil))
+                    return
+                }
+                let defaults = UserDefaults(suiteName: AppDelegate.appGroupIdentifier)
+                defaults?.set(payload["arabic"] ?? "", forKey: "huzur_widget_arabic")
+                defaults?.set(payload["turkish"] ?? "", forKey: "huzur_widget_turkish")
+                defaults?.set(payload["reference"] ?? "", forKey: "huzur_widget_reference")
+                defaults?.synchronize()
+                WidgetCenter.shared.reloadAllTimelines()
                 result(true)
-
-            case "stopHourlyLockScreenVerse":
-                UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["hourly_verse_777"])
-                result(true)
-
-            case "scheduleExactAdhan":
-                result(true)
-
             default:
                 result(FlutterMethodNotImplemented)
             }
         }
+    }
 
-        GeneratedPluginRegistrant.register(with: self)
-        return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+    @objc private func image(
+        _ image: UIImage,
+        didFinishSavingWithError error: Error?,
+        contextInfo: UnsafeRawPointer?
+    ) {
+        let callback = pendingGalleryResult
+        pendingGalleryResult = nil
+        if let error = error {
+            callback?(FlutterError(code: "PHOTO_SAVE_FAILED", message: error.localizedDescription, details: nil))
+        } else {
+            callback?(true)
+        }
     }
 }
