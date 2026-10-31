@@ -72,8 +72,7 @@ class _LiquidGlassPaywallSheetState
           ),
           child: ListView(
             controller: scrollController,
-            keyboardDismissBehavior:
-                ScrollViewKeyboardDismissBehavior.onDrag,
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             physics: const BouncingScrollPhysics(),
             children: [
               Center(
@@ -87,7 +86,6 @@ class _LiquidGlassPaywallSheetState
                 ),
               ),
               const SizedBox(height: 18),
-
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -116,9 +114,7 @@ class _LiquidGlassPaywallSheetState
                   ),
                 ],
               ),
-
               const SizedBox(height: 6),
-
               const Text(
                 "Sıfır Reklam • Tüm İlahi Kitaplar • Karşılaştırmalı Tefekkür",
                 textAlign: TextAlign.center,
@@ -127,17 +123,11 @@ class _LiquidGlassPaywallSheetState
                   fontSize: 13,
                 ),
               ),
-
               const SizedBox(height: 14),
-
               const HuzurDeveloperStoryButton(),
-
               const SizedBox(height: 10),
-
               const HuzurLiveSupportButton(),
-
               const SizedBox(height: 18),
-
               _buildFeatureRow(
                 "Tevrat (39 Kitap) ve İncil (27 Kitap) Canlı Türkçe Külliyat",
               ),
@@ -153,9 +143,7 @@ class _LiquidGlassPaywallSheetState
               _buildFeatureRow(
                 "Sınırsız Zikirmatik & 99 Esmaül Hüsna Rehberi",
               ),
-
               const SizedBox(height: 18),
-
               _buildPlanCard(
                 id: 'monthly',
                 title: "Aylık Plan",
@@ -163,20 +151,15 @@ class _LiquidGlassPaywallSheetState
                 subtitle: "Esnek aylık abonelik",
                 badge: null,
               ),
-
               const SizedBox(height: 12),
-
               _buildPlanCard(
                 id: 'annual',
                 title: "Yıllık Huzur Planı",
                 price: offer.annualPrice,
-                subtitle:
-                    "${offer.annualMonthlyEquivalent} • Yıllık Abonelik",
+                subtitle: "${offer.annualMonthlyEquivalent} • Yıllık Abonelik",
                 badge: "EN ÇOK TERCİH EDİLEN",
               ),
-
               const SizedBox(height: 12),
-
               _buildPlanCard(
                 id: 'lifetime',
                 title: "Ömür Boyu Tam Erişim",
@@ -184,9 +167,7 @@ class _LiquidGlassPaywallSheetState
                 subtitle: "Tek seferlik ödeme • Süresiz kullanım",
                 badge: "SINIRSIZ ERİŞİM",
               ),
-
               const SizedBox(height: 16),
-
               if (premium.statusMessage != null)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 12),
@@ -200,7 +181,6 @@ class _LiquidGlassPaywallSheetState
                     ),
                   ),
                 ),
-
               GlassContainer(
                 goldAccentBorder: true,
                 emeraldGlow: true,
@@ -242,9 +222,7 @@ class _LiquidGlassPaywallSheetState
                         ),
                 ),
               ),
-
               const SizedBox(height: 10),
-
               GlassContainer(
                 borderRadius: 16,
                 padding: const EdgeInsets.symmetric(vertical: 11),
@@ -260,9 +238,7 @@ class _LiquidGlassPaywallSheetState
                   ),
                 ),
               ),
-
               const SizedBox(height: 12),
-
               Row(
                 children: [
                   Expanded(
@@ -301,9 +277,7 @@ class _LiquidGlassPaywallSheetState
                       ),
                     ),
                   ),
-
                   const SizedBox(width: 10),
-
                   Expanded(
                     child: GlassContainer(
                       borderRadius: 16,
@@ -342,9 +316,7 @@ class _LiquidGlassPaywallSheetState
                   ),
                 ],
               ),
-
               const SizedBox(height: 12),
-
               const Text(
                 "114 Sure Kur'ân-ı Kerîm, sesli tilavet, ezan vakitleri ve kıble pusulası herkes için sonsuza dek ücretsizdir.",
                 textAlign: TextAlign.center,
@@ -428,7 +400,6 @@ class _LiquidGlassPaywallSheetState
             ),
             const SizedBox(height: 8),
           ],
-
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -451,9 +422,7 @@ class _LiquidGlassPaywallSheetState
               ),
             ],
           ),
-
           const SizedBox(height: 4),
-
           Text(
             subtitle,
             style: const TextStyle(
@@ -517,9 +486,7 @@ class _LiquidGlassPaywallSheetState
                 ),
               ],
             ),
-
             const SizedBox(height: 12),
-
             Text(
               body,
               style: const TextStyle(
@@ -528,9 +495,7 @@ class _LiquidGlassPaywallSheetState
                 color: Colors.white,
               ),
             ),
-
             const SizedBox(height: 16),
-
             GlassContainer(
               borderRadius: 14,
               emeraldGlow: true,
@@ -547,9 +512,7 @@ class _LiquidGlassPaywallSheetState
                 ),
               ),
             ),
-
             const SizedBox(height: 8),
-
             GlassContainer(
               borderRadius: 14,
               padding: const EdgeInsets.symmetric(vertical: 10),
@@ -572,7 +535,7 @@ class _LiquidGlassPaywallSheetState
 }
 
 // ============================================================
-// ÖZEL SVG / VEKTÖR ÇİZİMLERİ (🌟 PARLAYAN YILDIZ & 🌙 HİLAL AMBLEMİ)
+// ÖZEL SVG / VEKTÖR ÇİZİMLERİ ( PARLAYAN YILDIZ &  HİLAL AMBLEMİ)
 // ============================================================
 
 class HuzurGlowingStarSvg extends StatelessWidget {
@@ -857,15 +820,13 @@ class _HuzurInAppLiveChatSheet extends StatefulWidget {
 }
 
 class _HuzurInAppLiveChatSheetState extends State<_HuzurInAppLiveChatSheet> {
-  // Doğrudan Gömülü Telegram & MTProto Yapılandırması
-  static const int _tgApiId = 26366323;
-  static const String _tgApiHash = '6d6b7e4cb59b61604f817d843727ff83';
+  // Telegram Bot API yapılandırması
   static const String _botToken =
       '9294606406:AAEPkXrViV0uK3rcW8m6CQjS9C9YAN_WNcc';
   static const String _developerChatId = '8147114161';
 
   final TextEditingController _inputController = TextEditingController();
-  final ScrollController _scrollController = ScrollController();
+  ScrollController? _sheetScrollController;
 
   String _sessionTag = 'HZR-0000';
   bool _isLiveDeveloperMode = false;
@@ -878,6 +839,7 @@ class _HuzurInAppLiveChatSheetState extends State<_HuzurInAppLiveChatSheet> {
   Timer? _typingDebounce;
   Timer? _pollTimer;
   int _lastProcessedUpdateId = 0;
+  bool _hasInitializedUpdateStream = false;
 
   final List<_HuzurChatMessage> _messages = [];
 
@@ -887,11 +849,17 @@ class _HuzurInAppLiveChatSheetState extends State<_HuzurInAppLiveChatSheet> {
   @override
   void initState() {
     super.initState();
-    assert(_tgApiId > 0 && _tgApiHash.isNotEmpty);
-    _loadLocalSession();
+    unawaited(_initializeLiveSupport());
+  }
+
+  Future<void> _initializeLiveSupport() async {
+    await _loadLocalSession();
+    if (!mounted) return;
+    await _pollDeveloperReplies();
+    if (!mounted) return;
     _pollTimer = Timer.periodic(
       const Duration(seconds: 2),
-      (_) => _pollDeveloperReplies(),
+      (_) => unawaited(_pollDeveloperReplies()),
     );
   }
 
@@ -900,7 +868,6 @@ class _HuzurInAppLiveChatSheetState extends State<_HuzurInAppLiveChatSheet> {
     _typingDebounce?.cancel();
     _pollTimer?.cancel();
     _inputController.dispose();
-    _scrollController.dispose();
     super.dispose();
   }
 
@@ -925,6 +892,8 @@ class _HuzurInAppLiveChatSheetState extends State<_HuzurInAppLiveChatSheet> {
         final savedTag = (data['sessionTag'] ?? '').toString();
         final savedLive = data['isLiveDeveloperMode'] == true;
         final savedLastUpdate = (data['lastProcessedUpdateId'] as int?) ?? 0;
+        final savedStreamInitialized =
+            data['hasInitializedUpdateStream'] == true || savedLastUpdate > 0;
         final list = (data['messages'] as List<dynamic>? ?? [])
             .map((e) => _HuzurChatMessage.fromJson(e as Map<String, dynamic>))
             .toList();
@@ -933,6 +902,7 @@ class _HuzurInAppLiveChatSheetState extends State<_HuzurInAppLiveChatSheet> {
             _sessionTag = savedTag;
             _isLiveDeveloperMode = savedLive;
             _lastProcessedUpdateId = savedLastUpdate;
+            _hasInitializedUpdateStream = savedStreamInitialized;
             _messages
               ..clear()
               ..addAll(list);
@@ -950,6 +920,8 @@ class _HuzurInAppLiveChatSheetState extends State<_HuzurInAppLiveChatSheet> {
     setState(() {
       _sessionTag = _generateFreshTag();
       _isLiveDeveloperMode = false;
+      _lastProcessedUpdateId = 0;
+      _hasInitializedUpdateStream = false;
       _liveTypingTelegramMsgId = null;
       _lastSentTypingDraft = '';
       _messages
@@ -973,6 +945,7 @@ class _HuzurInAppLiveChatSheetState extends State<_HuzurInAppLiveChatSheet> {
         'sessionTag': _sessionTag,
         'isLiveDeveloperMode': _isLiveDeveloperMode,
         'lastProcessedUpdateId': _lastProcessedUpdateId,
+        'hasInitializedUpdateStream': _hasInitializedUpdateStream,
         'messages': _messages.map((m) => m.toJson()).toList(),
       });
       await _storageFile.writeAsString(payload);
@@ -981,13 +954,13 @@ class _HuzurInAppLiveChatSheetState extends State<_HuzurInAppLiveChatSheet> {
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent + 120,
-          duration: const Duration(milliseconds: 280),
-          curve: Curves.easeOut,
-        );
-      }
+      final controller = _sheetScrollController;
+      if (!mounted || controller == null || !controller.hasClients) return;
+      controller.animateTo(
+        controller.position.maxScrollExtent + 120,
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeOut,
+      );
     });
   }
 
@@ -997,8 +970,8 @@ class _HuzurInAppLiveChatSheetState extends State<_HuzurInAppLiveChatSheet> {
         type == 'nedir' ? 'Huzur Nedir?' : 'Bizlere Ne Sunuyor?';
 
     final answerText = type == 'nedir'
-        ? '🌙 HUZUR NEDİR?\n\nHuzur; modern dünyanın gürültüsü, hızı ve veri sömürüsü içinde bunalan ruhlar için 21 yaşındaki bağımsız geliştirici Ege Deniz tarafından, hiçbir bilgisayar kullanmadan yalnızca tek bir iPhone 16 üzerinden gecelerce kodlanarak inşa edilmiş dijital bir tefekkür sığınağıdır.\n\n• Sıfır Reklam & Sıfır Takip (Zero Tracking): Uygulamanın içinde hiçbir reklam ağı, analitik dinleyicisi veya veri takip kodu bulunmaz. İbadetiniz ve tefekkürünüz yalnızca sizinle Rabbi arasındadır.\n• Cihaz İçi (Offline-First) Mimari: Tüm hesaplamalar ve okuma geçmişiniz cihazınızın içinde korunur.\n• Bağımsız Adanmışlık: Arkasında dev şirketler veya yatırımcılar değil; saf bir inanç, alın teri ve samimi bir dua beklentisi vardır.'
-        : '🌟 HUZUR BİZLERE NE SUNUYOR?\n\n1. 114 Sure Kur’ân-ı Kerîm & Kesintisiz Tilavet: Sıfır bekleme (Zero-Latency) mimarisiyle arka planda ve Dynamic Island üzerinde çalışan sesli tilavet ve meal külliyatı.\n\n2. Tevrat (39 Kitap) ve İncil (27 Kitap) Canlı Türkçe Külliyat: İlahi metinleri karşılaştırmalı olarak inceleyebileceğiniz eksiksiz Türkçe kaynak kütüphanesi.\n\n3. 15 Büyük Kıssada 3’lü Karşılaştırmalı Tefekkür: Peygamber kıssalarının Kur’ân, Tevrat ve İncil’deki anlatımlarını yan yana, derinlikli olarak inceleme imkânı.\n\n4. Kilit Ekranı Saatlik Ayet Widget’ı & Hikâye Stüdyosu: Uzun ayetleri ruhu yormadan bölen akıllı algoritma ve Likit Cam tasarımlı paylaşım kartları.\n\n5. Sınırsız Akışkan Zikirmatik, 99 Esmaül Hüsna, Astronomik Ezan Vakitleri ve Hassas Kıble Pusulası.';
+        ? ' HUZUR NEDİR?\n\nHuzur; modern dünyanın gürültüsü, hızı ve veri sömürüsü içinde bunalan ruhlar için 21 yaşındaki bağımsız geliştirici Ege Deniz tarafından, hiçbir bilgisayar kullanmadan yalnızca tek bir iPhone 16 üzerinden gecelerce kodlanarak inşa edilmiş dijital bir tefekkür sığınağıdır.\n\n• Sıfır Reklam & Sıfır Takip (Zero Tracking): Uygulamanın içinde hiçbir reklam ağı, analitik dinleyicisi veya veri takip kodu bulunmaz. İbadetiniz ve tefekkürünüz yalnızca sizinle Rabbi arasındadır.\n• Cihaz İçi (Offline-First) Mimari: Tüm hesaplamalar ve okuma geçmişiniz cihazınızın içinde korunur.\n• Bağımsız Adanmışlık: Arkasında dev şirketler veya yatırımcılar değil; saf bir inanç, alın teri ve samimi bir dua beklentisi vardır.'
+        : ' HUZUR BİZLERE NE SUNUYOR?\n\n1. 114 Sure Kur’ân-ı Kerîm & Kesintisiz Tilavet: Sıfır bekleme (Zero-Latency) mimarisiyle arka planda ve Dynamic Island üzerinde çalışan sesli tilavet ve meal külliyatı.\n\n2. Tevrat (39 Kitap) ve İncil (27 Kitap) Canlı Türkçe Külliyat: İlahi metinleri karşılaştırmalı olarak inceleyebileceğiniz eksiksiz Türkçe kaynak kütüphanesi.\n\n3. 15 Büyük Kıssada 3’lü Karşılaştırmalı Tefekkür: Peygamber kıssalarının Kur’ân, Tevrat ve İncil’deki anlatımlarını yan yana, derinlikli olarak inceleme imkânı.\n\n4. Kilit Ekranı Saatlik Ayet Widget’ı & Hikâye Stüdyosu: Uzun ayetleri ruhu yormadan bölen akıllı algoritma ve Likit Cam tasarımlı paylaşım kartları.\n\n5. Sınırsız Akışkan Zikirmatik, 99 Esmaül Hüsna, Astronomik Ezan Vakitleri ve Hassas Kıble Pusulası.';
 
     setState(() {
       _messages.add(
@@ -1045,7 +1018,7 @@ class _HuzurInAppLiveChatSheetState extends State<_HuzurInAppLiveChatSheet> {
     await _tgPost('sendMessage', {
       'chat_id': _developerChatId,
       'text':
-          '🌙 Yeni Canlı Sohbet Başladı [#$_sessionTag]\n👤 Kullanıcı "Geliştirici ile Sohbet Et" butonuna bastı ve canlı hatta bağlandı.\n\n🔚 Sohbeti bitirip kullanıcıya puanlama ekranı göndermek için /sohbetikapa yazabilirsiniz.',
+          'Yeni Canlı Sohbet Başladı [#$_sessionTag]\nKullanıcı Geliştirici ile Sohbet Et butonuna bastı ve canlı hatta bağlandı.\n\nSohbeti kapatıp puanlama ekranını açmak için bu oturumun mesajına yanıt olarak /sohbetikapa yazın veya komuta #$_sessionTag ekleyin.',
     });
   }
 
@@ -1054,7 +1027,7 @@ class _HuzurInAppLiveChatSheetState extends State<_HuzurInAppLiveChatSheet> {
     if (!_isLiveDeveloperMode || _isRatingMode) return;
     _typingDebounce?.cancel();
     _typingDebounce = Timer(const Duration(milliseconds: 650), () {
-      _syncLiveTypingPreviewToTelegram(value.trim());
+      unawaited(_syncLiveTypingPreviewToTelegram(value.trim()));
     });
   }
 
@@ -1062,8 +1035,7 @@ class _HuzurInAppLiveChatSheetState extends State<_HuzurInAppLiveChatSheet> {
     if (draft.isEmpty || draft == _lastSentTypingDraft) return;
     _lastSentTypingDraft = draft;
 
-    final previewText =
-        '✍️ [#$_sessionTag] Kullanıcı şu an yazıyor:\n"$draft..."';
+    final previewText = '[#$_sessionTag] Kullanıcı şu an yazıyor:\n"$draft..."';
 
     if (_liveTypingTelegramMsgId == null) {
       final res = await _tgPost('sendMessage', {
@@ -1083,7 +1055,7 @@ class _HuzurInAppLiveChatSheetState extends State<_HuzurInAppLiveChatSheet> {
     }
   }
 
-  Future?> _tgPost(
+  Future<Map<String, dynamic>?> _tgPost(
     String method,
     Map<String, dynamic> payload,
   ) async {
@@ -1133,7 +1105,7 @@ class _HuzurInAppLiveChatSheetState extends State<_HuzurInAppLiveChatSheet> {
     _scrollToBottom();
 
     final finalTelegramText =
-        '📩 Huzur Canlı Destek [#$_sessionTag]\n\n💬 $text\n\n↩️ Yanıtlamak için bu mesajı kaydırın (Reply) veya sohbeti bitirip puanlatmak için /sohbetikapa yazın.';
+        'Huzur Canlı Destek [#$_sessionTag]\n\n$text\n\nYanıtlamak için bu mesaja Telegram üzerinden yanıt verin. Sohbeti bitirmek için bu mesaja yanıt olarak /sohbetikapa yazın.';
 
     if (_liveTypingTelegramMsgId != null) {
       await _tgPost('editMessageText', {
@@ -1174,20 +1146,26 @@ class _HuzurInAppLiveChatSheetState extends State<_HuzurInAppLiveChatSheet> {
       if (decoded['ok'] != true) return;
 
       final results = decoded['result'] as List<dynamic>? ?? [];
+
+      if (!_hasInitializedUpdateStream) {
+        for (final item in results) {
+          final update = item as Map<String, dynamic>;
+          final updateId = (update['update_id'] as int?) ?? 0;
+          if (updateId > _lastProcessedUpdateId) {
+            _lastProcessedUpdateId = updateId;
+          }
+        }
+        _hasInitializedUpdateStream = true;
+        await _saveLocalSession();
+        return;
+      }
+
       bool addedNew = false;
       bool shouldCloseChat = false;
 
       for (final item in results) {
         final update = item as Map<String, dynamic>;
         final rawUpdateId = (update['update_id'] as int?) ?? 0;
-
-        if (_lastProcessedUpdateId == 0) {
-          // İlk açılışta geçmiş update ID'lerini baz al
-          if (rawUpdateId > _lastProcessedUpdateId) {
-            _lastProcessedUpdateId = rawUpdateId;
-          }
-          continue;
-        }
 
         if (rawUpdateId > _lastProcessedUpdateId) {
           _lastProcessedUpdateId = rawUpdateId;
@@ -1210,18 +1188,15 @@ class _HuzurInAppLiveChatSheetState extends State<_HuzurInAppLiveChatSheet> {
 
         final isGlobalClose = replyText.startsWith('/sohbetikapa');
         final matchesSession = originalText.contains('[#$_sessionTag]') ||
-            replyText.contains('#$_sessionTag') ||
-            (_isLiveDeveloperMode && replyTo == null);
+            replyText.contains('#$_sessionTag');
 
-        if (isGlobalClose &&
-            (matchesSession || _isLiveDeveloperMode)) {
+        if (isGlobalClose && matchesSession) {
           shouldCloseChat = true;
           break;
         }
 
         if (matchesSession && !isGlobalClose) {
-          final cleaned =
-              replyText.replaceAll('#$_sessionTag', '').trim();
+          final cleaned = replyText.replaceAll('#$_sessionTag', '').trim();
           _messages.add(
             _HuzurChatMessage(
               id: updateKey,
@@ -1267,11 +1242,10 @@ class _HuzurInAppLiveChatSheetState extends State<_HuzurInAppLiveChatSheet> {
 
   Future<void> _submitRatingAndClose() async {
     HapticFeedback.mediumImpact();
-    final starsVisual = '🌟' * _selectedStars;
     await _tgPost('sendMessage', {
       'chat_id': _developerChatId,
       'text':
-          '🏆 Sohbet Değerlendirmesi [#$_sessionTag]\nPuan: $_selectedStars / 5 $starsVisual\nSohbet sıfırlandı ve kapatıldı.',
+          'Sohbet Değerlendirmesi [#$_sessionTag]\nPuan: $_selectedStars / 5\nSohbet sıfırlandı ve kapatıldı.',
     });
     if (mounted) {
       Navigator.of(context).pop();
@@ -1289,7 +1263,8 @@ class _HuzurInAppLiveChatSheetState extends State<_HuzurInAppLiveChatSheet> {
         initialChildSize: 0.90,
         minChildSize: 0.58,
         maxChildSize: 0.96,
-        builder: (context, _) {
+        builder: (context, sheetScrollController) {
+          _sheetScrollController = sheetScrollController;
           return GlassContainer(
             borderRadius: 32,
             enableBlur: true,
@@ -1299,8 +1274,12 @@ class _HuzurInAppLiveChatSheetState extends State<_HuzurInAppLiveChatSheet> {
             child: SafeArea(
               top: false,
               child: _isRatingMode
-                  ? _buildRatingView()
-                  : _buildChatConversationView(),
+                  ? SingleChildScrollView(
+                      controller: sheetScrollController,
+                      physics: const BouncingScrollPhysics(),
+                      child: _buildRatingView(),
+                    )
+                  : _buildChatConversationView(sheetScrollController),
             ),
           );
         },
@@ -1393,7 +1372,7 @@ class _HuzurInAppLiveChatSheetState extends State<_HuzurInAppLiveChatSheet> {
     );
   }
 
-  Widget _buildChatConversationView() {
+  Widget _buildChatConversationView(ScrollController sheetScrollController) {
     return Column(
       children: [
         Center(
@@ -1408,7 +1387,7 @@ class _HuzurInAppLiveChatSheetState extends State<_HuzurInAppLiveChatSheet> {
         ),
         const SizedBox(height: 14),
 
-        // Üst Başlık: Hilal Amblemi + Ege Deniz • Geliştirici + 🌟 SVG
+        // Üst Başlık: Hilal Amblemi + Ege Deniz • Geliştirici +  SVG
         Row(
           children: [
             Container(
@@ -1544,7 +1523,7 @@ class _HuzurInAppLiveChatSheetState extends State<_HuzurInAppLiveChatSheet> {
 
         Expanded(
           child: ListView.builder(
-            controller: _scrollController,
+            controller: sheetScrollController,
             physics: const BouncingScrollPhysics(),
             itemCount: _messages.length,
             itemBuilder: (context, index) {
@@ -1720,7 +1699,7 @@ class _HuzurInAppLiveChatSheetState extends State<_HuzurInAppLiveChatSheet> {
             ],
             const SizedBox(height: 4),
             Text(
-              isDev ? msg.timeLabel : '${msg.timeLabel} • ✓✓',
+              isDev ? msg.timeLabel : '${msg.timeLabel} • Gönderildi',
               style: const TextStyle(
                 color: Colors.white54,
                 fontSize: 10,
@@ -1841,9 +1820,7 @@ Future<void> showHuzurDeveloperStoryModal(
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 18),
-
                   const Row(
                     children: [
                       HuzurCrescentEmblemSvg(size: 22),
@@ -1861,9 +1838,7 @@ Future<void> showHuzurDeveloperStoryModal(
                       HuzurGlowingStarSvg(size: 18),
                     ],
                   ),
-
                   const SizedBox(height: 5),
-
                   const Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
@@ -1875,9 +1850,7 @@ Future<void> showHuzurDeveloperStoryModal(
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 12),
-
                   Expanded(
                     child: ListView(
                       controller: scrollController,
@@ -1891,9 +1864,7 @@ Future<void> showHuzurDeveloperStoryModal(
                           _huzurDeveloperStoryText(),
                           textAlign: TextAlign.start,
                         ),
-
                         const SizedBox(height: 22),
-
                         GlassContainer(
                           borderRadius: 16,
                           goldAccentBorder: true,
@@ -1922,9 +1893,7 @@ Future<void> showHuzurDeveloperStoryModal(
                             ],
                           ),
                         ),
-
                         const SizedBox(height: 10),
-
                         GlassContainer(
                           borderRadius: 16,
                           emeraldGlow: true,
@@ -1993,70 +1962,72 @@ TextSpan _huzurDeveloperStoryText() {
     style: base,
     children: [
       TextSpan(
-        text: 'Her şey, modern dünyanın getirdiği o amansız hızın, karmaşanın ve samimiyetsizliğin içinde kalbimin sıkışmasıyla başladı. Ben de sizler gibi, henüz yolun başında, ',
+        text:
+            'Her şey, modern dünyanın getirdiği o amansız hızın, karmaşanın ve samimiyetsizliğin içinde kalbimin sıkışmasıyla başladı. Ben de sizler gibi, henüz yolun başında, ',
       ),
       TextSpan(
         text: '21 yaşında bağımsız bir yazılımcıyım.',
         style: emerald,
       ),
       TextSpan(
-        text: ' Arkamda devasa bütçeleri olan şirketler, reklam ajansları ya da bana sermaye veren yatırımcılar yok. En önemlisi, benim bir bilgisayarım bile yok! Sadece elimdeki tek bir telefonla, ',
+        text:
+            ' Arkamda devasa bütçeleri olan şirketler, reklam ajansları ya da bana sermaye veren yatırımcılar yok. En önemlisi, benim bir bilgisayarım bile yok! Sadece elimdeki tek bir telefonla, ',
       ),
       TextSpan(
         text: 'iPhone 16\'mla',
         style: gold,
       ),
       TextSpan(
-        text: ' gecelerce terminale bağlanarak, uykumu feda ederek bu kod satırlarını tek tek işledim. Bu uygulamanın adını bu yüzden ',
+        text:
+            ' gecelerce terminale bağlanarak, uykumu feda ederek bu kod satırlarını tek tek işledim. Bu uygulamanın adını bu yüzden ',
       ),
       TextSpan(
         text: '"Huzur"',
         style: gold,
       ),
       TextSpan(
-        text: ' koydum. İstedim ki bir insan telefonunun ekranını açtığında, karşısında sadece parıldayan pikseller değil; ruhuna dokunan, onu sakinleştiren temiz bir sığınak bulsun.',
+        text:
+            ' koydum. İstedim ki bir insan telefonunun ekranını açtığında, karşısında sadece parıldayan pikseller değil; ruhuna dokunan, onu sakinleştiren temiz bir sığınak bulsun.',
       ),
-
       TextSpan(text: '\n\n'),
-
       TextSpan(
-        text: 'Bugün nereye baksak, hangi uygulamayı indirmeye kalksak her yerinden reklamlar fırlıyor. Kullanıcıların verilerini gizlice toplayıp satan, her saniye karşınıza zorla 30 saniyelik videolar çıkaran, insan ruhunu sadece birer "veri" ve "para" olarak gören koca bir endüstri var. Ben 21 yaşındaki bu genç yaşımda, bu sisteme tek başıma meydan okumak istedim. Huzur’u tasarlarken en büyük yeminim şuydu: ',
+        text:
+            'Bugün nereye baksak, hangi uygulamayı indirmeye kalksak her yerinden reklamlar fırlıyor. Kullanıcıların verilerini gizlice toplayıp satan, her saniye karşınıza zorla 30 saniyelik videolar çıkaran, insan ruhunu sadece birer "veri" ve "para" olarak gören koca bir endüstri var. Ben 21 yaşındaki bu genç yaşımda, bu sisteme tek başıma meydan okumak istedim. Huzur’u tasarlarken en büyük yeminim şuydu: ',
       ),
       TextSpan(
-        text: 'Bu uygulamada tek bir reklam ağı, tek bir takip kodu (Zero Tracking) olmayacak!',
+        text:
+            'Bu uygulamada tek bir reklam ağı, tek bir takip kodu (Zero Tracking) olmayacak!',
         style: emerald,
       ),
       TextSpan(
-        text: ' İnsanlar buraya tefekkür etmeye, dinlenmeye geldiklerinde arkalarında iz bırakmayacaklar, rahatsız edilmeyecekler. Ben insanların verilerini değil, sadece samimi bir teşekkürlerini ve dualarını almak için yola çıktım.',
+        text:
+            ' İnsanlar buraya tefekkür etmeye, dinlenmeye geldiklerinde arkalarında iz bırakmayacaklar, rahatsız edilmeyecekler. Ben insanların verilerini değil, sadece samimi bir teşekkürlerini ve dualarını almak için yola çıktım.',
       ),
-
       TextSpan(text: '\n\n'),
-
       TextSpan(
-        text: 'Bu yolculuk benim için hiç kolay olmadı. Yaşıtlarım dışarıda gezip eğlenirken, ben avucumun içindeki o telefon ekranına bakarak sabaha karşı çöken sunucularla ve çözülmeyi bekleyen hata kodlarıyla baş başa kaldım. Kaç kez durup tıkandığımı, "acaba yapamayacak mıyım?" diye kendi kendimi yiyip bitirdiğimi ben bilirim. Apple\'ın o katı ödeme motorunu entegre etmekten, Tevrat ve İncil\'in canlı Türkçe API bağlantılarını hatasız kurmaya kadar her detayı telefonumdan, ilmek ilmek işledim. Sırf kilit ekranında ayetler taşmasın, alt alta temizce süzülsün, uzun cümleler arasında insan ruhu boğulmasın diye günlerce akıllı cümle bölücüler üzerinde çalıştım. Sesler geçiş yaparken kullanıcı uygulamayı kapandı sanmasın diye arka planda sıfır beklemeli ses sistemini kurmak için uykumu feda ettim.',
+        text:
+            'Bu yolculuk benim için hiç kolay olmadı. Yaşıtlarım dışarıda gezip eğlenirken, ben avucumun içindeki o telefon ekranına bakarak sabaha karşı çöken sunucularla ve çözülmeyi bekleyen hata kodlarıyla baş başa kaldım. Kaç kez durup tıkandığımı, "acaba yapamayacak mıyım?" diye kendi kendimi yiyip bitirdiğimi ben bilirim. Apple\'ın o katı ödeme motorunu entegre etmekten, Tevrat ve İncil\'in canlı Türkçe API bağlantılarını hatasız kurmaya kadar her detayı telefonumdan, ilmek ilmek işledim. Sırf kilit ekranında ayetler taşmasın, alt alta temizce süzülsün, uzun cümleler arasında insan ruhu boğulmasın diye günlerce akıllı cümle bölücüler üzerinde çalıştım. Sesler geçiş yaparken kullanıcı uygulamayı kapandı sanmasın diye arka planda sıfır beklemeli ses sistemini kurmak için uykumu feda ettim.',
       ),
-
       TextSpan(text: '\n\n'),
-
       TextSpan(
-        text: 'Bu uygulama, sadece satırlardan ve algoritmalardan ibaret ticari bir meta değil. Bu proje bağımsız bir geliştiricinin, 21 yaşındaki bir gencin tüm dünyaya ',
+        text:
+            'Bu uygulama, sadece satırlardan ve algoritmalardan ibaret ticari bir meta değil. Bu proje bağımsız bir geliştiricinin, 21 yaşındaki bir gencin tüm dünyaya ',
       ),
       TextSpan(
-        text: '"Bir bilgisayarım olmasa bile, sadece bir telefonla reklamsız ve tertemiz bir dijital dünya inşa edebilirim"',
+        text:
+            '"Bir bilgisayarım olmasa bile, sadece bir telefonla reklamsız ve tertemiz bir dijital dünya inşa edebilirim"',
         style: emerald,
       ),
       TextSpan(
-        text: ' deme şeklidir. Arkamda büyük sermayeler olmasa da, bu projede her bir satır kodda saf bir emek, telefon başında dökülen alın teri ve koca bir inanç var.',
+        text:
+            ' deme şeklidir. Arkamda büyük sermayeler olmasa da, bu projede her bir satır kodda saf bir emek, telefon başında dökülen alın teri ve koca bir inanç var.',
       ),
-
       TextSpan(text: '\n\n'),
-
       TextSpan(
-        text: 'Huzur, bir şirketin kazanç kapısı değil; bağımsız bir tefekkür, bir adanmışlık yolculuğudur. Bu limana sığınan, emeğime saygı duyan ve bu sessiz devrimde yanımda olan her bir kalbe selam olsun...',
+        text:
+            'Huzur, bir şirketin kazanç kapısı değil; bağımsız bir tefekkür, bir adanmışlık yolculuğudur. Bu limana sığınan, emeğime saygı duyan ve bu sessiz devrimde yanımda olan her bir kalbe selam olsun...',
       ),
-
       TextSpan(text: '\n\n'),
-
       TextSpan(
         text: 'Bağımsız Geliştirici: Ege Deniz (21)',
         style: signature,
