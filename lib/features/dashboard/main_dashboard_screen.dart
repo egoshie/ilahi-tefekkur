@@ -756,7 +756,6 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
           ),
         ),
         const SizedBox(height: 14),
-        const HuzurLiveSupportButton(),
       ],
     );
   }
