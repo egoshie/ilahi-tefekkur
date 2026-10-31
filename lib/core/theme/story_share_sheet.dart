@@ -6,24 +6,19 @@ import 'package:flutter/services.dart';
 import '../../core/theme/glass_container.dart';
 
 class StoryShareSheet extends StatefulWidget {
-  final String arabicText;
+  final String arabic;
   final String turkishText;
   final String reference;
+  const StoryShareSheet({super.key, required this.arabic, required this.turkishText, required this.reference});
 
-  const StoryShareSheet({super.key, required this.arabicText, required this.turkishText, required this.reference});
-
-  static Future<void> show(BuildContext context, {required String arabicText, required String turkishText, required String reference}) {
+  static Future<void> show(BuildContext context, {required String arabic, required String turkishText, required String reference}) {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => StoryShareSheet(arabicText: arabicText, turkishText: turkishText, reference: reference),
+      builder: (_) => StoryShareSheet(arabic: arabic, turkishText: turkishText, reference: reference),
     );
   }
-  final String arabicText;
-  final String turkishText;
-  final String reference;
-  const StoryShareSheet({super.key, required this.arabicText, required this.turkishText, required this.reference});
   @override State<StoryShareSheet> createState() => _StoryShareSheetState();
 }
 
@@ -74,6 +69,7 @@ class _StoryShareSheetState extends State<StoryShareSheet> {
       setState(() { _isExporting = false; _feedbackMessage = saved ? "Fotoğraflar galerisine kaydedildi." : "Galeri izni reddedildi."; });
     } catch (_) { setState(() { _isExporting = false; _feedbackMessage = "Hata oluştu."; }); }
   }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -93,7 +89,7 @@ class _StoryShareSheetState extends State<StoryShareSheet> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(widget.arabicText, textAlign: TextAlign.center, style: const TextStyle(fontSize: 19, color: Color(0xFF64FFDA))),
+                  Text(widget.arabic, textAlign: TextAlign.center, style: const TextStyle(fontSize: 19, color: Color(0xFF64FFDA))),
                   const SizedBox(height: 16),
                   Text(widget.turkishText, textAlign: TextAlign.center, style: const TextStyle(fontSize: 14, color: Colors.white, height: 1.5)),
                   const SizedBox(height: 12),
