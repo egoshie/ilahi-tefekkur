@@ -1,3 +1,4 @@
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
 
 import 'package:firebase_core/firebase_core.dart';
@@ -159,6 +160,33 @@ class _HuzurLiveSupportSheetState extends State<_HuzurLiveSupportSheet> {
     );
   }
 
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_restoreSession());
+  }
+
+  Future<void> _restoreSession() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final id = prefs.getString("huzur_live_support_session_id");
+      if (!mounted || id == null || id.isEmpty) return;
+
+      setState(() => _sessionId = id);
+
+      _pollTimer?.cancel();
+      _pollTimer = Timer.periodic(
+        const Duration(seconds: 3),
+        (_) => _refreshSession(),
+      );
+
+      await _refreshSession();
+      await _initializePushNotifications();
+    } catch (error) {
+      if (mounted) _showError(error);
+    }
+  }
+
   Future<void> _startSession() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -175,6 +203,11 @@ class _HuzurLiveSupportSheetState extends State<_HuzurLiveSupportSheet> {
       setState(() {
         _sessionId = result.sessionId;
       });
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        "huzur_live_support_session_id",
+        result.sessionId,
+      );
 
       _pollTimer = Timer.periodic(
         const Duration(seconds: 3),
@@ -352,6 +385,7 @@ class _HuzurLiveSupportSheetState extends State<_HuzurLiveSupportSheet> {
 
     if (id == null || text.isEmpty || _sending) return;
 
+    FocusScope.of(context).unfocus();
     setState(() => _sending = true);
 
     try {
