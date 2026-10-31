@@ -93,6 +93,16 @@ class PhotoSaveCallbackTarget: NSObject {
                 case "scheduleExactAdhan":
                     result(true)
 
+                case "openExternalUrl":
+                    if let args = call.arguments as? [String: Any],
+                       let urlStr = args["url"] as? String,
+                       let url = URL(string: urlStr) {
+                        DispatchQueue.main.async {
+                            UIApplication.shared.open(url, options: [:], completionHandler: nil)
+                        }
+                    }
+                    result(true)
+
                 default:
                     result(FlutterMethodNotImplemented)
                 }

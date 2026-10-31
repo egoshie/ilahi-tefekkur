@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/services/pricing_and_premium_service.dart';
@@ -23,7 +24,17 @@ class LiquidGlassPaywallSheet extends ConsumerStatefulWidget {
 
 class _LiquidGlassPaywallSheetState
     extends ConsumerState< LiquidGlassPaywallSheet > {
+  static const MethodChannel _nativeChannel = MethodChannel('com.ilahi.tefekkur/native_bridge');
+  static const String _privacyUrl = 'https://egoshie.github.io/ilahi-tefekkur/privacy.html';
+  static const String _eulaUrl = 'https://egoshie.github.io/ilahi-tefekkur/eula.html';
   String _selectedTier = 'annual';
+
+  Future<void> _openOfficialUrl(String url) async {
+    HapticFeedback.selectionClick();
+    try {
+      await _nativeChannel.invokeMethod('openExternalUrl', {'url': url});
+    } catch (_) {}
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -230,6 +241,56 @@ class _LiquidGlassPaywallSheetState
                     ),
                   ),
                 ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: GlassContainer(
+                      borderRadius: 16,
+                      emeraldGlow: true,
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+                      onTap: () => _showLegalModal(context, isPrivacy: true),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          BespokeVectorIcon(type: BespokeIconType.lockShield, color: Color(0xFF64FFDA), size: 16),
+                          SizedBox(width: 7),
+                          Flexible(
+                            child: Text(
+                              "Gizlilik Politikası",
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF64FFDA)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: GlassContainer(
+                      borderRadius: 16,
+                      goldAccentBorder: true,
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+                      onTap: () => _showLegalModal(context, isPrivacy: false),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          BespokeVectorIcon(type: BespokeIconType.sacredScroll, color: Color(0xFFFFE082), size: 16),
+                          SizedBox(width: 7),
+                          Flexible(
+                            child: Text(
+                              "Kullanım Koşulları (EULA)",
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFFFFE082)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 10),
               const Text(
