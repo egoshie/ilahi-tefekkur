@@ -38,7 +38,7 @@ class NotificationAndWidgetService {
     }
     final clauses = clean.split(',');
     if (clauses.length >= 2) {
-      final c = (clauses[0] + ',' + clauses).trim();
+      final c = (clauses[0] + ',' + clauses[1]).trim();
       if (c.length <= 82) return c + '.';
     }
     return clean.substring(0, 75).trim() + '...';
@@ -68,7 +68,7 @@ class NotificationAndWidgetService {
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body)['data'] as List<dynamic>;
         final arObj = data[0] as Map<String, dynamic>;
-        final trObj = data as Map<String, dynamic>;
+        final trObj = data[1] as Map<String, dynamic>;
         final surahNum = int.tryParse((arObj['surah'] as Map)['number'].toString()) ?? 1;
         final inSurah = int.tryParse(arObj['numberInSurah'].toString()) ?? 1;
         final sName = (surahNum >= 1 && surahNum <= 114) ? OfflineSacredRepository.kSurahNamesTr[surahNum - 1] : 'Sûre \$surahNum';

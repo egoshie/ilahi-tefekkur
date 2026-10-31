@@ -62,7 +62,7 @@ class _MainDashboardScreenState extends ConsumerState< MainDashboardScreen >
     _hourlyChecker = Timer.periodic(const Duration(minutes: 1), (_) {
       if (mounted) {
         setState(() {});
-        await NotificationAndWidgetService.instance.syncHourlyVerseToWidget(
+        NotificationAndWidgetService.instance.syncHourlyVerseToWidget(
           manualOffset: _manualVerseOffset,
         );
       }
