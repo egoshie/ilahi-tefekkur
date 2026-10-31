@@ -132,7 +132,7 @@ class _HuzurStoryShareSheetState extends State< HuzurStoryShareSheet > {
 
       await Clipboard.setData(ClipboardData(text: _formattedCaption));
 
-      await Share.shareXFiles(
+      await // Share.shareXFiles(
         [XFile(file.path, mimeType: 'image/png', name: 'huzur_story.png')],
         text: includeText ? _formattedCaption : null,
         subject: "Huzur • ${widget.reference}",
@@ -195,7 +195,7 @@ class _HuzurStoryShareSheetState extends State< HuzurStoryShareSheet > {
       );
       await file.writeAsBytes(pngBytes, flush: true);
 
-      await Share.shareXFiles(
+      await // Share.shareXFiles(
         [XFile(file.path, mimeType: 'image/png', name: 'huzur_card.png')],
         text: _formattedCaption,
         sharePositionOrigin: originRect,

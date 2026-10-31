@@ -83,6 +83,15 @@ WidgetCenter.shared.reloadAllTimelines()
                     if let args = call.arguments as? [String: Any] { self.configureBackgroundAudioSession(); self.updateNowPlayingMetadata(args: args) }
                     result(true)
                 case "clearNowPlaying": MPNowPlayingInfoCenter.default().nowPlayingInfo = nil; result(true)
+                case "shareToInstagramStory":
+                    guard let args = call.arguments as? [String: Any],
+                          let td = args["bytes"] as? FlutterStandardTypedData else { result(false); return }
+                    self.launchInstagramStory(imageData: td.data, result: result)
+                case "shareToWhatsAppDirect":
+                    guard let args = call.arguments as? [String: Any],
+                          let td = args["bytes"] as? FlutterStandardTypedData,
+                          let img = UIImage(data: td.data) else { result(false); return }
+                    self.launchWhatsAppShare(image: img, text: args["text"] as? String ?? "", result: result)
                 case "saveImageToGallery":
                     guard let args = call.arguments as? [String: Any], let td = args["bytes"] as? FlutterStandardTypedData, let img = UIImage(data: td.data) else { result(false); return }
                     self.savePhotoToLibrary(image: img, result: result)
@@ -159,5 +168,35 @@ WidgetCenter.shared.reloadAllTimelines()
         let target = PhotoSaveCallbackTarget { [weak self] ok in DispatchQueue.main.async { self?.activePhotoTarget = nil; result(ok) } }
         self.activePhotoTarget = target
         UIImageWriteToSavedPhotosAlbum(image, target, #selector(PhotoSaveCallbackTarget.image(_:didFinishSavingWithError:contextInfo:)), nil)
+    }
+
+    private func launchInstagramStory(imageData: Data, result: @escaping FlutterResult) {
+        guard let url = URL(string: "instagram-stories://share?source_application=com.ilahi.tefekkur") else { result(false); return }
+        DispatchQueue.main.async {
+            if UIApplication.shared.canOpenURL(url) {
+                let pasteboardItems: [[String: Any]] = [[
+                    "com.instagram.sharedSticker.backgroundImage": imageData,
+                    "com.instagram.sharedSticker.backgroundTopColor": "#030B18",
+                    "com.instagram.sharedSticker.backgroundBottomColor": "#0E3842"
+                ]]
+                let options: [UIPasteboard.OptionsKey: Any] = [.expirationDate: Date().addingTimeInterval(300)]
+                UIPasteboard.general.setItems(pasteboardItems, options: options)
+                UIApplication.shared.open(url, options: [:]) { ok in result(ok) }
+            } else {
+                result(false)
+            }
+        }
+    }
+
+    private func launchWhatsAppShare(image: UIImage, text: String, result: @escaping FlutterResult) {
+        DispatchQueue.main.async {
+            UIPasteboard.general.image = image
+            let encoded = text.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+            if let waUrl = URL(string: "whatsapp://send?text=\(encoded)"), UIApplication.shared.canOpenURL(waUrl) {
+                UIApplication.shared.open(waUrl, options: [:]) { ok in result(ok) }
+            } else {
+                result(false)
+            }
+        }
     }
 }
