@@ -262,7 +262,7 @@ class _EsmaulHusnaSheetState extends ConsumerState< EsmaulHusnaSheet > {
                                           "${esma.transliteration}: ${esma.turkishMeaning}",
                                       reference:
                                           "Esmaül Hüsna #${esma.id} (${esma.reference})",
-                                      category: "Esmaül Hüsna",
+                                      
                                     );
                                   },
                                   child: const Row(

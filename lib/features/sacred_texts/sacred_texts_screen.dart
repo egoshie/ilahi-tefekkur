@@ -563,7 +563,7 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                                           reference:
                                               "${a.surahName}, ${a.numberInSurah}",
                                           arabic: a.arabicText,
-                                          turkishText: a.turkishText,
+                                          turkish: a.turkishText,
                                           savedAtEpochMs: DateTime.now()
                                               .millisecondsSinceEpoch,
                                         ),
@@ -585,7 +585,7 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                                           reference:
                                               "${a.surahName}, ${a.numberInSurah}",
                                           arabic: a.arabicText,
-                                          turkishText: a.turkishText,
+                                          turkish: a.turkishText,
                                           savedAtEpochMs: DateTime.now()
                                               .millisecondsSinceEpoch,
                                         ),
@@ -609,7 +609,7 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                                       await NotificationAndWidgetService.instance
                                           .pinCustomVerseToWidget(
                                         arabic: a.arabicText,
-                                        turkishText: a.turkishText,
+                                        turkish: a.turkishText,
                                         reference:
                                             "${a.surahName}, ${a.numberInSurah}",
                                       );
@@ -622,7 +622,7 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                                     onTap: () => StoryShareSheet.show(
                                       context,
                                       arabic: a.arabicText,
-                                      turkishText: a.turkishText,
+                                      turkish: a.turkishText,
                                       reference:
                                           "${a.surahName}, ${a.numberInSurah}",
                                       category: "Kur'ân-ı Kerîm",
@@ -905,7 +905,7 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                         arabic: v.originalScript,
                         turkishText: v.turkishText,
                         reference: "${v.bookName} ${v.chapter}:${v.verse}",
-                        category: categoryLabel,
+                        
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -931,7 +931,7 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                                       NotificationAndWidgetService.instance
                                           .pinCustomVerseToWidget(
                                         arabic: v.originalScript,
-                                        turkishText: v.turkishText,
+                                        turkish: v.turkishText,
                                         reference:
                                             "${v.bookName} ${v.chapter}:${v.verse}",
                                       );
@@ -947,7 +947,7 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                                       turkishText: v.turkishText,
                                       reference:
                                           "${v.bookName} ${v.chapter}:${v.verse}",
-                                      category: categoryLabel,
+                                      
                                     ),
                                   ),
                                 ],

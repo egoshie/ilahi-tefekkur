@@ -1,5 +1,5 @@
 import 'dart:typed_data';
-import 'dart:ui'; as ui;
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -11,12 +11,20 @@ class StoryShareSheet extends StatefulWidget {
   final String reference;
   const StoryShareSheet({super.key, required this.arabic, required this.turkishText, required this.reference});
 
-  static Future<void> show(BuildContext context, {required String arabic, required String turkishText, required String reference}) {
+  static Future<void> show(
+    BuildContext context, {
+    String arabic = '',
+    String? turkishText,
+    String? turkish,
+    String reference = '',
+    String? category,
+  }) {
+    final resolvedTurkish = turkishText ?? turkish ?? '';
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => StoryShareSheet(arabic: arabic, turkishText: turkishText, reference: reference),
+      builder: (_) => StoryShareSheet(arabic: arabic, turkishText: resolvedTurkish, reference: reference),
     );
   }
   @override State<StoryShareSheet> createState() => _StoryShareSheetState();
@@ -136,3 +144,5 @@ class _StoryShareSheetState extends State<StoryShareSheet> {
     );
   }
 }
+
+typedef HuzurStoryShareSheet = StoryShareSheet;
