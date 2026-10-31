@@ -23,9 +23,11 @@ class PhotoSaveCallbackTarget: NSObject {
     override func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         if #available(iOS 10.0, *) { UNUserNotificationCenter.current().delegate = self }
         configureBackgroundAudioSession()
-        if #available(iOS 14.0, *) { #if canImport(WidgetKit)
+        if #available(iOS 14.0, *) {
+#if canImport(WidgetKit)
 WidgetCenter.shared.reloadAllTimelines()
-#endif }
+#endif
+}
         if let controller = window?.rootViewController as? FlutterViewController {
             let bridgeChannel = FlutterMethodChannel(name: "com.ilahi.tefekkur/native_bridge", binaryMessenger: controller.binaryMessenger)
             bridgeChannel.setMethodCallHandler { (call: FlutterMethodCall, result: @escaping FlutterResult) in
@@ -41,9 +43,11 @@ WidgetCenter.shared.reloadAllTimelines()
                         if let sh = UserDefaults(suiteName: "group.com.ilahi.tefekkur") {
                             sh.set(ar, forKey: "hourly_arabic"); sh.set(tr, forKey: "hourly_translation"); sh.set(rf, forKey: "hourly_reference"); sh.synchronize()
                         }
-                        if #available(iOS 14.0, *) { #if canImport(WidgetKit)
+                        if #available(iOS 14.0, *) {
+#if canImport(WidgetKit)
 WidgetCenter.shared.reloadAllTimelines()
-#endif }
+#endif
+}
                     }
                     result(true)
                 case "openExternalUrl":

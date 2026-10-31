@@ -14,10 +14,10 @@ jobs:
         with:
           channel: stable
           cache: true
-      - name: Configure Flutter iOS & Pods
+      - name: Configure Flutter iOS & Pods (--no-codesign)
         run: |
           flutter pub get
-          flutter build ios --config-only --release
+          flutter build ios --config-only --release --no-codesign
           cd ios
           pod install
       - name: Inject HuzurWidgetExtension into Xcode Project
@@ -25,7 +25,7 @@ jobs:
           gem install xcodeproj --no-document
           cd ios
           ruby fix_and_add_widget.rb
-      - name: Build Runner & WidgetExtension Separately (Zero Imza Engeli)
+      - name: Build Runner & WidgetExtension Separately
         run: |
           cd ios
           xcodebuild -workspace Runner.xcworkspace -scheme Runner -configuration Release -sdk iphoneos -derivedDataPath "$PWD/build_runner" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO AD_HOC_CODE_SIGNING_ALLOWED=YES COMPILER_INDEX_STORE_ENABLE=NO
