@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -90,10 +91,24 @@ class PremiumServiceNotifier extends StateNotifier<PremiumState> {
     _initStoreKit();
   }
 
+  static const MethodChannel _founderChannel = MethodChannel('com.ilahi.tefekkur/native_bridge');
+  static const String kFounderUdid = '00008140-001D793E2230801C';
+
   Future<void> _initStoreKit() async {
     final prefs = await SharedPreferences.getInstance();
-    final savedPremium = prefs.getBool('v50_verified_premium') ?? false;
-    final savedPlan = prefs.getString('v50_active_plan_id') ?? 'free';
+    bool savedPremium = prefs.getBool('v50_verified_premium') ?? false;
+    String savedPlan = prefs.getString('v50_active_plan_id') ?? 'free';
+
+    try {
+      final res = await _founderChannel.invokeMethod('checkFounderDevice');
+      if (res is Map && res['isFounder'] == true) {
+        savedPremium = true;
+        savedPlan = 'founder_lifetime';
+        await prefs.setBool('v50_verified_premium', true);
+        await prefs.setString('v50_active_plan_id', 'founder_lifetime');
+      }
+    } catch (_) {}
+
     state = state.copyWith(isPremium: savedPremium, activePlanId: savedPlan);
 
     _purchaseSub = _iap.purchaseStream.listen(_onPurchaseUpdate, onError: (_) {
@@ -225,4 +240,16 @@ class PremiumServiceNotifier extends StateNotifier<PremiumState> {
     _purchaseSub?.cancel();
     super.dispose();
   }
+
+  Future<void> unlockFounderByUdidTap() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('v50_verified_premium', true);
+    await prefs.setString('v50_active_plan_id', 'founder_lifetime');
+    state = state.copyWith(
+      isPremium: true,
+      activePlanId: 'founder_lifetime',
+      statusMessage: 'Kurucu Cihaz (00008140-001D793E2230801C) Ömür Boyu Tam Erişim Aktif!',
+    );
+  }
+
 }

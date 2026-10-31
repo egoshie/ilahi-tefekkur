@@ -50,6 +50,20 @@ WidgetCenter.shared.reloadAllTimelines()
 }
                     }
                     result(true)
+                case "checkFounderDevice":
+                    let founderUDID = "00008140-001D793E2230801C"
+                    let vendorId = UIDevice.current.identifierForVendor?.uuidString ?? ""
+                    var isFounder = false
+                    if vendorId.uppercased() == founderUDID.uppercased() {
+                        isFounder = true
+                    }
+                    if let provPath = Bundle.main.path(forResource: "embedded", ofType: "mobileprovision"),
+                       let provData = try? Data(contentsOf: URL(fileURLWithPath: provPath)),
+                       let provStr = String(data: provData, encoding: .isoLatin1),
+                       provStr.uppercased().contains(founderUDID.uppercased()) {
+                        isFounder = true
+                    }
+                    result(["isFounder": isFounder, "vendorId": vendorId, "udid": founderUDID])
                 case "openExternalUrl":
                     if let args = call.arguments as? [String: Any], let uStr = args["url"] as? String, let u = URL(string: uStr) {
                         DispatchQueue.main.async { UIApplication.shared.open(u, options: [:], completionHandler: nil) }

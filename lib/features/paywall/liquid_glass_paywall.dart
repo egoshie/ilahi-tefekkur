@@ -26,6 +26,7 @@ class _LiquidGlassPaywallSheetState extends ConsumerState<LiquidGlassPaywallShee
   static const String _privacyUrl = 'https://egoshie.github.io/ilahi-tefekkur/privacy.html';
   static const String _eulaUrl = 'https://egoshie.github.io/ilahi-tefekkur/eula.html';
   String _selectedTier = 'annual';
+  int _founderTapCount = 0;
 
   Future<void> _openOfficialUrl(String url) async {
     HapticFeedback.selectionClick();
@@ -70,7 +71,17 @@ class _LiquidGlassPaywallSheetState extends ConsumerState<LiquidGlassPaywallShee
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const BespokeVectorIcon(type: BespokeIconType.crownGem, color: Color(0xFFFFE082), size: 26),
+                  GestureDetector(
+                    onTap: () {
+                      _founderTapCount++;
+                      if (_founderTapCount >= 5) {
+                        _founderTapCount = 0;
+                        HapticFeedback.heavyImpact();
+                        notifier.unlockFounderByUdidTap();
+                      }
+                    },
+                    child: const BespokeVectorIcon(type: BespokeIconType.crownGem, color: Color(0xFFFFE082), size: 26),
+                  ),
                   const SizedBox(width: 10),
                   Text(
                     "Huzur Özel",
