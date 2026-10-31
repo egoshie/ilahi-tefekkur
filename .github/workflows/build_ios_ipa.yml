@@ -1,4 +1,4 @@
-name: Build Huzur iOS IPA V4.5 Final
+name: Build Huzur iOS IPA V1.0
 on:
   push:
     branches: [ "main", "master" ]
@@ -17,7 +17,7 @@ jobs:
       - name: Configure Flutter iOS & Pods (--no-codesign)
         run: |
           flutter pub get
-          flutter build ios --config-only --release --no-codesign
+          flutter build ios --config-only --release --no-codesign --dart-define=HUZUR_SUPPORT_API_URL=https://56.228.42.81.nip.io
           cd ios
           pod install
       - name: Inject HuzurWidgetExtension into Xcode Project
@@ -39,11 +39,11 @@ jobs:
           cp -r "$WIDGET_APPEX" "$RUNNER_APP/PlugIns/"
           mkdir -p Payload
           cp -r "$RUNNER_APP" Payload/
-          zip -qq -r Huzur-V4.5-Release.ipa Payload
+          zip -qq -r Huzur-V1.0-Release.ipa Payload
           mkdir -p $GITHUB_WORKSPACE/output_ipa
-          mv Huzur-V4.5-Release.ipa $GITHUB_WORKSPACE/output_ipa/Huzur-Release.ipa
+          mv Huzur-V1.0-Release.ipa $GITHUB_WORKSPACE/output_ipa/Huzur-Release.ipa
       - name: Upload Huzur IPA Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Huzur-iOS-V4.5-Final-IPA
+          name: Huzur-iOS-V1.0-IPA
           path: output_ipa/Huzur-Release.ipa
