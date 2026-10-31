@@ -9,6 +9,20 @@ class StoryShareSheet extends StatefulWidget {
   final String arabicText;
   final String turkishText;
   final String reference;
+
+  const StoryShareSheet({super.key, required this.arabicText, required this.turkishText, required this.reference});
+
+  static Future<void> show(BuildContext context, {required String arabicText, required String turkishText, required String reference}) {
+    return showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => StoryShareSheet(arabicText: arabicText, turkishText: turkishText, reference: reference),
+    );
+  }
+  final String arabicText;
+  final String turkishText;
+  final String reference;
   const StoryShareSheet({super.key, required this.arabicText, required this.turkishText, required this.reference});
   @override State<StoryShareSheet> createState() => _StoryShareSheetState();
 }

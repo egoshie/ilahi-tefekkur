@@ -619,7 +619,7 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                                   _buildActionButton(
                                     icon: BespokeIconType.instagramStory,
                                     color: const Color(0xFFFFE082),
-                                    onTap: () => HuzurStoryShareSheet.show(
+                                    onTap: () => StoryShareSheet.show(
                                       context,
                                       arabic: a.arabicText,
                                       turkish: a.turkishText,
@@ -698,7 +698,7 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
           borderRadius: 22,
           goldAccentBorder: true,
           padding: const EdgeInsets.all(16),
-          onTap: () => HuzurStoryShareSheet.show(
+          onTap: () => StoryShareSheet.show(
             context,
             arabic: item.arabic,
             turkish: item.turkish,
@@ -900,7 +900,7 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                     return GlassContainer(
                       borderRadius: 20,
                       padding: const EdgeInsets.all(15),
-                      onTap: () => HuzurStoryShareSheet.show(
+                      onTap: () => StoryShareSheet.show(
                         context,
                         arabic: v.originalScript,
                         turkish: v.turkishText,
@@ -941,7 +941,7 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                                   _buildActionButton(
                                     icon: BespokeIconType.instagramStory,
                                     color: const Color(0xFFFFE082),
-                                    onTap: () => HuzurStoryShareSheet.show(
+                                    onTap: () => StoryShareSheet.show(
                                       context,
                                       arabic: v.originalScript,
                                       turkish: v.turkishText,

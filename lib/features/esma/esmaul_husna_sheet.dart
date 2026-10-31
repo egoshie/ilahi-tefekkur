@@ -255,7 +255,7 @@ class _EsmaulHusnaSheetState extends ConsumerState< EsmaulHusnaSheet > {
                                   goldAccentBorder: true,
                                   padding: const EdgeInsets.symmetric(vertical: 9),
                                   onTap: () {
-                                    HuzurStoryShareSheet.show(
+                                    StoryShareSheet.show(
                                       context,
                                       arabic: esma.arabic,
                                       turkish:
