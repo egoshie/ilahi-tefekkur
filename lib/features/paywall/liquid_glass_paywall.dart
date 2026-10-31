@@ -5,6 +5,22 @@ import '../../core/services/pricing_and_premium_service.dart';
 import '../../core/theme/glass_container.dart';
 import '../../core/theme/liquid_glass_theme.dart';
 
+const MethodChannel _huzurNativeChannel =
+    MethodChannel('com.ilahi.tefekkur/native_bridge');
+
+const String _huzurLiveSupportUrl =
+    'https://egoshie.github.io/ilahi-tefekkur/?chat=1';
+
+Future<void> openHuzurExternalUrl(String url) async {
+  HapticFeedback.selectionClick();
+  try {
+    await _huzurNativeChannel.invokeMethod(
+      'openExternalUrl',
+      {'url': url},
+    );
+  } catch (_) {}
+}
+
 class LiquidGlassPaywallSheet extends ConsumerStatefulWidget {
   const LiquidGlassPaywallSheet({super.key});
 
@@ -24,9 +40,6 @@ class LiquidGlassPaywallSheet extends ConsumerStatefulWidget {
 
 class _LiquidGlassPaywallSheetState
     extends ConsumerState<LiquidGlassPaywallSheet> {
-  static const MethodChannel _nativeChannel =
-      MethodChannel('com.ilahi.tefekkur/native_bridge');
-
   static const String _privacyUrl =
       'https://egoshie.github.io/ilahi-tefekkur/privacy.html';
 
@@ -35,16 +48,6 @@ class _LiquidGlassPaywallSheetState
 
   String _selectedTier = 'annual';
   int _founderTapCount = 0;
-
-  Future<void> _openOfficialUrl(String url) async {
-    HapticFeedback.selectionClick();
-    try {
-      await _nativeChannel.invokeMethod(
-        'openExternalUrl',
-        {'url': url},
-      );
-    } catch (_) {}
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -127,6 +130,10 @@ class _LiquidGlassPaywallSheetState
               const SizedBox(height: 14),
 
               const HuzurDeveloperStoryButton(),
+
+              const SizedBox(height: 10),
+
+              const HuzurLiveSupportButton(),
 
               const SizedBox(height: 18),
 
@@ -469,8 +476,8 @@ class _LiquidGlassPaywallSheetState
         : "Kullanım Koşulları ve Lisans (EULA)";
 
     final body = isPrivacy
-        ? "1. CİHAZ İÇİ ÖNCELİKLİ MİMARİ VE VERİ KORUMA\\nHuzur uygulaması kullanıcılarından hesap oluşturmasını talep etmez. Hiçbir reklam ağı ve takip kodu (Zero Tracking) barındırmaz.\\n\\n2. KONUM VE GALERİ İZİNLERİ\\n• Konum İzni: Yalnızca bulunduğunuz şehrin astronomik ezan vakitlerini ve Kıble açısını cihaz içinde hesaplamak için kullanılır.\\n• Fotoğraflar İzni: Yalnızca Paylaşım Stüdyosunda oluşturduğunuz ayet kartlarını galeriye kaydetmek için kullanılır.\\n\\nGeliştirici: Ege Deniz • berkwisy@gmail.com"
-        : "1. LİSANS KAPSAMI VE ABONELİK KURALLARI\\n114 Sure Kur'ân-ı Kerîm, sesli tilavet, ezan vakitleri ve kıble pusulası ücretsizdir. Huzur Özel (Aylık ve Yıllık) abonelikleri, dönem bitiminden en az 24 saat önce iptal edilmediği sürece Apple ID hesabınız üzerinden otomatik yenilenir. Ayarlar &gt; Apple Kimliği &gt; Abonelikler menüsünden dilediğiniz an iptal edebilirsiniz.\\n\\nGeliştirici: Ege Deniz • berkwisy@gmail.com";
+        ? "1. CİHAZ İÇİ ÖNCELİKLİ MİMARİ VE VERİ KORUMA\nHuzur uygulaması kullanıcılarından hesap oluşturmasını talep etmez. Hiçbir reklam ağı ve takip kodu (Zero Tracking) barındırmaz.\n\n2. KONUM VE GALERİ İZİNLERİ\n• Konum İzni: Yalnızca bulunduğunuz şehrin astronomik ezan vakitlerini ve Kıble açısını cihaz içinde hesaplamak için kullanılır.\n• Fotoğraflar İzni: Yalnızca Paylaşım Stüdyosunda oluşturduğunuz ayet kartlarını galeriye kaydetmek için kullanılır.\n\nGeliştirici: Ege Deniz • berkwisy@gmail.com"
+        : "1. LİSANS KAPSAMI VE ABONELİK KURALLARI\n114 Sure Kur'ân-ı Kerîm, sesli tilavet, ezan vakitleri ve kıble pusulası ücretsizdir. Huzur Özel (Aylık ve Yıllık) abonelikleri, dönem bitiminden en az 24 saat önce iptal edilmediği sürece Apple ID hesabınız üzerinden otomatik yenilenir. Ayarlar > Apple Kimliği > Abonelikler menüsünden dilediğiniz an iptal edebilirsiniz.\n\nGeliştirici: Ege Deniz • berkwisy@gmail.com";
 
     showModalBottomSheet(
       context: context,
@@ -527,7 +534,7 @@ class _LiquidGlassPaywallSheetState
               borderRadius: 14,
               emeraldGlow: true,
               padding: const EdgeInsets.symmetric(vertical: 11),
-              onTap: () => _openOfficialUrl(url),
+              onTap: () => openHuzurExternalUrl(url),
               child: const Center(
                 child: Text(
                   "Resmi Web Belgesini Safari'de Aç",
@@ -563,11 +570,69 @@ class _LiquidGlassPaywallSheetState
   }
 }
 
+// ============================================================
+// HUZUR CANLI DESTEK (TIDIO) BUTONU
+// ============================================================
+
+class HuzurLiveSupportButton extends StatelessWidget {
+  const HuzurLiveSupportButton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return GlassContainer(
+      borderRadius: 20,
+      goldAccentBorder: true,
+      padding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 13,
+      ),
+      onTap: () => openHuzurExternalUrl(_huzurLiveSupportUrl),
+      child: const Row(
+        children: [
+          Icon(
+            Icons.support_agent_rounded,
+            color: Color(0xFFFFE082),
+            size: 23,
+          ),
+          SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Canlı Destek & Geliştiriciye Yaz',
+                  style: TextStyle(
+                    color: Color(0xFFFFE082),
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                SizedBox(height: 3),
+                Text(
+                  'Tidio üzerinden 7/24 anında canlı mesaj gönder',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 11.5,
+                    height: 1.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(width: 8),
+          Icon(
+            Icons.chat_bubble_outline_rounded,
+            color: Color(0xFF64FFDA),
+            size: 16,
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 // ============================================================
 // HUZUR DEVELOPER STORY - TETİKLEYİCİ BUTON
-// Dashboard, Ayarlar ve Paywall ekranlarında kullanılabilir.
-// Kullanım: const HuzurDeveloperStoryButton()
 // ============================================================
 
 class HuzurDeveloperStoryButton extends StatelessWidget {
@@ -583,17 +648,15 @@ class HuzurDeveloperStoryButton extends StatelessWidget {
         vertical: 14,
       ),
       onTap: () => showHuzurDeveloperStoryModal(context),
-      child: Row(
+      child: const Row(
         children: [
-          const Icon(
+          Icon(
             Icons.auto_stories_rounded,
             color: Color(0xFF64FFDA),
             size: 23,
           ),
-
-          const SizedBox(width: 12),
-
-          const Expanded(
+          SizedBox(width: 12),
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -617,10 +680,8 @@ class HuzurDeveloperStoryButton extends StatelessWidget {
               ],
             ),
           ),
-
-          const SizedBox(width: 8),
-
-          const Icon(
+          SizedBox(width: 8),
+          Icon(
             Icons.arrow_forward_ios_rounded,
             color: Color(0xFF64FFDA),
             size: 15,
@@ -630,7 +691,6 @@ class HuzurDeveloperStoryButton extends StatelessWidget {
     );
   }
 }
-
 
 // ============================================================
 // HUZUR DEVELOPER STORY - LIQUID GLASS MODAL
@@ -737,6 +797,36 @@ Future<void> showHuzurDeveloperStoryModal(
 
                         GlassContainer(
                           borderRadius: 16,
+                          goldAccentBorder: true,
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 13,
+                          ),
+                          onTap: () => openHuzurExternalUrl(_huzurLiveSupportUrl),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.support_agent_rounded,
+                                color: Color(0xFFFFE082),
+                                size: 18,
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                'Canlı Destek ile Geliştiriciye Yaz',
+                                style: TextStyle(
+                                  color: Color(0xFFFFE082),
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 10),
+
+                        GlassContainer(
+                          borderRadius: 16,
                           emeraldGlow: true,
                           padding: const EdgeInsets.symmetric(
                             vertical: 13,
@@ -768,7 +858,6 @@ Future<void> showHuzurDeveloperStoryModal(
     },
   );
 }
-
 
 // ============================================================
 // HUZUR DEVELOPER STORY - RENKLİ TEXTSPAN GÖVDESİ
