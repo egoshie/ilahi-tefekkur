@@ -19,3 +19,7 @@ build/
 GoogleService-Info.plist
 firebase-adminsdk*.json
 service-account*.json
+.huzur_final_backup_*
+.huzur_final_backup_*/
+*.bak_v1
+*.bak_v1.*

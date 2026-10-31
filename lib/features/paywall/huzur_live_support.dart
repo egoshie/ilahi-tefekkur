@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
 import 'dart:ui' as ui;
@@ -77,6 +78,275 @@ class _HuzurLiveSupportSheet extends StatefulWidget {
 }
 
 class _HuzurLiveSupportSheetState extends State<_HuzurLiveSupportSheet> {
+
+  Widget _buildHuzurAiSection() {
+    return HuzurLiquidGlassSurface(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      borderRadius: 20,
+      blurSigma: 18,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const HuzurAiCrescentAvatar(size: 38),
+              const SizedBox(width: 11),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Text(
+                          HuzurAiGuideData.title,
+                          style: TextStyle(
+                            color: Color(0xFFFFE082),
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(width: 7),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF9CE5C9).withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Text(
+                            'Rehber',
+                            style: TextStyle(
+                              color: Color(0xFF9CE5C9),
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      HuzurAiGuideData.subtitle,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.60),
+                        fontSize: 11.2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFF091D16).withValues(alpha: 0.85),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+            ),
+            child: Text(
+              HuzurAiGuideData.welcomeMessage,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.90),
+                fontSize: 12.6,
+                height: 1.45,
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildHuzurAiOptionChip(
+                icon: Icons.self_improvement_rounded,
+                label: HuzurAiGuideData.optWhatIsHuzur,
+                onTap: () => _onSelectHuzurAiPrompt(
+                  HuzurAiGuideData.optWhatIsHuzur,
+                  HuzurAiGuideData.ansWhatIsHuzur,
+                ),
+              ),
+              _buildHuzurAiOptionChip(
+                icon: Icons.auto_awesome_rounded,
+                label: HuzurAiGuideData.optWhatDoesHuzurOffer,
+                onTap: () => _onSelectHuzurAiPrompt(
+                  HuzurAiGuideData.optWhatDoesHuzurOffer,
+                  HuzurAiGuideData.ansWhatDoesHuzurOffer,
+                ),
+              ),
+            ],
+          ),
+          if (_huzurAiThread.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            ..._huzurAiThread.map(_buildHuzurAiThreadItem),
+          ] else if (_isHuzurAiTyping) ...[
+            const SizedBox(height: 8),
+            const HuzurAiTypingBubble(),
+          ],
+        ],
+      ),
+    );
+  }
+
+
+  Widget _buildHuzurAiOptionChip({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+          decoration: BoxDecoration(
+            color: const Color(0xFF123529).withValues(alpha: 0.85),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: const Color(0xFFD4AF37).withValues(alpha: 0.38),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 15, color: const Color(0xFFFFE082)),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12.2,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHuzurAiThreadItem(Map<String, String> item) {
+    final q = item['question'] ?? '';
+    final a = item['answer'] ?? '';
+    final isTyping = item['status'] == 'typing';
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Align(
+            alignment: Alignment.centerRight,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFD4AF37).withValues(alpha: 0.18),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(14),
+                  topRight: Radius.circular(14),
+                  bottomLeft: Radius.circular(14),
+                  bottomRight: Radius.circular(4),
+                ),
+                border: Border.all(
+                  color: const Color(0xFFD4AF37).withValues(alpha: 0.40),
+                ),
+              ),
+              child: Text(
+                q,
+                style: const TextStyle(
+                  color: Color(0xFFFFE082),
+                  fontSize: 12.2,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 6),
+          if (isTyping)
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: HuzurAiTypingBubble(),
+            )
+          else
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.only(top: 2),
+                  child: HuzurAiCrescentAvatar(size: 28),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0A2018).withValues(alpha: 0.95),
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(4),
+                        topRight: Radius.circular(14),
+                        bottomLeft: Radius.circular(14),
+                        bottomRight: Radius.circular(14),
+                      ),
+                      border: Border.all(
+                        color: const Color(0xFF9CE5C9).withValues(alpha: 0.24),
+                      ),
+                    ),
+                    child: Text(
+                      a,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.92),
+                        fontSize: 12.4,
+                        height: 1.48,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
+
+  // --- HUZUR AI REHBER STATE & AKSİYONLARI (ADIM 4B) ---
+  bool _isHuzurAiTyping = false;
+  int _huzurAiReqToken = 0;
+  final List<Map<String, String>> _huzurAiThread = <Map<String, String>>[];
+
+  Future<void> _onSelectHuzurAiPrompt(String question, String answer) async {
+    final int token = ++_huzurAiReqToken;
+    setState(() {
+      // Aynı soru tekrar seçilirse listeyi şişirmemek için önceki cevabı yenile
+      _huzurAiThread.removeWhere((item) => item['question'] == question);
+      _huzurAiThread.add({
+        'question': question,
+        'answer': '',
+        'status': 'typing',
+      });
+      _isHuzurAiTyping = true;
+    });
+
+    await Future<void>.delayed(const Duration(milliseconds: 650));
+    if (!mounted || token != _huzurAiReqToken) return;
+
+    setState(() {
+      final idx = _huzurAiThread.indexWhere((item) => item['question'] == question);
+      if (idx != -1) {
+        _huzurAiThread[idx] = {
+          'question': question,
+          'answer': answer,
+          'status': 'done',
+        };
+      }
+      _isHuzurAiTyping = false;
+    });
+  }
+
   final _api = HuzurLiveSupportApi();
   final _formKey = GlobalKey<FormState>();
 
@@ -895,5 +1165,561 @@ class _HuzurLiveSupportSheetState extends State<_HuzurLiveSupportSheet> {
         ),
       ),
     );
+  }
+}
+
+// ============================================================================
+// HUZUR AI — CUSTOM PAINTER HİLAL AVATARI & TYPING INDICATOR (ADIM 4A)
+// ============================================================================
+
+class HuzurAiCrescentAvatar extends StatelessWidget {
+  final double size;
+  const HuzurAiCrescentAvatar({super.key, this.size = 38});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: const RadialGradient(
+          center: Alignment(-0.25, -0.3),
+          radius: 0.95,
+          colors: [
+            Color(0xFF174636),
+            Color(0xFF0A221A),
+            Color(0xFF05110D),
+          ],
+        ),
+        border: Border.all(
+          color: const Color(0xFFD4AF37).withValues(alpha: 0.65),
+          width: 1.25,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFD4AF37).withValues(alpha: 0.18),
+            blurRadius: 10,
+            spreadRadius: 0.5,
+          ),
+        ],
+      ),
+      child: CustomPaint(
+        painter: _HuzurCrescentPainter(),
+      ),
+    );
+  }
+}
+
+class _HuzurCrescentPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final outerRadius = size.width * 0.30;
+
+    // Altın hilal (Path.combine ile iki dairenin farkı)
+    final outerCircle = Path()
+      ..addOval(Rect.fromCircle(center: center.translate(-size.width * 0.02, 0), radius: outerRadius));
+    final innerCutout = Path()
+      ..addOval(Rect.fromCircle(
+        center: center.translate(outerRadius * 0.38, -outerRadius * 0.16),
+        radius: outerRadius * 0.82,
+      ));
+
+    final crescentPath = Path.combine(PathOperation.difference, outerCircle, innerCutout);
+
+    final goldPaint = Paint()
+      ..style = PaintingStyle.fill
+      ..shader = const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Color(0xFFFFF3B0),
+          Color(0xFFD4AF37),
+          Color(0xFFAA8220),
+        ],
+      ).createShader(Rect.fromCircle(center: center, radius: outerRadius));
+
+    canvas.drawPath(crescentPath, goldPaint);
+
+    // Hilalin sağ üst iç boşluğuna zarif 4 köşeli ışıltı yıldızı
+    final starCenter = center.translate(outerRadius * 0.42, -outerRadius * 0.22);
+    final starRadius = size.width * 0.095;
+    final starPath = Path();
+    for (int i = 0; i < 8; i++) {
+      final r = i.isEven ? starRadius : starRadius * 0.36;
+      final angle = (i * math.pi / 4) - (math.pi / 2);
+      final pt = Offset(
+        starCenter.dx + r * math.cos(angle),
+        starCenter.dy + r * math.sin(angle),
+      );
+      if (i == 0) {
+        starPath.moveTo(pt.dx, pt.dy);
+      } else {
+        starPath.lineTo(pt.dx, pt.dy);
+      }
+    }
+    starPath.close();
+    canvas.drawPath(starPath, goldPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class HuzurAiTypingBubble extends StatefulWidget {
+  const HuzurAiTypingBubble({super.key});
+
+  @override
+  State<HuzurAiTypingBubble> createState() => _HuzurAiTypingBubbleState();
+}
+
+class _HuzurAiTypingBubbleState extends State<HuzurAiTypingBubble>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1100),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          const HuzurAiCrescentAvatar(size: 32),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0E2920).withValues(alpha: 0.92),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+                bottomRight: Radius.circular(16),
+                bottomLeft: Radius.circular(4),
+              ),
+              border: Border.all(
+                color: const Color(0xFFD4AF37).withValues(alpha: 0.30),
+                width: 1,
+              ),
+            ),
+            child: AnimatedBuilder(
+              animation: _controller,
+              builder: (context, _) {
+                return Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: List.generate(3, (index) {
+                    final phase = (_controller.value * 2 * math.pi) - (index * 0.9);
+                    final dy = -3.0 * ((math.sin(phase) + 1) / 2);
+                    final opacity = 0.40 + 0.60 * ((math.sin(phase) + 1) / 2);
+                    return Padding(
+                      padding: EdgeInsets.only(right: index < 2 ? 5 : 0),
+                      child: Transform.translate(
+                        offset: Offset(0, dy),
+                        child: Opacity(
+                          opacity: opacity.clamp(0.25, 1.0),
+                          child: Container(
+                            width: 6.5,
+                            height: 6.5,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFD4AF37),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class HuzurAiGuideData {
+  static const String title = 'Huzur AI';
+  static const String subtitle = 'Uygulama Rehberi • Otomatik Tanıtım';
+
+  static const String welcomeMessage =
+      'Selamünaleyküm, Huzur rehberine hoş geldiniz. '
+      'Aşağıdaki başlıklardan Huzur uygulamasının gerçek özelliklerini hemen inceleyebilir '
+      'veya doğrudan Huzur Geliştiricisi Ege Deniz ile canlı sohbete bağlanabilirsiniz.';
+
+  static const String optWhatIsHuzur = 'Huzur nedir?';
+  static const String optWhatDoesHuzurOffer = 'Huzur bizlere neler sunuyor?';
+
+  static const String ansWhatIsHuzur =
+      'Huzur; ibadet, tefekkür ve günlük manevi alışkanlıkları tek bir sade deneyimde '
+      'buluşturan bir yaşam ve ibadet ekosistemidir. Gün içinde kendine ayırdığın zamanı '
+      'daha düzenli, dingin ve anlamlı kılmana eşlik eder.';
+
+  static const String ansWhatDoesHuzurOffer =
+      'Huzur uygulaması içerisinde yer alan gerçek modüller şunlardır:\n'
+      '• Namaz Vakitleri ve Vakit Atmosferi: Konuma dayalı vakit hesaplaması (Adhan), ezan bildirimleri ve vakte uyumlu görsel atmosfer.\n'
+      '• Kur’an ve Kutsal Metinlerde Arama: Ayetler, ilahi metinler ve tefekkür notları arasında hızlı okuma ve arama.\n'
+      '• Esmaül Hüsna ve Zikir Takibi: Kişisel zikir sayacı, Esmaül Hüsna rehberi ve günlük manevi takip.\n'
+      '• Huzur Sesleri (Atmosfer): Ney, yağmur, su ve rüzgar sesleriyle tefekkür ve odaklanma arka planı.\n'
+      '• Kıble Pusulası ve Hicri Takvim: Sensör destekli kıble yönü bulucu ve Hicri takvim dönüşümü.';
+}
+
+// ============================================================================
+// HUZUR LIQUID GLASS — COMPACT iOS EMERALD, BLACK & GOLD DESIGN (ADIM 5)
+// ============================================================================
+
+class HuzurLiquidGlassTheme {
+  static const Color deepBlack = Color(0xFF040B08);
+  static const Color darkEmerald = Color(0xFF0B241C);
+  static const Color midEmerald = Color(0xFF12382B);
+  static const Color softEmerald = Color(0xFF9CE5C9);
+  static const Color royalGold = Color(0xFFD4AF37);
+  static const Color lightGold = Color(0xFFFFE082);
+}
+
+class HuzurLiquidGlassSurface extends StatelessWidget {
+  final Widget child;
+  final EdgeInsetsGeometry padding;
+  final EdgeInsetsGeometry? margin;
+  final double borderRadius;
+  final double blurSigma;
+  final Color? borderColor;
+
+  const HuzurLiquidGlassSurface({
+    super.key,
+    required this.child,
+    this.padding = const EdgeInsets.all(14),
+    this.margin,
+    this.borderRadius = 20,
+    this.blurSigma = 18,
+    this.borderColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: margin,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(borderRadius),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.42),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+          BoxShadow(
+            color: HuzurLiquidGlassTheme.royalGold.withValues(alpha: 0.06),
+            blurRadius: 12,
+            spreadRadius: 0.5,
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(borderRadius),
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: blurSigma, sigmaY: blurSigma),
+          child: Container(
+            padding: padding,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(borderRadius),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  HuzurLiquidGlassTheme.midEmerald.withValues(alpha: 0.78),
+                  HuzurLiquidGlassTheme.darkEmerald.withValues(alpha: 0.88),
+                  HuzurLiquidGlassTheme.deepBlack.withValues(alpha: 0.94),
+                ],
+              ),
+              border: Border.all(
+                color: borderColor ??
+                    HuzurLiquidGlassTheme.royalGold.withValues(alpha: 0.34),
+                width: 1.0,
+              ),
+            ),
+            child: child,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ============================================================================
+// EGE DENİZ — HUZUR GELİŞTİRİCİSİ SVG/CUSTOMPAINTER AVATARI & DOĞRULAMA (ADIM 6)
+// ============================================================================
+
+class EgeDenizDeveloperProfile {
+  static const String fullName = 'Ege Deniz';
+  static const String title = 'Huzur Geliştiricisi';
+  static const String connectLabel = 'Ege Deniz ile Canlı Sohbete Bağlan';
+  static const String privacyNotice =
+      'Ad ve e-posta bilgilerimin yalnızca canlı destek iletişimi kapsamında işlenmesini ve gizlilik koşullarını onaylıyorum.';
+}
+
+class EgeDenizDeveloperAvatar extends StatelessWidget {
+  final double size;
+  final bool showVerifiedBadge;
+
+  const EgeDenizDeveloperAvatar({
+    super.key,
+    this.size = 40,
+    this.showVerifiedBadge = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFF164A39),
+                  Color(0xFF0A241C),
+                  Color(0xFF05110D),
+                ],
+              ),
+              border: Border.all(
+                color: const Color(0xFFD4AF37).withValues(alpha: 0.78),
+                width: 1.35,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF9CE5C9).withValues(alpha: 0.16),
+                  blurRadius: 10,
+                  spreadRadius: 0.5,
+                ),
+              ],
+            ),
+            child: CustomPaint(
+              painter: _EgeDenizSvgAvatarPainter(),
+            ),
+          ),
+          if (showVerifiedBadge)
+            Positioned(
+              right: -1,
+              bottom: -1,
+              child: Container(
+                width: size * 0.36,
+                height: size * 0.36,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFF071A14),
+                  border: Border.all(
+                    color: const Color(0xFFD4AF37),
+                    width: 1.0,
+                  ),
+                ),
+                child: Icon(
+                  Icons.verified_rounded,
+                  size: size * 0.26,
+                  color: const Color(0xFF9CE5C9),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EgeDenizSvgAvatarPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+    final center = Offset(w / 2, h / 2);
+
+    // 1. Sekizgen geometrik çerçeve (SVG tarzı ince altın çizgi)
+    final hexPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = w * 0.032
+      ..color = const Color(0xFFFFE082).withValues(alpha: 0.35);
+
+    final hexPath = Path();
+    final r = w * 0.38;
+    for (int i = 0; i < 6; i++) {
+      final a = (i * math.pi / 3) - (math.pi / 2);
+      final pt = Offset(center.dx + r * math.cos(a), center.dy + r * math.sin(a));
+      if (i == 0) {
+        hexPath.moveTo(pt.dx, pt.dy);
+      } else {
+        hexPath.lineTo(pt.dx, pt.dy);
+      }
+    }
+    hexPath.close();
+    canvas.drawPath(hexPath, hexPaint);
+
+    // 2. Geliştirici sembolü: Sol '<', Sağ '>' ve ortada altın '/' vektörleri
+    final strokePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..strokeWidth = w * 0.068
+      ..shader = const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Color(0xFFFFF3B0),
+          Color(0xFFD4AF37),
+          Color(0xFF9CE5C9),
+        ],
+      ).createShader(Rect.fromCircle(center: center, radius: r));
+
+    // Sol '<'
+    final leftBracket = Path()
+      ..moveTo(w * 0.37, h * 0.37)
+      ..lineTo(w * 0.25, h * 0.50)
+      ..lineTo(w * 0.37, h * 0.63);
+    canvas.drawPath(leftBracket, strokePaint);
+
+    // Sağ '>'
+    final rightBracket = Path()
+      ..moveTo(w * 0.63, h * 0.37)
+      ..lineTo(w * 0.75, h * 0.50)
+      ..lineTo(w * 0.63, h * 0.63);
+    canvas.drawPath(rightBracket, strokePaint);
+
+    // Orta '/'
+    final slashPath = Path()
+      ..moveTo(w * 0.54, h * 0.33)
+      ..lineTo(w * 0.46, h * 0.67);
+    canvas.drawPath(slashPath, strokePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class EgeDenizDeveloperHeaderBadge extends StatelessWidget {
+  const EgeDenizDeveloperHeaderBadge({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return HuzurLiquidGlassSurface(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
+      borderRadius: 18,
+      blurSigma: 16,
+      child: Row(
+        children: [
+          const EgeDenizDeveloperAvatar(size: 42),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: const [
+                    Text(
+                      EgeDenizDeveloperProfile.fullName,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14.8,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    SizedBox(width: 5),
+                    Icon(
+                      Icons.verified_rounded,
+                      size: 15,
+                      color: Color(0xFF9CE5C9),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                const Text(
+                  EgeDenizDeveloperProfile.title,
+                  style: TextStyle(
+                    color: Color(0xFFFFE082),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: const Color(0xFF9CE5C9).withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: const Color(0xFF9CE5C9).withValues(alpha: 0.35),
+                width: 0.8,
+              ),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.circle, size: 7, color: Color(0xFF9CE5C9)),
+                SizedBox(width: 5),
+                Text(
+                  'Canlı Destek',
+                  style: TextStyle(
+                    color: Color(0xFF9CE5C9),
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ============================================================================
+// SOHBET DAVRANIŞLARI, OTURUM KORUMA & DEĞERLENDİRME YÖNETİCİSİ (ADIM 7)
+// ============================================================================
+
+class HuzurSupportSessionGuard {
+  static bool shouldTriggerRating({
+    required String status,
+    required bool closedByAdmin,
+    required bool ratingAlreadySubmitted,
+  }) {
+    final normalized = status.trim().toLowerCase();
+    final isClosed = closedByAdmin ||
+        normalized == 'closed' ||
+        normalized == 'ended' ||
+        normalized == 'resolved' ||
+        normalized == 'closed_by_admin';
+    return isClosed && !ratingAlreadySubmitted;
+  }
+
+  static void dismissKeyboard(BuildContext context) {
+    final currentFocus = FocusScope.of(context);
+    if (!currentFocus.hasPrimaryFocus && currentFocus.focusedChild != null) {
+      FocusManager.instance.primaryFocus?.unfocus();
+    }
   }
 }

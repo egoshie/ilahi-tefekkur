@@ -131,3 +131,21 @@ class NotificationAndWidgetService {
     }
   }
 }
+
+// ============================================================================
+// GELİŞTİRİCİ (EGE DENİZ) CANLI DESTEK BİLDİRİM SABİTİ (ADIM 9)
+// ============================================================================
+const String developerSupportNotificationTitle = 'Ege size yazdı';
+
+String resolveSupportNotificationTitle({
+  String? incomingTitle,
+  String? senderRole,
+}) {
+  final role = (senderRole ?? '').trim().toLowerCase();
+  if (role.isEmpty || role == 'admin' || role == 'developer' || role == 'ege' || role == 'agent') {
+    return developerSupportNotificationTitle;
+  }
+  return (incomingTitle != null && incomingTitle.trim().isNotEmpty)
+      ? incomingTitle.trim()
+      : developerSupportNotificationTitle;
+}

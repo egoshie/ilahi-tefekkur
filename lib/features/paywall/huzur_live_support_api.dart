@@ -327,13 +327,7 @@ class HuzurLiveSupportApi {
     required String sessionId,
     required bool isTyping,
   }) async {
-    await _request(
-      'POST',
-      '${_sessionPath(sessionId)}/typing',
-      body: <String, dynamic>{
-        'is_typing': isTyping,
-      },
-    );
+    return; // [ADIM 8] Telegram yazma onizlemesi kaldirildi
   }
 
   Future<void> markMessagesRead({
@@ -403,5 +397,52 @@ class HuzurLiveSupportApi {
 
   Future<void> dispose() async {
     _client.close();
+  }
+}
+
+// ============================================================================
+// TELEGRAM KALICI KISA KOD (ege1, ege2, ali1) & KOMUT ÇÖZÜMLEYİCİ (ADIM 8)
+// ============================================================================
+
+class HuzurTelegramShortCodeHelper {
+  static const Map<String, String> _trCharMap = {
+    'ç': 'c', 'Ç': 'c',
+    'ğ': 'g', 'Ğ': 'g',
+    'ı': 'i', 'I': 'i', 'İ': 'i',
+    'ö': 'o', 'Ö': 'o',
+    'ş': 's', 'Ş': 's',
+    'ü': 'u', 'Ü': 'u',
+  };
+
+  /// Kullanıcının ilk adından temiz bir önek üretir (örn: "Ege Deniz" -> "ege", "Ali" -> "ali")
+  static String normalizeNamePrefix(String fullName) {
+    final trimmed = fullName.trim();
+    if (trimmed.isEmpty) return 'uye';
+    final firstWord = trimmed.split(RegExp(r'\s+')).first;
+    final buffer = StringBuffer();
+    for (final rune in firstWord.runes) {
+      final ch = String.fromCharCode(rune);
+      final mapped = _trCharMap[ch] ?? ch.toLowerCase();
+      if (RegExp(r'^[a-z0-9]$').hasMatch(mapped)) {
+        buffer.write(mapped);
+      }
+    }
+    final result = buffer.toString();
+    return result.isEmpty ? 'uye' : result;
+  }
+
+  /// Dahili UUID korunurken Telegram tarafında gösterilecek kalıcı kısa kodu üretir (örn: ege1, ege2, ali1)
+  static String buildShortCode({
+    required String fullName,
+    int sequenceNumber = 1,
+    String? existingShortCode,
+  }) {
+    if (existingShortCode != null &&
+        RegExp(r'^[a-z0-9]+[0-9]+$').hasMatch(existingShortCode.trim())) {
+      return existingShortCode.trim().toLowerCase();
+    }
+    final prefix = normalizeNamePrefix(fullName);
+    final seq = sequenceNumber < 1 ? 1 : sequenceNumber;
+    return '$prefix$seq';
   }
 }

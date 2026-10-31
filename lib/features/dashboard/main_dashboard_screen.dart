@@ -14,8 +14,6 @@ import '../../core/theme/liquid_glass_theme.dart';
 import '../../core/theme/story_share_sheet.dart';
 import '../esma/esmaul_husna_sheet.dart';
 import '../paywall/liquid_glass_paywall.dart';
-import '../paywall/huzur_live_support.dart';
-
 class MainDashboardScreen extends ConsumerStatefulWidget {
   final ValueChanged<int>? onSwitchTab;
 
@@ -689,94 +687,11 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
           ),
         ),
         const SizedBox(height: 18),
-        GlassContainer(
-          borderRadius: 26,
-          enableBlur: true,
-          blurSigma: 25,
-          emeraldGlow: true,
-          goldAccentBorder: true,
-          padding: const EdgeInsets.all(19),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Row(children: [
-                Icon(Icons.self_improvement_rounded,
-                    color: Color(0xFF9CE5C9), size: 22),
-                SizedBox(width: 10),
-                Text(
-                  'Huzur nedir?',
-                  style: TextStyle(
-                      color: Color(0xFFFFE082),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800),
-                ),
-              ]),
-              const SizedBox(height: 11),
-              Text(
-                'Huzur; ibadet, tefekkür ve günlük manevi alışkanlıkları tek bir sade deneyimde buluşturur. Gün içinde kendine ayırdığın zamanı daha düzenli ve anlamlı kılmana eşlik eder.',
-                style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.82),
-                    fontSize: 12.5,
-                    height: 1.55),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-        GlassContainer(
-          borderRadius: 24,
-          enableBlur: true,
-          blurSigma: 23,
-          padding: const EdgeInsets.all(18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Row(children: [
-                Icon(Icons.auto_awesome_rounded,
-                    color: Color(0xFFFFE082), size: 21),
-                SizedBox(width: 9),
-                Text(
-                  'Huzur bizlere neler sunuyor?',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14.5,
-                      fontWeight: FontWeight.w800),
-                ),
-              ]),
-              const SizedBox(height: 13),
-              _huzurFeatureLine(Icons.access_time_rounded,
-                  'Namaz vakitleri ve vakit atmosferi'),
-              _huzurFeatureLine(
-                  Icons.menu_book_rounded, 'Kur’ân ve kutsal metinlerde arama'),
-              _huzurFeatureLine(Icons.favorite_border_rounded,
-                  'Esmaül Hüsna, zikir ve kişisel takip'),
-              _huzurFeatureLine(
-                  Icons.widgets_rounded, 'Widget’lar ve günlük ilham kartları'),
-            ],
-          ),
-        ),
-        const SizedBox(height: 14),
+
+
       ],
     );
   }
-
-  Widget _huzurFeatureLine(IconData icon, String text) => Padding(
-        padding: const EdgeInsets.only(bottom: 10),
-        child: Row(children: [
-          Icon(icon, size: 17, color: const Color(0xFF9CE5C9)),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              text,
-              style: TextStyle(
-                fontSize: 11.7,
-                height: 1.35,
-                color: Colors.white.withValues(alpha: 0.78),
-              ),
-            ),
-          ),
-        ]),
-      );
 
   Widget _buildTimePillar(
     String label,
