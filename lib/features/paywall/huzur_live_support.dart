@@ -1,11 +1,14 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
+import 'dart:ui' as ui;
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
+import '../../core/theme/glass_container.dart';
 import 'huzur_live_support_api.dart';
 
 Future<void> showHuzurInAppLiveChatModal(BuildContext context) async {
@@ -23,70 +26,44 @@ class HuzurLiveSupportButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: () {
-          showModalBottomSheet<void>(
-            context: context,
-            isScrollControlled: true,
-            useSafeArea: true,
-            backgroundColor: Colors.transparent,
-            builder: (_) => const _HuzurLiveSupportSheet(),
-          );
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 17,
-            vertical: 15,
+    return GlassContainer(
+      borderRadius: 22,
+      enableBlur: true,
+      blurSigma: 24,
+      emeraldGlow: true,
+      goldAccentBorder: true,
+      padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 16),
+      onTap: () => showHuzurInAppLiveChatModal(context),
+      child: const Row(
+        children: [
+          CircleAvatar(
+            radius: 21,
+            backgroundColor: Color(0x223F9D7B),
+            child: Icon(Icons.support_agent_rounded, color: Color(0xFF9CE5C9)),
           ),
-          decoration: BoxDecoration(
-            color: const Color(0xFF102D28),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: const Color(0xFF78CDB0).withValues(alpha: 0.3),
+          SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Geliştirici ile sohbet etmek istiyorum',
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Sorunu veya önerini doğrudan ilet',
+                  style: TextStyle(color: Color(0xFFB8CEC7), fontSize: 11.5),
+                ),
+              ],
             ),
           ),
-          child: const Row(
-            children: [
-              Icon(
-                Icons.support_agent_rounded,
-                color: Color(0xFF9CE5C9),
-                size: 25,
-              ),
-              SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Geliştiriciyle Görüş',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    SizedBox(height: 3),
-                    Text(
-                      'Sorularınız için canlı destek',
-                      style: TextStyle(
-                        color: Color(0xFFB8CEC7),
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.arrow_forward_ios_rounded,
-                color: Color(0xFF9CE5C9),
-                size: 15,
-              ),
-            ],
-          ),
-        ),
+          Icon(Icons.arrow_forward_ios_rounded,
+              color: Color(0xFFFFE082), size: 15),
+        ],
       ),
     );
   }
@@ -109,8 +86,6 @@ class _HuzurLiveSupportSheetState extends State<_HuzurLiveSupportSheet> {
   final _reviewController = TextEditingController();
 
   Timer? _pollTimer;
-  Timer? _typingTimer;
-
   StreamSubscription<String>? _tokenSubscription;
   StreamSubscription<RemoteMessage>? _foregroundSubscription;
   StreamSubscription<RemoteMessage>? _openedSubscription;
@@ -123,8 +98,6 @@ class _HuzurLiveSupportSheetState extends State<_HuzurLiveSupportSheet> {
   bool _reviewSending = false;
   bool _reviewSubmitted = false;
   bool _polling = false;
-  bool _typingActive = false;
-
   int _stars = 5;
 
   static const _background = Color(0xFF08120F);
@@ -134,8 +107,6 @@ class _HuzurLiveSupportSheetState extends State<_HuzurLiveSupportSheet> {
   @override
   void dispose() {
     _pollTimer?.cancel();
-    _typingTimer?.cancel();
-
     _nameController.dispose();
     _emailController.dispose();
     _messageController.dispose();
@@ -239,8 +210,6 @@ class _HuzurLiveSupportSheetState extends State<_HuzurLiveSupportSheet> {
 
       if (result.closed) {
         _pollTimer?.cancel();
-        _typingTimer?.cancel();
-        await _setTyping(false);
       }
 
       final unreadIds = result.messages
@@ -346,51 +315,19 @@ class _HuzurLiveSupportSheetState extends State<_HuzurLiveSupportSheet> {
     }
   }
 
-  void _onMessageChanged(String value) {
-    _typingTimer?.cancel();
-
-    if (value.trim().isEmpty) {
-      unawaited(_setTyping(false));
-      return;
-    }
-
-    unawaited(_setTyping(true));
-
-    _typingTimer = Timer(
-      const Duration(milliseconds: 900),
-      () => _setTyping(false),
-    );
-  }
-
-  Future<void> _setTyping(bool value) async {
-    final id = _sessionId;
-
-    if (id == null || _typingActive == value) return;
-
-    _typingActive = value;
-
-    try {
-      await _api.setTyping(
-        sessionId: id,
-        isTyping: value,
-      );
-    } catch (error) {
-      debugPrint('Huzur typing status: $error');
-    }
-  }
-
   Future<void> _sendMessage() async {
     final id = _sessionId;
     final text = _messageController.text.trim();
 
     if (id == null || text.isEmpty || _sending) return;
 
-    FocusScope.of(context).unfocus();
+    FocusManager.instance.primaryFocus?.unfocus();
+    try {
+      await SystemChannels.textInput.invokeMethod<void>('TextInput.hide');
+    } catch (_) {}
     setState(() => _sending = true);
 
     try {
-      await _setTyping(false);
-
       await _api.sendMessage(
         sessionId: id,
         text: text,
@@ -422,6 +359,9 @@ class _HuzurLiveSupportSheetState extends State<_HuzurLiveSupportSheet> {
       if (!mounted) return;
 
       setState(() => _reviewSubmitted = true);
+      await _api.clearSavedSession();
+      await Future<void>.delayed(const Duration(milliseconds: 650));
+      if (mounted) Navigator.of(context).pop();
     } catch (error) {
       _showError(error);
     } finally {
@@ -915,28 +855,43 @@ class _HuzurLiveSupportSheetState extends State<_HuzurLiveSupportSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return FractionallySizedBox(
-      heightFactor: 0.92,
-      child: Container(
-        decoration: const BoxDecoration(
-          color: _background,
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(25),
-          ),
-        ),
-        child: SafeArea(
-          top: false,
-          child: Column(
-            children: [
-              _header(),
-              Expanded(
-                child: _sessionId == null
-                    ? _entryView()
-                    : _snapshot?.closed == true
-                        ? _reviewView()
-                        : _conversationView(),
+    final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
+    return AnimatedPadding(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
+      padding: EdgeInsets.only(bottom: keyboardInset),
+      child: FractionallySizedBox(
+        heightFactor: keyboardInset > 0 ? 1.0 : 0.92,
+        child: ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          child: BackdropFilter(
+            filter: ui.ImageFilter.blur(sigmaX: 26, sigmaY: 26),
+            child: Container(
+              decoration: BoxDecoration(
+                color: _background.withValues(alpha: 0.84),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(28)),
+                border: Border(
+                    top: BorderSide(
+                        color:
+                            const Color(0xFFFFE082).withValues(alpha: 0.34))),
               ),
-            ],
+              child: SafeArea(
+                top: false,
+                child: Column(
+                  children: [
+                    _header(),
+                    Expanded(
+                      child: _sessionId == null
+                          ? _entryView()
+                          : _snapshot?.closed == true
+                              ? _reviewView()
+                              : _conversationView(),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
       ),

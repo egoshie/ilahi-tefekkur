@@ -14,9 +14,10 @@ import '../../core/theme/liquid_glass_theme.dart';
 import '../../core/theme/story_share_sheet.dart';
 import '../esma/esmaul_husna_sheet.dart';
 import '../paywall/liquid_glass_paywall.dart';
+import '../paywall/huzur_live_support.dart';
 
 class MainDashboardScreen extends ConsumerStatefulWidget {
-  final ValueChanged< int >? onSwitchTab;
+  final ValueChanged<int>? onSwitchTab;
 
   const MainDashboardScreen({
     super.key,
@@ -24,11 +25,11 @@ class MainDashboardScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState< MainDashboardScreen > createState() =>
+  ConsumerState<MainDashboardScreen> createState() =>
       _MainDashboardScreenState();
 }
 
-class _MainDashboardScreenState extends ConsumerState< MainDashboardScreen >
+class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _waveController;
   Timer? _hourlyChecker;
@@ -36,7 +37,7 @@ class _MainDashboardScreenState extends ConsumerState< MainDashboardScreen >
   bool _alarmConfirmed = false;
   bool _widgetPinnedFeedback = false;
 
-  static const Map< int, String > _trHijriMonths = {
+  static const Map<int, String> _trHijriMonths = {
     1: "Muharrem",
     2: "Safer",
     3: "Rebîülevvel",
@@ -69,7 +70,7 @@ class _MainDashboardScreenState extends ConsumerState< MainDashboardScreen >
     });
   }
 
-  Future< void > _initSilentWidgetSync() async {
+  Future<void> _initSilentWidgetSync() async {
     final prefs = await SharedPreferences.getInstance();
     final offset = prefs.getInt('hourly_verse_offset') ?? 0;
     if (mounted) {
@@ -109,7 +110,7 @@ class _MainDashboardScreenState extends ConsumerState< MainDashboardScreen >
 
     return ListView(
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-                  physics: const BouncingScrollPhysics(),
+      physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(18, 14, 18, 32),
       children: [
         Row(
@@ -171,7 +172,6 @@ class _MainDashboardScreenState extends ConsumerState< MainDashboardScreen >
           ],
         ),
         const SizedBox(height: 16),
-
         GlassContainer(
           borderRadius: 32,
           emeraldGlow: true,
@@ -240,7 +240,6 @@ class _MainDashboardScreenState extends ConsumerState< MainDashboardScreen >
                 ),
               ),
               const SizedBox(height: 18),
-
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -259,7 +258,6 @@ class _MainDashboardScreenState extends ConsumerState< MainDashboardScreen >
                 ],
               ),
               const SizedBox(height: 14),
-
               Row(
                 children: [
                   Expanded(
@@ -354,7 +352,6 @@ class _MainDashboardScreenState extends ConsumerState< MainDashboardScreen >
           ),
         ),
         const SizedBox(height: 16),
-
         GlassContainer(
           borderRadius: 30,
           goldAccentBorder: true,
@@ -425,7 +422,8 @@ class _MainDashboardScreenState extends ConsumerState< MainDashboardScreen >
                           _manualVerseOffset++;
                           _widgetPinnedFeedback = false;
                         });
-                        await NotificationAndWidgetService.instance.syncHourlyVerseToWidget(
+                        await NotificationAndWidgetService.instance
+                            .syncHourlyVerseToWidget(
                           manualOffset: _manualVerseOffset,
                         );
                         if (mounted) setState(() {});
@@ -482,7 +480,9 @@ class _MainDashboardScreenState extends ConsumerState< MainDashboardScreen >
                           const SizedBox(width: 6),
                           Flexible(
                             child: Text(
-                              _widgetPinnedFeedback ? "Widget'ta" : "Widget Yap",
+                              _widgetPinnedFeedback
+                                  ? "Widget'ta"
+                                  : "Widget Yap",
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 fontSize: 12,
@@ -537,7 +537,6 @@ class _MainDashboardScreenState extends ConsumerState< MainDashboardScreen >
           ),
         ),
         const SizedBox(height: 16),
-
         Row(
           children: [
             Expanded(
@@ -651,7 +650,6 @@ class _MainDashboardScreenState extends ConsumerState< MainDashboardScreen >
           ],
         ),
         const SizedBox(height: 16),
-
         GlassContainer(
           borderRadius: 24,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -669,8 +667,9 @@ class _MainDashboardScreenState extends ConsumerState< MainDashboardScreen >
               const SizedBox(height: 10),
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
-                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-                  physics: const BouncingScrollPhysics(),
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                physics: const BouncingScrollPhysics(),
                 padding: const EdgeInsets.only(right: 12),
                 child: Row(
                   children: [
@@ -689,9 +688,96 @@ class _MainDashboardScreenState extends ConsumerState< MainDashboardScreen >
             ],
           ),
         ),
+        const SizedBox(height: 18),
+        GlassContainer(
+          borderRadius: 26,
+          enableBlur: true,
+          blurSigma: 25,
+          emeraldGlow: true,
+          goldAccentBorder: true,
+          padding: const EdgeInsets.all(19),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(children: [
+                Icon(Icons.self_improvement_rounded,
+                    color: Color(0xFF9CE5C9), size: 22),
+                SizedBox(width: 10),
+                Text(
+                  'Huzur nedir?',
+                  style: TextStyle(
+                      color: Color(0xFFFFE082),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800),
+                ),
+              ]),
+              const SizedBox(height: 11),
+              Text(
+                'Huzur; ibadet, tefekkür ve günlük manevi alışkanlıkları tek bir sade deneyimde buluşturur. Gün içinde kendine ayırdığın zamanı daha düzenli ve anlamlı kılmana eşlik eder.',
+                style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.82),
+                    fontSize: 12.5,
+                    height: 1.55),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        GlassContainer(
+          borderRadius: 24,
+          enableBlur: true,
+          blurSigma: 23,
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(children: [
+                Icon(Icons.auto_awesome_rounded,
+                    color: Color(0xFFFFE082), size: 21),
+                SizedBox(width: 9),
+                Text(
+                  'Huzur bizlere neler sunuyor?',
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.w800),
+                ),
+              ]),
+              const SizedBox(height: 13),
+              _huzurFeatureLine(Icons.access_time_rounded,
+                  'Namaz vakitleri ve vakit atmosferi'),
+              _huzurFeatureLine(
+                  Icons.menu_book_rounded, 'Kur’ân ve kutsal metinlerde arama'),
+              _huzurFeatureLine(Icons.favorite_border_rounded,
+                  'Esmaül Hüsna, zikir ve kişisel takip'),
+              _huzurFeatureLine(
+                  Icons.widgets_rounded, 'Widget’lar ve günlük ilham kartları'),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
+        const HuzurLiveSupportButton(),
       ],
     );
   }
+
+  Widget _huzurFeatureLine(IconData icon, String text) => Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: Row(children: [
+          Icon(icon, size: 17, color: const Color(0xFF9CE5C9)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 11.7,
+                height: 1.35,
+                color: Colors.white.withValues(alpha: 0.78),
+              ),
+            ),
+          ),
+        ]),
+      );
 
   Widget _buildTimePillar(
     String label,

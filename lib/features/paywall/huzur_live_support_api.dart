@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'package:http/http.dart' as http;
 
 typedef HuzurJson = Map<String, dynamic>;
@@ -391,6 +393,12 @@ class HuzurLiveSupportApi {
         'review': cleanReview,
       },
     );
+    await clearSavedSession();
+  }
+
+  Future<void> clearSavedSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('huzur_live_support_session_id');
   }
 
   Future<void> dispose() async {
