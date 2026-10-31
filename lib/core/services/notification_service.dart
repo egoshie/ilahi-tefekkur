@@ -30,24 +30,27 @@ class NotificationAndWidgetService {
 
   static String smartSplitTurkishSentence(String raw) {
     final clean = raw.replaceAll(RegExp(r'\s+'), ' ').trim();
-    if (clean.length <= 78) return clean;
-    final parts = clean.split(RegExp(r'(?<=[.!?;:])\s+'));
-    for (final p in parts) {
-      final t = p.trim();
-      if (t.length >= 16 && t.length <= 82) return t;
+    final sentences = clean.split(RegExp(r'(?<=[.!?;:])\s+'));
+    for (final s in sentences) {
+      final w = s.trim().split(' ').where((e) => e.isNotEmpty).toList();
+      if (w.length >= 3 && w.length <= 6) return w.join(' ');
     }
-    final clauses = clean.split(',');
-    if (clauses.length >= 2) {
-      final c = (clauses[0] + ',' + clauses[1]).trim();
-      if (c.length <= 82) return c + '.';
+    final clauses = clean.split(RegExp(r'[,;:]'));
+    for (final c in clauses) {
+      final w = c.trim().split(' ').where((e) => e.isNotEmpty).toList();
+      if (w.length >= 3 && w.length <= 6) return w.join(' ') + '.';
     }
-    return clean.substring(0, 75).trim() + '...';
+    final allWords = clean.split(' ').where((e) => e.isNotEmpty).toList();
+    if (allWords.length <= 6) return allWords.join(' ');
+    String cut = allWords.take(5).join(' ');
+    if (!cut.endsWith('.')) cut += '.';
+    return cut;
   }
 
   static String smartSplitArabic(String raw) {
     final words = raw.trim().split(RegExp(r'\s+'));
-    if (words.length <= 7) return raw.trim();
-    return words.take(6).join(' ');
+    if (words.length <= 4) return raw.trim();
+    return words.take(4).join(' ');
   }
 
   HourlyShortVerse getActiveHourlyVerse({int offset = 0}) {
