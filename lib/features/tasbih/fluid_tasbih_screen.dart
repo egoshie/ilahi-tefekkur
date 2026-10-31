@@ -176,8 +176,8 @@ class _FluidTasbihScreenState extends ConsumerState< FluidTasbihScreen >
                   margin: const EdgeInsets.only(right: 8),
                   decoration: BoxDecoration(
                     color: session.hapticEnabled
-                        ? const Color(0xFF64FFDA).withOpacity(0.16)
-                        : Colors.white.withOpacity(0.06),
+                        ? const Color(0xFF64FFDA).withValues(alpha: 0.16)
+                        : Colors.white.withValues(alpha: 0.06),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
                       color: session.hapticEnabled
@@ -228,8 +228,8 @@ class _FluidTasbihScreenState extends ConsumerState< FluidTasbihScreen >
                             horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
                           color: sel
-                              ? const Color(0xFF64FFDA).withOpacity(0.20)
-                              : Colors.white.withOpacity(0.07),
+                              ? const Color(0xFF64FFDA).withValues(alpha: 0.20)
+                              : Colors.white.withValues(alpha: 0.07),
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
                             color: sel
@@ -258,7 +258,7 @@ class _FluidTasbihScreenState extends ConsumerState< FluidTasbihScreen >
                     padding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFE082).withOpacity(0.16),
+                      color: const Color(0xFFFFE082).withValues(alpha: 0.16),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
                           color: const Color(0xFFFFE082), width: 0.9),
@@ -371,7 +371,7 @@ class _FluidTasbihScreenState extends ConsumerState< FluidTasbihScreen >
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 16, vertical: 8),
                                       decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.08),
+                                        color: Colors.white.withValues(alpha: 0.08),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: const Text(
@@ -490,7 +490,7 @@ class _TasbihRipplePainter extends CustomPainter {
       final paint = Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2.4 * (1.0 - t * 0.5)
-        ..color = const Color(0xFF64FFDA).withOpacity(opacity);
+        ..color = const Color(0xFF64FFDA).withValues(alpha: opacity);
 
       canvas.drawCircle(r.center, radius, paint);
     }

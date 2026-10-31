@@ -62,7 +62,7 @@ class _LiquidGlassPaywallSheetState extends ConsumerState<LiquidGlassPaywallShee
                   width: 48,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.35),
+                    color: Colors.white.withValues(alpha: 0.35),
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
@@ -232,7 +232,7 @@ class _LiquidGlassPaywallSheetState extends ConsumerState<LiquidGlassPaywallShee
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFE082).withOpacity(0.18),
+                color: const Color(0xFFFFE082).withValues(alpha: 0.18),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: const Color(0xFFFFE082), width: 0.8),
               ),

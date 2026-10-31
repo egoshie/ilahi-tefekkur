@@ -116,7 +116,7 @@ class _QiblaAndToolsScreenState extends ConsumerState< QiblaAndToolsScreen > {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.08),
+                        color: Colors.white.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Row(
@@ -198,8 +198,8 @@ class _QiblaAndToolsScreenState extends ConsumerState< QiblaAndToolsScreen > {
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: ch.isPlaying
-                          ? const Color(0xFF64FFDA).withOpacity(0.14)
-                          : Colors.white.withOpacity(0.04),
+                          ? const Color(0xFF64FFDA).withValues(alpha: 0.14)
+                          : Colors.white.withValues(alpha: 0.04),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                         color: ch.isPlaying
@@ -440,8 +440,8 @@ class _QiblaAndToolsScreenState extends ConsumerState< QiblaAndToolsScreen > {
                       height: 38,
                       decoration: BoxDecoration(
                         color: done
-                            ? const Color(0xFF64FFDA).withOpacity(0.24)
-                            : Colors.white.withOpacity(0.06),
+                            ? const Color(0xFF64FFDA).withValues(alpha: 0.24)
+                            : Colors.white.withValues(alpha: 0.06),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
                           color: done
@@ -550,7 +550,7 @@ class _QiblaAndToolsScreenState extends ConsumerState< QiblaAndToolsScreen > {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
+        color: Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white12, width: 0.8),
       ),
@@ -577,7 +577,7 @@ class _QiblaAndToolsScreenState extends ConsumerState< QiblaAndToolsScreen > {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF64FFDA).withOpacity(0.20),
+                    color: const Color(0xFF64FFDA).withValues(alpha: 0.20),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Text(
@@ -597,7 +597,7 @@ class _QiblaAndToolsScreenState extends ConsumerState< QiblaAndToolsScreen > {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.12),
+                    color: Colors.white.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Text("+ Ekle", style: TextStyle(fontSize: 11)),
@@ -623,7 +623,7 @@ class _QiblaBeamCompassPainter extends CustomPainter {
     final ringPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.6
-      ..color = const Color(0xFF64FFDA).withOpacity(0.45);
+      ..color = const Color(0xFF64FFDA).withValues(alpha: 0.45);
     canvas.drawCircle(center, radius - 4, ringPaint);
     canvas.drawCircle(center, radius * 0.65, ringPaint);
 

@@ -223,7 +223,7 @@ class _AuroraCosmicPainter extends CustomPainter {
       canvas,
       center1,
       size.width * 0.78,
-      palette.auroraPrimary.withOpacity(0.32),
+      palette.auroraPrimary.withValues(alpha: 0.32),
     );
 
     final center2 = Offset(
@@ -234,7 +234,7 @@ class _AuroraCosmicPainter extends CustomPainter {
       canvas,
       center2,
       size.width * 0.72,
-      palette.auroraSecondary.withOpacity(0.28),
+      palette.auroraSecondary.withValues(alpha: 0.28),
     );
 
     final center3 = Offset(
@@ -245,7 +245,7 @@ class _AuroraCosmicPainter extends CustomPainter {
       canvas,
       center3,
       size.width * 0.76,
-      const Color(0xFFFFE082).withOpacity(0.22),
+      const Color(0xFFFFE082).withValues(alpha: 0.22),
     );
   }
 
@@ -259,7 +259,7 @@ class _AuroraCosmicPainter extends CustomPainter {
       ..shader = RadialGradient(
         colors: [
           color,
-          color.withOpacity(0.06),
+          color.withValues(alpha: 0.06),
           Colors.transparent,
         ],
         stops: const [0.0, 0.55, 1.0],

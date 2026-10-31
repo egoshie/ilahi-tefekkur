@@ -294,8 +294,8 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
         padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
         decoration: BoxDecoration(
           color: selected
-              ? const Color(0xFF64FFDA).withOpacity(0.22)
-              : Colors.white.withOpacity(0.08),
+              ? const Color(0xFF64FFDA).withValues(alpha: 0.22)
+              : Colors.white.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: selected ? const Color(0xFF64FFDA) : Colors.white24,
@@ -366,7 +366,7 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFE082).withOpacity(0.18),
+                      color: const Color(0xFFFFE082).withValues(alpha: 0.18),
                       borderRadius: BorderRadius.circular(12),
                       border:
                           Border.all(color: const Color(0xFFFFE082), width: 0.9),
@@ -434,8 +434,8 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                   decoration: BoxDecoration(
                     color: isCurrentSurahPlaying && audioState.isPlaying
-                        ? const Color(0xFFFFE082).withOpacity(0.24)
-                        : const Color(0xFF64FFDA).withOpacity(0.20),
+                        ? const Color(0xFFFFE082).withValues(alpha: 0.24)
+                        : const Color(0xFF64FFDA).withValues(alpha: 0.20),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: isCurrentSurahPlaying && audioState.isPlaying
@@ -761,7 +761,7 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
       child: Container(
         padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.08),
+          color: Colors.white.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(10),
         ),
         child: BespokeVectorIcon(
@@ -838,7 +838,7 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.08),
+                        color: Colors.white.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Text(
@@ -865,7 +865,7 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF64FFDA).withOpacity(0.18),
+                        color: const Color(0xFF64FFDA).withValues(alpha: 0.18),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Text(
@@ -1042,9 +1042,9 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: accent.withOpacity(0.08),
+        color: accent.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: accent.withOpacity(0.45), width: 0.9),
+        border: Border.all(color: accent.withValues(alpha: 0.45), width: 0.9),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1230,7 +1230,7 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
         child: Container(
-          color: Colors.black.withOpacity(0.45),
+          color: Colors.black.withValues(alpha: 0.45),
           alignment: Alignment.center,
           padding: const EdgeInsets.all(24),
           child: GlassContainer(

@@ -49,9 +49,9 @@ class GlassContainer extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Colors.white.withOpacity(0.22),
-              accentTint.withOpacity((emeraldGlow || goldAccentBorder) ? 0.14 : 0.09),
-              (tintColor ?? const Color(0xFF0B2E3D)).withOpacity(0.58),
+              Colors.white.withValues(alpha: 0.22),
+              accentTint.withValues(alpha: (emeraldGlow || goldAccentBorder) ? 0.14 : 0.09),
+              (tintColor ?? const Color(0xFF0B2E3D)).withValues(alpha: 0.58),
             ],
             stops: const [0.0, 0.44, 1.0],
           ),
@@ -74,13 +74,13 @@ class GlassContainer extends StatelessWidget {
           borderRadius: BorderRadius.circular(borderRadius),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.36),
+              color: Colors.black.withValues(alpha: 0.36),
               blurRadius: 22,
               spreadRadius: -3,
               offset: const Offset(0, 10),
             ),
             BoxShadow(
-              color: accentTint.withOpacity(
+              color: accentTint.withValues(alpha: 
                 (emeraldGlow || goldAccentBorder) ? 0.22 : 0.10,
               ),
               blurRadius: 24,
@@ -124,12 +124,12 @@ class _RefractiveSpecularRimPainter extends CustomPainter {
     );
 
     final topLeftRim = goldAccent
-        ? const Color(0xFFFFE082).withOpacity(0.92)
-        : Colors.white.withOpacity(0.76);
+        ? const Color(0xFFFFE082).withValues(alpha: 0.92)
+        : Colors.white.withValues(alpha: 0.76);
 
     final bottomRightRim = emeraldAccent
-        ? const Color(0xFF64FFDA).withOpacity(0.75)
-        : const Color(0xFF64FFDA).withOpacity(0.45);
+        ? const Color(0xFF64FFDA).withValues(alpha: 0.75)
+        : const Color(0xFF64FFDA).withValues(alpha: 0.45);
 
     final borderPaint = Paint()
       ..style = PaintingStyle.stroke
@@ -139,7 +139,7 @@ class _RefractiveSpecularRimPainter extends CustomPainter {
         end: Alignment.bottomRight,
         colors: [
           topLeftRim,
-          Colors.white.withOpacity(0.20),
+          Colors.white.withValues(alpha: 0.20),
           bottomRightRim,
         ],
         stops: const [0.0, 0.48, 1.0],
@@ -156,9 +156,9 @@ class _RefractiveSpecularRimPainter extends CustomPainter {
       ..strokeWidth = 1.4
       ..shader = LinearGradient(
         colors: [
-          Colors.white.withOpacity(0.0),
-          Colors.white.withOpacity(0.85),
-          Colors.white.withOpacity(0.0),
+          Colors.white.withValues(alpha: 0.0),
+          Colors.white.withValues(alpha: 0.85),
+          Colors.white.withValues(alpha: 0.0),
         ],
       ).createShader(Rect.fromLTWH(0, 0, size.width, 3));
 

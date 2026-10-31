@@ -72,7 +72,7 @@ class _EsmaulHusnaSheetState extends ConsumerState< EsmaulHusnaSheet > {
                   width: 44,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.30),
+                    color: Colors.white.withValues(alpha: 0.30),
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
@@ -104,7 +104,7 @@ class _EsmaulHusnaSheetState extends ConsumerState< EsmaulHusnaSheet > {
                       vertical: 5,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF64FFDA).withOpacity(0.15),
+                      color: const Color(0xFF64FFDA).withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -206,7 +206,7 @@ class _EsmaulHusnaSheetState extends ConsumerState< EsmaulHusnaSheet > {
                             style: TextStyle(
                               fontSize: 11.5,
                               fontWeight: FontWeight.w600,
-                              color: Colors.white.withOpacity(0.65),
+                              color: Colors.white.withValues(alpha: 0.65),
                             ),
                           ),
                           const SizedBox(height: 12),

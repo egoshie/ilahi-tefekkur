@@ -147,7 +147,7 @@ class _LiquidRootShellState extends ConsumerState< LiquidRootShell > {
                             padding: const EdgeInsets.all(8),
                             margin: const EdgeInsets.symmetric(horizontal: 4),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF64FFDA).withOpacity(0.22),
+                              color: const Color(0xFF64FFDA).withValues(alpha: 0.22),
                               shape: BoxShape.circle,
                             ),
                             child: BespokeVectorIcon(
@@ -196,13 +196,13 @@ class _LiquidRootShellState extends ConsumerState< LiquidRootShell > {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          widget.palette.deepCosmicMid.withOpacity(0.88),
-                          widget.palette.deepCosmicStart.withOpacity(0.96),
+                          widget.palette.deepCosmicMid.withValues(alpha: 0.88),
+                          widget.palette.deepCosmicStart.withValues(alpha: 0.96),
                         ],
                       ),
                       border: Border(
                         top: BorderSide(
-                          color: Colors.white.withOpacity(0.16),
+                          color: Colors.white.withValues(alpha: 0.16),
                           width: 0.9,
                         ),
                       ),
@@ -237,11 +237,11 @@ class _LiquidRootShellState extends ConsumerState< LiquidRootShell > {
                                     horizontal: 11, vertical: 6),
                                 decoration: BoxDecoration(
                                   color:
-                                      const Color(0xFFFFE082).withOpacity(0.14),
+                                      const Color(0xFFFFE082).withValues(alpha: 0.14),
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
                                     color: const Color(0xFFFFE082)
-                                        .withOpacity(0.65),
+                                        .withValues(alpha: 0.65),
                                     width: 1.0,
                                   ),
                                 ),
@@ -294,7 +294,7 @@ class _LiquidRootShellState extends ConsumerState< LiquidRootShell > {
         duration: const Duration(milliseconds: 160),
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
         decoration: BoxDecoration(
-          color: selected ? Colors.white.withOpacity(0.12) : Colors.transparent,
+          color: selected ? Colors.white.withValues(alpha: 0.12) : Colors.transparent,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
