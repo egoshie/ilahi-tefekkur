@@ -48,7 +48,7 @@ widget_target.build_configurations.each do |config|
   config.build_settings['LD_RUNPATH_SEARCH_PATHS'] = '$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks'
   config.build_settings['SKIP_INSTALL'] = 'NO'
   config.build_settings['CURRENT_PROJECT_VERSION'] = '7'
-  config.build_settings['MARKETING_VERSION'] = '4.3.0'
+  config.build_settings['MARKETING_VERSION'] = '5.0.0'
   config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
   config.build_settings['CODE_SIGNING_REQUIRED'] = 'NO'
   config.build_settings['CODE_SIGN_IDENTITY'] = ''

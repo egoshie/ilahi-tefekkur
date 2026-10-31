@@ -21,7 +21,7 @@ class DatabaseService {
 
   Future< Database > _initDatabase() async {
     final dbPath = await getDatabasesPath();
-    final path = join(dbPath, 'huzur_v45_clean.db');
+    final path = join(dbPath, 'huzur_v50_live_production.db');
 
     return openDatabase(
       path,
@@ -291,16 +291,16 @@ class DatabaseService {
   ];
 
   // %100 CANLI MULTI-API TEVRAT & İNCİL GETİRİCİ (bolls.life -> Sefaria -> Bible-API)
-  Future< List< BibleVerseItem > > fetchBibleChapter(BibleBookMeta book, int chapter) async {
+  Future<List<BibleVerseItem>> fetchBibleChapter(BibleBookMeta book, int chapter) async {
     final db = await database;
-    final key = "tr_v44_${book.bookId}_$chapter";
+    final key = "v50_live_tr_${book.bookId}_$chapter";
     try {
       final cached = await db.query("cached_bible_chapters", where: "cache_key = ?", whereArgs: [key]);
       if (cached.isNotEmpty) {
-        final list = jsonDecode(cached.first["payload"] as String) as List< dynamic >;
+        final list = jsonDecode(cached.first["payload"] as String) as List<dynamic>;
         if (list.isNotEmpty) {
           return list.map((e) {
-            final m = Map< String, dynamic >.from(e as Map);
+            final m = Map<String, dynamic>.from(e as Map);
             return BibleVerseItem(
               bookId: int.tryParse(m["bookId"].toString()) ?? book.bookId,
               bookName: m["bookName"].toString(),
@@ -313,21 +313,42 @@ class DatabaseService {
         }
       }
     } catch (_) {}
-    final headers = < String, String >{"Accept": "application/json", "User-Agent": "HuzurApp/4.4"};
+
+    final headers = <String, String>{"Accept": "application/json", "User-Agent": "HuzurApp/5.0"};
+    final Map<int, String> origMap = {};
+    try {
+      final origEdition = book.testament == "torah" ? "wlc" : "textusreceptus";
+      final oRes = await http.get(Uri.parse("https://api.getbible.net/v2/\$origEdition/${book.bookId}/$chapter.json"), headers: headers).timeout(const Duration(seconds: 5));
+      if (oRes.statusCode == 200) {
+        final oJson = jsonDecode(utf8.decode(oRes.bodyBytes)) as Map<String, dynamic>;
+        final oVerses = oJson["verses"];
+        if (oVerses is List) {
+          for (final item in oVerses) {
+            final m = Map<String, dynamic>.from(item as Map);
+            final vNum = int.tryParse(m["verse"].toString()) ?? 0;
+            final txt = (m["text"] ?? "").toString().trim();
+            if (vNum > 0 && txt.isNotEmpty) origMap[vNum] = txt;
+          }
+        }
+      }
+    } catch (_) {}
+
     for (final url in ["https://api.getbible.net/v2/turkish/${book.bookId}/$chapter.json", "https://cdn.jsdelivr.net/gh/getbible/v2@master/turkish/${book.bookId}/$chapter.json"]) {
       try {
         final res = await http.get(Uri.parse(url), headers: headers).timeout(const Duration(seconds: 10));
         if (res.statusCode == 200) {
-          final map = jsonDecode(utf8.decode(res.bodyBytes)) as Map< String, dynamic >;
+          final map = jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
           final rawVerses = map["verses"];
           if (rawVerses is List && rawVerses.isNotEmpty) {
-            final List< BibleVerseItem > verses = [];
+            final List<BibleVerseItem> verses = [];
+            String prevTr = "";
             for (int i = 0; i < rawVerses.length; i++) {
-              final row = Map< String, dynamic >.from(rawVerses[i] as Map);
+              final row = Map<String, dynamic>.from(rawVerses[i] as Map);
               final vNum = int.tryParse(row["verse"].toString()) ?? (i + 1);
-              final cleanTr = (row["text"] ?? "").toString().trim();
-              if (cleanTr.isNotEmpty) {
-                verses.add(BibleVerseItem(bookId: book.bookId, bookName: book.nameTurkish, chapter: chapter, verse: vNum, originalScript: "", turkishText: cleanTr));
+              final cleanTr = (row["text"] ?? "").toString().replaceAll(RegExp("<" "[^>]*>"), "").replaceAll(RegExp(r"\s+"), " ").trim();
+              if (cleanTr.isNotEmpty && cleanTr != prevTr) {
+                prevTr = cleanTr;
+                verses.add(BibleVerseItem(bookId: book.bookId, bookName: book.nameTurkish, chapter: chapter, verse: vNum, originalScript: origMap[vNum] ?? "", turkishText: cleanTr));
               }
             }
             if (verses.isNotEmpty) {
@@ -338,19 +359,22 @@ class DatabaseService {
         }
       } catch (_) {}
     }
+
     for (final endpoint in ["https://bolls.life/get-text/TCL02/${book.bookId}/$chapter/", "https://bolls.life/get-text/TUR/${book.bookId}/$chapter/"]) {
       try {
         final trRes = await http.get(Uri.parse(endpoint), headers: headers).timeout(const Duration(seconds: 10));
         if (trRes.statusCode == 200) {
           final decodedBody = jsonDecode(utf8.decode(trRes.bodyBytes));
           if (decodedBody is List && decodedBody.isNotEmpty) {
-            final List< BibleVerseItem > verses = [];
+            final List<BibleVerseItem> verses = [];
+            String prevTr = "";
             for (int i = 0; i < decodedBody.length; i++) {
-              final item = Map< String, dynamic >.from(decodedBody[i] as Map);
+              final item = Map<String, dynamic>.from(decodedBody[i] as Map);
               final vNum = int.tryParse(item["verse"].toString()) ?? (i + 1);
-              final cleanTr = (item["text"] ?? "").toString().trim();
-              if (cleanTr.isNotEmpty) {
-                verses.add(BibleVerseItem(bookId: book.bookId, bookName: book.nameTurkish, chapter: chapter, verse: vNum, originalScript: "", turkishText: cleanTr));
+              final cleanTr = (item["text"] ?? "").toString().replaceAll(RegExp("<" "[^>]*>"), "").replaceAll(RegExp(r"\s+"), " ").trim();
+              if (cleanTr.isNotEmpty && cleanTr != prevTr) {
+                prevTr = cleanTr;
+                verses.add(BibleVerseItem(bookId: book.bookId, bookName: book.nameTurkish, chapter: chapter, verse: vNum, originalScript: origMap[vNum] ?? "", turkishText: cleanTr));
               }
             }
             if (verses.isNotEmpty) {
@@ -361,6 +385,7 @@ class DatabaseService {
         }
       } catch (_) {}
     }
+
     return OfflineSacredRepository.getFallbackBibleChapter(book, chapter);
   }
 

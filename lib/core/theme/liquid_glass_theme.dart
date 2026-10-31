@@ -223,7 +223,7 @@ class _AuroraCosmicPainter extends CustomPainter {
       canvas,
       center1,
       size.width * 0.78,
-      palette.auroraPrimary.withOpacity(0.24),
+      palette.auroraPrimary.withOpacity(0.32),
     );
 
     final center2 = Offset(
@@ -234,7 +234,7 @@ class _AuroraCosmicPainter extends CustomPainter {
       canvas,
       center2,
       size.width * 0.72,
-      palette.auroraSecondary.withOpacity(0.20),
+      palette.auroraSecondary.withOpacity(0.28),
     );
 
     final center3 = Offset(
@@ -245,7 +245,7 @@ class _AuroraCosmicPainter extends CustomPainter {
       canvas,
       center3,
       size.width * 0.76,
-      const Color(0xFFFFE082).withOpacity(0.14),
+      const Color(0xFFFFE082).withOpacity(0.22),
     );
   }
 

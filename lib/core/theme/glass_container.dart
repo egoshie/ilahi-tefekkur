@@ -21,7 +21,7 @@ class GlassContainer extends StatelessWidget {
     this.padding = const EdgeInsets.all(18),
     this.margin,
     this.borderRadius = 24,
-    this.blurSigma = 22,
+    this.blurSigma = 24,
     this.tintColor,
     this.goldAccentBorder = false,
     this.emeraldGlow = false,
@@ -49,11 +49,11 @@ class GlassContainer extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Colors.white.withOpacity(0.16),
-              accentTint.withOpacity(0.08),
-              (tintColor ?? const Color(0xFF0A2634)).withOpacity(0.52),
+              Colors.white.withOpacity(0.22),
+              accentTint.withOpacity((emeraldGlow || goldAccentBorder) ? 0.14 : 0.09),
+              (tintColor ?? const Color(0xFF0B2E3D)).withOpacity(0.58),
             ],
-            stops: const [0.0, 0.42, 1.0],
+            stops: const [0.0, 0.44, 1.0],
           ),
         ),
         child: child,
@@ -74,17 +74,17 @@ class GlassContainer extends StatelessWidget {
           borderRadius: BorderRadius.circular(borderRadius),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.30),
-              blurRadius: 18,
+              color: Colors.black.withOpacity(0.36),
+              blurRadius: 22,
               spreadRadius: -3,
-              offset: const Offset(0, 8),
+              offset: const Offset(0, 10),
             ),
             BoxShadow(
               color: accentTint.withOpacity(
-                (emeraldGlow || goldAccentBorder) ? 0.14 : 0.06,
+                (emeraldGlow || goldAccentBorder) ? 0.22 : 0.10,
               ),
-              blurRadius: 18,
-              spreadRadius: -2,
+              blurRadius: 24,
+              spreadRadius: -1,
             ),
           ],
         ),
@@ -119,27 +119,27 @@ class _RefractiveSpecularRimPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
     final rrect = RRect.fromRectAndRadius(
-      rect.deflate(0.55),
+      rect.deflate(0.6),
       Radius.circular(borderRadius),
     );
 
     final topLeftRim = goldAccent
-        ? const Color(0xFFFFE082).withOpacity(0.78)
-        : Colors.white.withOpacity(0.62);
+        ? const Color(0xFFFFE082).withOpacity(0.92)
+        : Colors.white.withOpacity(0.76);
 
     final bottomRightRim = emeraldAccent
-        ? const Color(0xFF64FFDA).withOpacity(0.58)
-        : const Color(0xFF64FFDA).withOpacity(0.36);
+        ? const Color(0xFF64FFDA).withOpacity(0.75)
+        : const Color(0xFF64FFDA).withOpacity(0.45);
 
     final borderPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.25
+      ..strokeWidth = 1.45
       ..shader = LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: [
           topLeftRim,
-          Colors.white.withOpacity(0.12),
+          Colors.white.withOpacity(0.20),
           bottomRightRim,
         ],
         stops: const [0.0, 0.48, 1.0],
@@ -148,19 +148,19 @@ class _RefractiveSpecularRimPainter extends CustomPainter {
     canvas.drawRRect(rrect, borderPaint);
 
     final topHighlightPath = Path()
-      ..moveTo(borderRadius * 0.75, 1.0)
-      ..lineTo(size.width - borderRadius * 0.75, 1.0);
+      ..moveTo(borderRadius * 0.70, 1.1)
+      ..lineTo(size.width - borderRadius * 0.70, 1.1);
 
     final ceilingPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.1
+      ..strokeWidth = 1.4
       ..shader = LinearGradient(
         colors: [
           Colors.white.withOpacity(0.0),
-          Colors.white.withOpacity(0.65),
+          Colors.white.withOpacity(0.85),
           Colors.white.withOpacity(0.0),
         ],
-      ).createShader(Rect.fromLTWH(0, 0, size.width, 2));
+      ).createShader(Rect.fromLTWH(0, 0, size.width, 3));
 
     canvas.drawPath(topHighlightPath, ceilingPaint);
   }
@@ -184,10 +184,10 @@ class SpringGlassInteractive extends StatefulWidget {
   });
 
   @override
-  State< SpringGlassInteractive > createState() => _SpringGlassInteractiveState();
+  State<SpringGlassInteractive> createState() => _SpringGlassInteractiveState();
 }
 
-class _SpringGlassInteractiveState extends State< SpringGlassInteractive >
+class _SpringGlassInteractiveState extends State<SpringGlassInteractive>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   double _scale = 1.0;

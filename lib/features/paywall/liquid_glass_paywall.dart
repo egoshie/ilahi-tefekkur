@@ -1,5 +1,5 @@
-import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/services/pricing_and_premium_service.dart';
 import '../../core/theme/glass_container.dart';
@@ -8,7 +8,7 @@ import '../../core/theme/liquid_glass_theme.dart';
 class LiquidGlassPaywallSheet extends ConsumerStatefulWidget {
   const LiquidGlassPaywallSheet({super.key});
 
-  static Future< void > show(BuildContext context) {
+  static Future<void> show(BuildContext context) {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -18,12 +18,10 @@ class LiquidGlassPaywallSheet extends ConsumerStatefulWidget {
   }
 
   @override
-  ConsumerState< LiquidGlassPaywallSheet > createState() =>
-      _LiquidGlassPaywallSheetState();
+  ConsumerState<LiquidGlassPaywallSheet> createState() => _LiquidGlassPaywallSheetState();
 }
 
-class _LiquidGlassPaywallSheetState
-    extends ConsumerState< LiquidGlassPaywallSheet > {
+class _LiquidGlassPaywallSheetState extends ConsumerState<LiquidGlassPaywallSheet> {
   static const MethodChannel _nativeChannel = MethodChannel('com.ilahi.tefekkur/native_bridge');
   static const String _privacyUrl = 'https://egoshie.github.io/ilahi-tefekkur/privacy.html';
   static const String _eulaUrl = 'https://egoshie.github.io/ilahi-tefekkur/eula.html';
@@ -56,7 +54,7 @@ class _LiquidGlassPaywallSheetState
           child: ListView(
             controller: scrollController,
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-                  physics: const BouncingScrollPhysics(),
+            physics: const BouncingScrollPhysics(),
             children: [
               Center(
                 child: Container(
@@ -72,161 +70,68 @@ class _LiquidGlassPaywallSheetState
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const BespokeVectorIcon(
-                    type: BespokeIconType.crownGem,
-                    color: Color(0xFFFFE082),
-                    size: 26,
-                  ),
+                  const BespokeVectorIcon(type: BespokeIconType.crownGem, color: Color(0xFFFFE082), size: 26),
                   const SizedBox(width: 10),
                   Text(
                     "Huzur Özel",
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFFFFE082),
-                        ),
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFFFFE082),
+                    ),
                   ),
                 ],
               ),
               const SizedBox(height: 6),
               const Text(
-                "Reklamsız İbadet • Tüm İlahi Kitaplar • Karşılaştırmalı Tefekkür",
+                "Sıfır Reklam • Tüm İlahi Kitaplar • Karşılaştırmalı Tefekkür",
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.white70, fontSize: 13),
               ),
-              const SizedBox(height: 16),
-
-              GlassContainer(
-                emeraldGlow: premium.isSandboxUnlocked,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                borderRadius: 18,
-                child: Row(
-                  children: [
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Tüm Huzur Özel Kitaplarını Etkinleştir",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                              color: Color(0xFF64FFDA),
-                            ),
-                          ),
-                          SizedBox(height: 2),
-                          Text(
-                            "Tevrat, İncil ve Karşılaştırmalı Kıssalar erişimini bu cihazda açar.",
-                            style:
-                                TextStyle(fontSize: 11, color: Colors.white70),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Switch(
-                      value: premium.isSandboxUnlocked,
-                      activeColor: const Color(0xFF64FFDA),
-                      onChanged: (val) => notifier.toggleSandboxMode(val),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              _buildFeatureRow(
-                  "Tevrat (39 Kitap) ve İncil (27 Kitap) Canlı Külliyat"),
-              _buildFeatureRow(
-                  "15 Büyük Kıssada 3'lü Karşılaştırmalı İnceleme"),
-              _buildFeatureRow(
-                  "Arka Plan Kur'ân Tilaveti & Dynamic Island Medya"),
-              _buildFeatureRow(
-                  "Kilit Ekranı Geniş Ayet Kartı & Hikâye Stüdyosu"),
-              _buildFeatureRow(
-                  "Sınırsız Zikirmatik & 99 Esmaül Hüsna Rehberi"),
               const SizedBox(height: 18),
-
-              _buildPlanCard(
-                id: 'monthly',
-                title: "Aylık Plan",
-                price: offer.monthlyPrice,
-                subtitle: "Esnek aylık katkı",
-                badge: null,
-              ),
+              _buildFeatureRow("Tevrat (39 Kitap) ve İncil (27 Kitap) Canlı Türkçe Külliyat"),
+              _buildFeatureRow("15 Büyük Kıssada 3'lü Karşılaştırmalı İnceleme"),
+              _buildFeatureRow("Arka Plan Kur'ân Tilaveti & Dynamic Island Medya"),
+              _buildFeatureRow("Kilit Ekranı Saatlik Ayet Widget'ı & Hikâye Stüdyosu"),
+              _buildFeatureRow("Sınırsız Zikirmatik & 99 Esmaül Hüsna Rehberi"),
+              const SizedBox(height: 18),
+              _buildPlanCard(id: 'monthly', title: "Aylık Plan", price: offer.monthlyPrice, subtitle: "Esnek aylık abonelik", badge: null),
               const SizedBox(height: 12),
-              _buildPlanCard(
-                id: 'annual',
-                title: "Yıllık Huzur Planı",
-                price: offer.annualPrice,
-                subtitle:
-                    "${offer.annualMonthlyEquivalent} • 7 Gün Ücretsiz Deneme",
-                badge: "EN ÇOK TERCİH EDİLEN",
-              ),
+              _buildPlanCard(id: 'annual', title: "Yıllık Huzur Planı", price: offer.annualPrice, subtitle: "${offer.annualMonthlyEquivalent} • Yıllık Abonelik", badge: "EN ÇOK TERCİH EDİLEN"),
               const SizedBox(height: 12),
-              _buildPlanCard(
-                id: 'lifetime',
-                title: "Ömür Boyu Tam Erişim",
-                price: offer.lifetimePrice,
-                subtitle: "Tek seferlik katkı • Süresiz kullanım",
-                badge: "SINIRSIZ ERİŞİM",
-              ),
+              _buildPlanCard(id: 'lifetime', title: "Ömür Boyu Tam Erişim", price: offer.lifetimePrice, subtitle: "Tek seferlik ödeme • Süresiz kullanım", badge: "SINIRSIZ ERİŞİM"),
               const SizedBox(height: 16),
-
               if (premium.statusMessage != null)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: Text(
                     premium.statusMessage!,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF64FFDA),
-                    ),
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF64FFDA)),
                   ),
                 ),
-
               GlassContainer(
                 goldAccentBorder: true,
+                emeraldGlow: true,
                 borderRadius: 22,
                 padding: const EdgeInsets.symmetric(vertical: 15),
-                onTap: () async {
-                  await notifier.activatePlan(_selectedTier);
-                },
+                onTap: () async { await notifier.activatePlan(_selectedTier); },
                 child: Center(
                   child: premium.isLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Color(0xFFFFE082),
-                          ),
-                        )
+                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFFFE082)))
                       : Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const BespokeVectorIcon(
-                              type: BespokeIconType.checkBadge,
-                              color: Color(0xFF64FFDA),
-                              size: 20,
-                            ),
+                            const BespokeVectorIcon(type: BespokeIconType.checkBadge, color: Color(0xFF64FFDA), size: 20),
                             const SizedBox(width: 8),
                             Text(
-                              premium.isPremium
-                                  ? "Huzur Özel Etkin"
-                                  : "Seçili Planı Etkinleştir",
-                              style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFFFFE082),
-                              ),
+                              premium.isPremium ? "Huzur Özel Etkin" : "App Store ile Güvenle Abone Ol",
+                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFFFFE082)),
                             ),
                           ],
                         ),
                 ),
               ),
               const SizedBox(height: 10),
-
               GlassContainer(
                 borderRadius: 16,
                 padding: const EdgeInsets.symmetric(vertical: 11),
@@ -234,11 +139,7 @@ class _LiquidGlassPaywallSheetState
                 child: const Center(
                   child: Text(
                     "Satın Alımları Geri Yükle (Restore Purchases)",
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white70,
-                    ),
+                    style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Colors.white70),
                   ),
                 ),
               ),
@@ -256,13 +157,7 @@ class _LiquidGlassPaywallSheetState
                         children: [
                           BespokeVectorIcon(type: BespokeIconType.lockShield, color: Color(0xFF64FFDA), size: 16),
                           SizedBox(width: 7),
-                          Flexible(
-                            child: Text(
-                              "Gizlilik Politikası",
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF64FFDA)),
-                            ),
-                          ),
+                          Flexible(child: Text("Gizlilik Politikası", overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF64FFDA)))),
                         ],
                       ),
                     ),
@@ -279,20 +174,14 @@ class _LiquidGlassPaywallSheetState
                         children: [
                           BespokeVectorIcon(type: BespokeIconType.sacredScroll, color: Color(0xFFFFE082), size: 16),
                           SizedBox(width: 7),
-                          Flexible(
-                            child: Text(
-                              "Kullanım Koşulları (EULA)",
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFFFFE082)),
-                            ),
-                          ),
+                          Flexible(child: Text("Kullanım Koşulları (EULA)", overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFFFFE082)))),
                         ],
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               const Text(
                 "114 Sure Kur'ân-ı Kerîm, sesli tilavet, ezan vakitleri ve kıble pusulası herkes için sonsuza dek ücretsizdir.",
                 textAlign: TextAlign.center,
@@ -304,39 +193,24 @@ class _LiquidGlassPaywallSheetState
       },
     );
   }
-
   Widget _buildFeatureRow(String text) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(
         children: [
-          const BespokeVectorIcon(
-            type: BespokeIconType.checkBadge,
-            color: Color(0xFF64FFDA),
-            size: 16,
-          ),
+          const BespokeVectorIcon(type: BespokeIconType.checkBadge, color: Color(0xFF64FFDA), size: 16),
           const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              text,
-              style: const TextStyle(fontSize: 13, color: Colors.white),
-            ),
-          ),
+          Expanded(child: Text(text, style: const TextStyle(fontSize: 13, color: Colors.white))),
         ],
       ),
     );
   }
 
-  Widget _buildPlanCard({
-    required String id,
-    required String title,
-    required String price,
-    required String subtitle,
-    required String? badge,
-  }) {
+  Widget _buildPlanCard({required String id, required String title, required String price, required String subtitle, required String? badge}) {
     final isSelected = _selectedTier == id;
     return GlassContainer(
       goldAccentBorder: isSelected,
+      emeraldGlow: isSelected,
       borderRadius: 20,
       padding: const EdgeInsets.all(14),
       onTap: () => setState(() => _selectedTier = id),
@@ -351,44 +225,19 @@ class _LiquidGlassPaywallSheetState
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: const Color(0xFFFFE082), width: 0.8),
               ),
-              child: Text(
-                badge,
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFFFFE082),
-                ),
-              ),
+              child: Text(badge, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFFFFE082))),
             ),
             const SizedBox(height: 8),
           ],
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-              Text(
-                price,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF64FFDA),
-                ),
-              ),
+              Expanded(child: Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700))),
+              Text(price, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF64FFDA))),
             ],
           ),
           const SizedBox(height: 4),
-          Text(
-            subtitle,
-            style: const TextStyle(fontSize: 12, color: Colors.white70),
-          ),
+          Text(subtitle, style: const TextStyle(fontSize: 12, color: Colors.white70)),
         ],
       ),
     );
@@ -396,10 +245,10 @@ class _LiquidGlassPaywallSheetState
 
   void _showLegalModal(BuildContext context, {required bool isPrivacy}) {
     final url = isPrivacy ? _privacyUrl : _eulaUrl;
-    final title = isPrivacy ? "Gizlilik Politikası (Privacy Policy)" : "Kullanım Koşulları (EULA)";
+    final title = isPrivacy ? "Gizlilik Politikası (Privacy Policy)" : "Kullanım Koşulları ve Lisans (EULA)";
     final body = isPrivacy
-        ? "Huzur uygulaması hiçbir reklam ağı ve takip kodu barındırmaz. Konum izni yalnızca ezan vakitleri ve Kıble açısı için cihaz içinde kullanılır; Galeri izni yalnızca hikâye kartlarını kaydetmek içindir.\n\nGeliştirici: Ege Deniz • berkwisy@gmail.com"
-        : "114 Sure Kur'ân-ı Kerîm, sesli tilavet, ezan vakitleri ve kıble pusulası ücretsizdir. Huzur Özel abonelikleri Apple ID üzerinden yürütülür ve Ayarlar > Abonelikler menüsünden yönetilebilir.\n\nGeliştirici: Ege Deniz • berkwisy@gmail.com";
+        ? "1. CİHAZ İÇİ ÖNCELİKLİ MİMARİ VE VERİ KORUMA\\nHuzur uygulaması kullanıcılarından hesap oluşturmasını talep etmez. Hiçbir reklam ağı ve takip kodu (Zero Tracking) barındırmaz.\\n\\n2. KONUM VE GALERİ İZİNLERİ\\n• Konum İzni: Yalnızca bulunduğunuz şehrin astronomik ezan vakitlerini ve Kıble açısını cihaz içinde hesaplamak için kullanılır.\\n• Fotoğraflar İzni: Yalnızca Paylaşım Stüdyosunda oluşturduğunuz ayet kartlarını galeriye kaydetmek için kullanılır.\\n\\nGeliştirici: Ege Deniz • berkwisy@gmail.com"
+        : "1. LİSANS KAPSAMI VE ABONELİK KURALLARI\\n114 Sure Kur'ân-ı Kerîm, sesli tilavet, ezan vakitleri ve kıble pusulası ücretsizdir. Huzur Özel (Aylık ve Yıllık) abonelikleri, dönem bitiminden en az 24 saat önce iptal edilmediği sürece Apple ID hesabınız üzerinden otomatik yenilenir. Ayarlar &gt; Apple Kimliği &gt; Abonelikler menüsünden dilediğiniz an iptal edebilirsiniz.\\n\\nGeliştirici: Ege Deniz • berkwisy@gmail.com";
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -413,7 +262,13 @@ class _LiquidGlassPaywallSheetState
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFFFFE082))),
+            Row(
+              children: [
+                BespokeVectorIcon(type: isPrivacy ? BespokeIconType.lockShield : BespokeIconType.sacredScroll, color: isPrivacy ? const Color(0xFF64FFDA) : const Color(0xFFFFE082), size: 20),
+                const SizedBox(width: 8),
+                Expanded(child: Text(title, style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.bold, color: Color(0xFFFFE082)))),
+              ],
+            ),
             const SizedBox(height: 12),
             Text(body, style: const TextStyle(fontSize: 13, height: 1.5, color: Colors.white)),
             const SizedBox(height: 16),
@@ -422,7 +277,7 @@ class _LiquidGlassPaywallSheetState
               emeraldGlow: true,
               padding: const EdgeInsets.symmetric(vertical: 11),
               onTap: () => _openOfficialUrl(url),
-              child: const Center(child: Text("Resmi Web Sayfasını Safari'de Aç", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5, color: Color(0xFF64FFDA)))),
+              child: const Center(child: Text("Resmi Web Belgesini Safari'de Aç", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5, color: Color(0xFF64FFDA)))),
             ),
             const SizedBox(height: 8),
             GlassContainer(

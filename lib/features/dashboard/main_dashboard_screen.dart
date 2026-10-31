@@ -62,7 +62,7 @@ class _MainDashboardScreenState extends ConsumerState< MainDashboardScreen >
     _hourlyChecker = Timer.periodic(const Duration(minutes: 1), (_) {
       if (mounted) {
         setState(() {});
-        NotificationAndWidgetService.instance.syncHourlyVerseToWidget(
+        await NotificationAndWidgetService.instance.syncHourlyVerseToWidget(
           manualOffset: _manualVerseOffset,
         );
       }
@@ -425,10 +425,10 @@ class _MainDashboardScreenState extends ConsumerState< MainDashboardScreen >
                           _manualVerseOffset++;
                           _widgetPinnedFeedback = false;
                         });
-                        await NotificationAndWidgetService.instance
-                            .syncHourlyVerseToWidget(
+                        await NotificationAndWidgetService.instance.syncHourlyVerseToWidget(
                           manualOffset: _manualVerseOffset,
                         );
+                        if (mounted) setState(() {});
                       },
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
