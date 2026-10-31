@@ -44,7 +44,8 @@ class _LiquidGlassPaywallSheetState
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
           child: ListView(
             controller: scrollController,
-            physics: const BouncingScrollPhysics(),
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                  physics: const BouncingScrollPhysics(),
             children: [
               Center(
                 child: Container(

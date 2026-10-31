@@ -21,7 +21,7 @@ class DatabaseService {
 
   Future< Database > _initDatabase() async {
     final dbPath = await getDatabasesPath();
-    final path = join(dbPath, 'huzur_v44_tr_only.db');
+    final path = join(dbPath, 'huzur_v45_clean.db');
 
     return openDatabase(
       path,
@@ -114,7 +114,7 @@ class DatabaseService {
 
       // 1. Birincil Canlı API: AlQuran Cloud (Arapça Hat + Diyanet Meal + Alafasy MP3)
       final url =
-          'https://api.alquran.cloud/v1/surah/$surahNumber/editions/quran-uthmani,tr.diyanet,ar.alafasy';
+          'https://api.alquran.cloud/v1/surah/$surahNumber/editions/quran-uthmani,tr.yazir,ar.alafasy,tr.diyanet';
       final res =
           await http.get(Uri.parse(url)).timeout(const Duration(seconds: 12));
 
@@ -129,9 +129,14 @@ class DatabaseService {
             (editions[2] as Map< String, dynamic >)['ayahs'] as List< dynamic >;
 
         final List< LiveAyahItem > result = [];
+        final altTurkishAyahs = editions.length > 3
+            ? ((editions[3] as Map< String, dynamic >)["ayahs"] as List< dynamic >)
+            : turkishAyahs;
+        String prevTrText = "";
         for (int i = 0; i < arabicAyahs.length; i++) {
           final ar = arabicAyahs[i] as Map< String, dynamic >;
           final tr = turkishAyahs[i] as Map< String, dynamic >;
+          final altTr = altTurkishAyahs[i] as Map< String, dynamic >;
           final au = audioAyahs[i] as Map< String, dynamic >;
           final globalNum = int.tryParse(ar['number'].toString()) ?? (i + 1);
           final inSurah =
@@ -144,7 +149,13 @@ class DatabaseService {
               surahNumber: surahNumber,
               surahName: trSurahTitle,
               arabicText: (ar['text'] ?? '').toString(),
-              turkishText: (tr['text'] ?? '').toString(),
+              turkishText: (() {
+                String t1 = (tr['text'] ?? '').toString().trim();
+                String t2 = (altTr['text'] ?? '').toString().trim();
+                String chosen = (t1 == prevTrText && t2.isNotEmpty && t2 != prevTrText) ? t2 : t1;
+                prevTrText = chosen;
+                return chosen;
+              })(),
               audioUrl: (au['audio'] ??
                       'https://cdn.islamic.network/quran/audio/128/ar.alafasy/$globalNum.mp3')
                   .toString(),

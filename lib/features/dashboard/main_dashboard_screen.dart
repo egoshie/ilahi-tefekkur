@@ -108,7 +108,8 @@ class _MainDashboardScreenState extends ConsumerState< MainDashboardScreen >
         .getActiveHourlyVerse(offset: _manualVerseOffset);
 
     return ListView(
-      physics: const BouncingScrollPhysics(),
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                  physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(18, 14, 18, 32),
       children: [
         Row(
@@ -668,7 +669,8 @@ class _MainDashboardScreenState extends ConsumerState< MainDashboardScreen >
               const SizedBox(height: 10),
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
-                physics: const BouncingScrollPhysics(),
+                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                  physics: const BouncingScrollPhysics(),
                 padding: const EdgeInsets.only(right: 12),
                 child: Row(
                   children: [

@@ -134,6 +134,8 @@ class _EsmaulHusnaSheetState extends ConsumerState< EsmaulHusnaSheet > {
                     Expanded(
                       child: TextField(
                         style: const TextStyle(fontSize: 13.5),
+                        textInputAction: TextInputAction.search,
+                        onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
                         decoration: const InputDecoration(
                           hintText: "Esma adı, anlamı veya numara ara...",
                           hintStyle: TextStyle(
@@ -143,6 +145,7 @@ class _EsmaulHusnaSheetState extends ConsumerState< EsmaulHusnaSheet > {
                           border: InputBorder.none,
                         ),
                         onChanged: (val) => setState(() => _searchQuery = val),
+                          onSubmitted: (_) => FocusManager.instance.primaryFocus?.unfocus(),
                       ),
                     ),
                   ],
@@ -153,6 +156,7 @@ class _EsmaulHusnaSheetState extends ConsumerState< EsmaulHusnaSheet > {
               Expanded(
                 child: ListView.separated(
                   controller: scrollController,
+                  keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                   physics: const BouncingScrollPhysics(),
                   itemCount: list.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 10),

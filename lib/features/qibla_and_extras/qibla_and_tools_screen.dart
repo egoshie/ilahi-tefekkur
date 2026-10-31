@@ -74,7 +74,8 @@ class _QiblaAndToolsScreenState extends ConsumerState< QiblaAndToolsScreen > {
     final finishFormatted = DateFormat('dd.MM.yyyy').format(finishDate);
 
     return ListView(
-      physics: const BouncingScrollPhysics(),
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                  physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(18, 12, 18, 32),
       children: [
         const Text(

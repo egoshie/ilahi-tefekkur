@@ -202,12 +202,15 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                   child: TextField(
                     controller: _searchController,
                     style: const TextStyle(fontSize: 13.5),
-                    decoration: const InputDecoration(
+                    textInputAction: TextInputAction.search,
+                        onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
+                        decoration: const InputDecoration(
                       hintText: "Sure adı, numarası veya ayet kelimesi ara...",
                       hintStyle: TextStyle(color: Colors.white54, fontSize: 12.5),
                       border: InputBorder.none,
                     ),
                     onChanged: (val) => setState(() => _searchQuery = val),
+                    onSubmitted: (_) => FocusManager.instance.primaryFocus?.unfocus(),
                   ),
                 ),
                 if (_searchQuery.isNotEmpty)
@@ -235,7 +238,8 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
             height: 40,
             child: ListView(
               scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                  physics: const BouncingScrollPhysics(),
               padding: const EdgeInsets.only(right: 16),
               children: [
                 _buildTraditionTab("quran", "Kur'ân-ı Kerîm", false),
@@ -343,7 +347,8 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
             height: 36,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                  physics: const BouncingScrollPhysics(),
               itemCount: matchedSurahs.length,
               separatorBuilder: (_, __) => const SizedBox(width: 8),
               itemBuilder: (context, idx) {
@@ -480,6 +485,7 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                   child: CircularProgressIndicator(color: Color(0xFF64FFDA)),
                 )
               : ListView.separated(
+                  keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                   physics: const BouncingScrollPhysics(),
                   padding: const EdgeInsets.only(bottom: 24),
                   itemCount: ayahsToDisplay.length,
@@ -681,7 +687,8 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
     }
 
     return ListView.separated(
-      physics: const BouncingScrollPhysics(),
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                  physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.only(bottom: 24),
       itemCount: combined.length,
       separatorBuilder: (_, __) => const SizedBox(height: 12),
@@ -883,6 +890,7 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                   child: CircularProgressIndicator(color: Color(0xFFFFE082)),
                 )
               : ListView.separated(
+                  keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                   physics: const BouncingScrollPhysics(),
                   padding: const EdgeInsets.only(bottom: 24),
                   itemCount: verses.length,
@@ -986,7 +994,8 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
             .toList();
 
     return ListView.separated(
-      physics: const BouncingScrollPhysics(),
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                  physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.only(bottom: 24),
       itemCount: topics.length,
       separatorBuilder: (_, __) => const SizedBox(height: 14),
@@ -1092,7 +1101,9 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                             horizontal: 12, vertical: 2),
                         child: TextField(
                           style: const TextStyle(fontSize: 13),
-                          decoration: const InputDecoration(
+                          textInputAction: TextInputAction.search,
+                        onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
+                        decoration: const InputDecoration(
                             hintText:
                                 "Sure adı veya numarası yazın (örn: duha, yasin)...",
                             hintStyle:
