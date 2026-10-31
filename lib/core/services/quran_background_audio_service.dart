@@ -121,7 +121,7 @@ class QuranBackgroundAudioNotifier
         final nextAyah = state.playlist[idx];
         state = state.copyWith(
           currentIndex: idx,
-          activeAyah: nextAyah,
+          
         );
         _syncIosNowPlayingCenter();
       }
