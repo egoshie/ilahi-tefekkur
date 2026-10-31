@@ -393,4 +393,47 @@ class _LiquidGlassPaywallSheetState
       ),
     );
   }
+
+  void _showLegalModal(BuildContext context, {required bool isPrivacy}) {
+    final url = isPrivacy ? _privacyUrl : _eulaUrl;
+    final title = isPrivacy ? "Gizlilik Politikası (Privacy Policy)" : "Kullanım Koşulları (EULA)";
+    final body = isPrivacy
+        ? "Huzur uygulaması hiçbir reklam ağı ve takip kodu barındırmaz. Konum izni yalnızca ezan vakitleri ve Kıble açısı için cihaz içinde kullanılır; Galeri izni yalnızca hikâye kartlarını kaydetmek içindir.\n\nGeliştirici: Ege Deniz • berkwisy@gmail.com"
+        : "114 Sure Kur'ân-ı Kerîm, sesli tilavet, ezan vakitleri ve kıble pusulası ücretsizdir. Huzur Özel abonelikleri Apple ID üzerinden yürütülür ve Ayarlar > Abonelikler menüsünden yönetilebilir.\n\nGeliştirici: Ege Deniz • berkwisy@gmail.com";
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => GlassContainer(
+        borderRadius: 30,
+        enableBlur: true,
+        goldAccentBorder: !isPrivacy,
+        emeraldGlow: isPrivacy,
+        padding: const EdgeInsets.all(22),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFFFFE082))),
+            const SizedBox(height: 12),
+            Text(body, style: const TextStyle(fontSize: 13, height: 1.5, color: Colors.white)),
+            const SizedBox(height: 16),
+            GlassContainer(
+              borderRadius: 14,
+              emeraldGlow: true,
+              padding: const EdgeInsets.symmetric(vertical: 11),
+              onTap: () => _openOfficialUrl(url),
+              child: const Center(child: Text("Resmi Web Sayfasını Safari'de Aç", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5, color: Color(0xFF64FFDA)))),
+            ),
+            const SizedBox(height: 8),
+            GlassContainer(
+              borderRadius: 14,
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              onTap: () => Navigator.pop(ctx),
+              child: const Center(child: Text("Kapat", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5))),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
