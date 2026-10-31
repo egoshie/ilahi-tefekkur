@@ -258,7 +258,7 @@ class _EsmaulHusnaSheetState extends ConsumerState< EsmaulHusnaSheet > {
                                     StoryShareSheet.show(
                                       context,
                                       arabic: esma.arabic,
-                                      turkish:
+                                      turkishText:
                                           "${esma.transliteration}: ${esma.turkishMeaning}",
                                       reference:
                                           "Esmaül Hüsna #${esma.id} (${esma.reference})",

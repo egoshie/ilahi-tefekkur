@@ -563,7 +563,7 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                                           reference:
                                               "${a.surahName}, ${a.numberInSurah}",
                                           arabic: a.arabicText,
-                                          turkish: a.turkishText,
+                                          turkishText: a.turkishText,
                                           savedAtEpochMs: DateTime.now()
                                               .millisecondsSinceEpoch,
                                         ),
@@ -585,7 +585,7 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                                           reference:
                                               "${a.surahName}, ${a.numberInSurah}",
                                           arabic: a.arabicText,
-                                          turkish: a.turkishText,
+                                          turkishText: a.turkishText,
                                           savedAtEpochMs: DateTime.now()
                                               .millisecondsSinceEpoch,
                                         ),
@@ -609,7 +609,7 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                                       await NotificationAndWidgetService.instance
                                           .pinCustomVerseToWidget(
                                         arabic: a.arabicText,
-                                        turkish: a.turkishText,
+                                        turkishText: a.turkishText,
                                         reference:
                                             "${a.surahName}, ${a.numberInSurah}",
                                       );
@@ -622,7 +622,7 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                                     onTap: () => StoryShareSheet.show(
                                       context,
                                       arabic: a.arabicText,
-                                      turkish: a.turkishText,
+                                      turkishText: a.turkishText,
                                       reference:
                                           "${a.surahName}, ${a.numberInSurah}",
                                       category: "Kur'ân-ı Kerîm",
@@ -701,7 +701,7 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
           onTap: () => StoryShareSheet.show(
             context,
             arabic: item.arabic,
-            turkish: item.turkish,
+            turkishText: item.turkish,
             reference: item.reference,
           ),
           child: Column(
@@ -903,7 +903,7 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                       onTap: () => StoryShareSheet.show(
                         context,
                         arabic: v.originalScript,
-                        turkish: v.turkishText,
+                        turkishText: v.turkishText,
                         reference: "${v.bookName} ${v.chapter}:${v.verse}",
                         category: categoryLabel,
                       ),
@@ -931,7 +931,7 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                                       NotificationAndWidgetService.instance
                                           .pinCustomVerseToWidget(
                                         arabic: v.originalScript,
-                                        turkish: v.turkishText,
+                                        turkishText: v.turkishText,
                                         reference:
                                             "${v.bookName} ${v.chapter}:${v.verse}",
                                       );
@@ -944,7 +944,7 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                                     onTap: () => StoryShareSheet.show(
                                       context,
                                       arabic: v.originalScript,
-                                      turkish: v.turkishText,
+                                      turkishText: v.turkishText,
                                       reference:
                                           "${v.bookName} ${v.chapter}:${v.verse}",
                                       category: categoryLabel,
