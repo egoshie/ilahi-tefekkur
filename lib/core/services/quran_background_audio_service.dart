@@ -116,6 +116,17 @@ class QuranBackgroundAudioNotifier
       _syncIosNowPlayingCenter();
     });
 
+    _player.currentIndexStream.listen((idx) {
+      if (idx != null && idx >= 0 && idx < state.playlist.length) {
+        final nextAyah = state.playlist[idx];
+        state = state.copyWith(
+          currentIndex: idx,
+          activeAyah: nextAyah,
+        );
+        _syncIosNowPlayingCenter();
+      }
+    });
+
     _posSub = _player.positionStream.listen((pos) {
       state = state.copyWith(position: pos);
     });
@@ -211,13 +222,13 @@ class QuranBackgroundAudioNotifier
 
   Future< void > skipToNext() async {
     if (state.currentIndex + 1 < state.playlist.length) {
-      await playAyahAtIndex(state.currentIndex + 1);
+      if (_player.hasNext) { await _player.seekToNext(); await _player.play(); } else { await playAyahAtIndex(state.currentIndex + 1); }
     }
   }
 
   Future< void > skipToPrevious() async {
     if (state.currentIndex - 1 >= 0) {
-      await playAyahAtIndex(state.currentIndex - 1);
+      if (_player.hasPrevious) { await _player.seekToPrevious(); await _player.play(); } else { await playAyahAtIndex(state.currentIndex - 1); }
     } else if (state.hasActiveSession) {
       await _player.seek(Duration.zero);
     }
