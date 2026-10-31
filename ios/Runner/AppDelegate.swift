@@ -18,6 +18,7 @@ class PhotoSaveCallbackTarget: NSObject {
 @objc class AppDelegate: FlutterAppDelegate {
     private var activePhotoTarget: PhotoSaveCallbackTarget?
     private var mediaChannel: FlutterMethodChannel?
+    private var cachedArtwork: MPMediaItemArtwork?
     private var remoteCommandsConfigured = false
 
     override func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
@@ -116,16 +117,43 @@ WidgetCenter.shared.reloadAllTimelines()
     private func updateNowPlayingMetadata(args: [String: Any]) {
         let title = args["title"] as? String ?? "Huzur"
         let artist = args["artist"] as? String ?? "Mishary Rashid Al-Afasy"
+        let album = args["album"] as? String ?? "Huzur • İlahi Tilavet"
         let isPlaying = args["isPlaying"] as? Bool ?? true
         let dur = args["durationSeconds"] as? Double ?? 12.0
         let elp = args["elapsedSeconds"] as? Double ?? 0.0
-        MPNowPlayingInfoCenter.default().nowPlayingInfo = [
+        var info: [String: Any] = [
             MPMediaItemPropertyTitle: title,
             MPMediaItemPropertyArtist: artist,
+            MPMediaItemPropertyAlbumTitle: album,
             MPMediaItemPropertyPlaybackDuration: dur,
             MPNowPlayingInfoPropertyElapsedPlaybackTime: elp,
             MPNowPlayingInfoPropertyPlaybackRate: isPlaying ? 1.0 : 0.0
         ]
+        if let artwork = getOrCreateHuzurArtwork() {
+            info[MPMediaItemPropertyArtwork] = artwork
+        }
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = info
+    }
+
+    private func getOrCreateHuzurArtwork() -> MPMediaItemArtwork? {
+        if let existing = cachedArtwork { return existing }
+        let size = CGSize(width: 512, height: 512)
+        let renderer = UIGraphicsImageRenderer(size: size)
+        let img = renderer.image { ctx in
+            let cg = ctx.cgContext
+            cg.setFillColor(UIColor(red: 0.03, green: 0.14, blue: 0.19, alpha: 1.0).cgColor)
+            cg.fill(CGRect(origin: .zero, size: size))
+            cg.setStrokeColor(UIColor(red: 0.39, green: 1.0, blue: 0.85, alpha: 0.85).cgColor)
+            cg.setLineWidth(10.0)
+            cg.strokeEllipse(in: CGRect(x: 64, y: 64, width: 384, height: 384))
+            cg.setFillColor(UIColor(red: 1.0, green: 0.88, blue: 0.51, alpha: 0.95).cgColor)
+            cg.fillEllipse(in: CGRect(x: 156, y: 156, width: 200, height: 200))
+            cg.setFillColor(UIColor(red: 0.03, green: 0.14, blue: 0.19, alpha: 1.0).cgColor)
+            cg.fillEllipse(in: CGRect(x: 192, y: 140, width: 185, height: 185))
+        }
+        let art = MPMediaItemArtwork(boundsSize: size) { _ in return img }
+        cachedArtwork = art
+        return art
     }
     private func savePhotoToLibrary(image: UIImage, result: @escaping FlutterResult) {
         let target = PhotoSaveCallbackTarget { [weak self] ok in DispatchQueue.main.async { self?.activePhotoTarget = nil; result(ok) } }
