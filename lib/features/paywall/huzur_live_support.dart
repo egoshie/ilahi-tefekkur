@@ -681,7 +681,6 @@ class _HuzurLiveSupportSheetState extends State<_HuzurLiveSupportSheet> {
                 Expanded(
                   child: TextField(
                     controller: _messageController,
-                    onChanged: _onMessageChanged,
                     minLines: 1,
                     maxLines: 4,
                     style: const TextStyle(color: Colors.white),
