@@ -7,3 +7,15 @@ build/
 .pub/
 *.apk
 *.ipa
+
+# Huzur secrets and local backups
+.env
+.env.*
+*.bak
+*.bak.*
+*.before-*
+*.jks
+*.keystore
+GoogleService-Info.plist
+firebase-adminsdk*.json
+service-account*.json
