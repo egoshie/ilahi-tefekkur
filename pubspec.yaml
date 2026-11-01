@@ -1,7 +1,7 @@
 name: ilahi_tefekkur
 description: "Huzur - Ilahi Metinler, Tefekkur ve Ibadet Ekosistemi V5.0 Production"
 publish_to: 'none'
-version: 1.0.0+12
+version: 1.0.0+13
 
 environment:
   sdk: '>=3.2.0 <4.0.0'

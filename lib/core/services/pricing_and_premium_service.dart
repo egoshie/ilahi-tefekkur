@@ -78,7 +78,7 @@ final premiumServiceProvider =
 class PremiumServiceNotifier extends StateNotifier<PremiumState> {
   static const String kMonthlyId = 'com.ilahi.tefekkur.monthly';
   static const String kAnnualId = 'com.ilahi.tefekkur.annual';
-  static const String kLifetimeId = 'com.ilahi.tefekkur.lifetime';
+  static const String kLifetimeId = 'com.ilahi.tefekkur.lifetime_access';
 
   static const Set<String> _productIds = {
     kMonthlyId,
