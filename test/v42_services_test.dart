@@ -14,6 +14,6 @@ void main() {
     final surahs = OfflineSacredRepository.getAllSurahMetadata();
     expect(surahs.length, 114);
     expect(OfflineSacredRepository.kAll99EsmaulHusna.length, 99);
-    expect(OfflineSacredRepository.kHourlyShortVerses.length, 40);
+    expect(OfflineSacredRepository.kHourlyShortVerses.length, 69);
   });
 }

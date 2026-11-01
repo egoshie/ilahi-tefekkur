@@ -36,7 +36,6 @@ class _LiquidGlassPaywallSheetState
       'https://egoshie.github.io/ilahi-tefekkur/eula.html';
 
   String _selectedTier = 'annual';
-  int _founderTapCount = 0;
 
   Future<void> _openOfficialUrl(String url) async {
     HapticFeedback.selectionClick();
@@ -87,20 +86,10 @@ class _LiquidGlassPaywallSheetState
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  GestureDetector(
-                    onTap: () {
-                      _founderTapCount++;
-                      if (_founderTapCount >= 5) {
-                        _founderTapCount = 0;
-                        HapticFeedback.heavyImpact();
-                        notifier.unlockFounderByUdidTap();
-                      }
-                    },
-                    child: const BespokeVectorIcon(
-                      type: BespokeIconType.crownGem,
-                      color: Color(0xFFFFE082),
-                      size: 26,
-                    ),
+                  const BespokeVectorIcon(
+                    type: BespokeIconType.crownGem,
+                    color: Color(0xFFFFE082),
+                    size: 26,
                   ),
                   const SizedBox(width: 10),
                   Text(

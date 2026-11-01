@@ -31,7 +31,7 @@ class TurkishSearchNormalizer {
       '‘': '',
       'ʻ': '',
       'ʿ': '',
-      '-': ' ',
+      '-': '',
     };
     map.forEach((k, v) {
       s = s.replaceAll(k, v);

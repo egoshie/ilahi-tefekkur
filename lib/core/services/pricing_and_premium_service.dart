@@ -1,8 +1,9 @@
-import 'package:flutter/services.dart';
 import 'dart:async';
 import 'dart:io';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:in_app_purchase_storekit/store_kit_2_wrappers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class RegionalOffer {
@@ -69,7 +70,8 @@ class PremiumState {
   }
 }
 
-final premiumServiceProvider = StateNotifierProvider<PremiumServiceNotifier, PremiumState>((ref) {
+final premiumServiceProvider =
+    StateNotifierProvider<PremiumServiceNotifier, PremiumState>((ref) {
   return PremiumServiceNotifier();
 });
 
@@ -77,160 +79,438 @@ class PremiumServiceNotifier extends StateNotifier<PremiumState> {
   static const String kMonthlyId = 'com.ilahi.tefekkur.monthly';
   static const String kAnnualId = 'com.ilahi.tefekkur.annual';
   static const String kLifetimeId = 'com.ilahi.tefekkur.lifetime';
-  static const Set<String> _productIds = {kMonthlyId, kAnnualId, kLifetimeId};
+
+  static const Set<String> _productIds = {
+    kMonthlyId,
+    kAnnualId,
+    kLifetimeId,
+  };
 
   final InAppPurchase _iap = InAppPurchase.instance;
+
   StreamSubscription<List<PurchaseDetails>>? _purchaseSub;
 
   PremiumServiceNotifier()
-      : super(PremiumState(
-          isPremium: false,
-          activePlanId: 'free',
-          regionalOffer: _detectOffer(Platform.localeName),
-        )) {
+      : super(
+          PremiumState(
+            isPremium: false,
+            activePlanId: 'free',
+            regionalOffer: _detectOffer(Platform.localeName),
+          ),
+        ) {
     _initStoreKit();
   }
 
-  static const MethodChannel _founderChannel = MethodChannel('com.ilahi.tefekkur/native_bridge');
-  static const String kFounderUdid = '00008140-001D793E2230801C';
-
   Future<void> _initStoreKit() async {
-    final prefs = await SharedPreferences.getInstance();
-    bool savedPremium = prefs.getBool('v50_verified_premium') ?? false;
-    String savedPlan = prefs.getString('v50_active_plan_id') ?? 'free';
-
+    // Eski yerel Premium bayrakları artık yetki kaynağı değildir.
     try {
-      final res = await _founderChannel.invokeMethod('checkFounderDevice');
-      if (res is Map && res['isFounder'] == true) {
-        savedPremium = true;
-        savedPlan = 'founder_lifetime';
-        await prefs.setBool('v50_verified_premium', true);
-        await prefs.setString('v50_active_plan_id', 'founder_lifetime');
-      }
-    } catch (_) {}
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('v50_verified_premium');
+      await prefs.remove('v50_active_plan_id');
+    } catch (_) {
+      // Yerel önbellek temizlenemese de doğrulama bundan etkilenmez.
+    }
 
-    state = state.copyWith(isPremium: savedPremium, activePlanId: savedPlan);
+    _purchaseSub = _iap.purchaseStream.listen(
+      _onPurchaseUpdate,
+      onError: (Object error) {
+        state = state.copyWith(
+          isLoading: false,
+          statusMessage: 'App Store ödeme iletişimi kesildi.',
+        );
+      },
+    );
 
-    _purchaseSub = _iap.purchaseStream.listen(_onPurchaseUpdate, onError: (_) {
-      state = state.copyWith(isLoading: false, statusMessage: 'App Store ödeme iletişimi kesildi.');
-    });
+    if (!Platform.isIOS) {
+      state = state.copyWith(
+        isPremium: false,
+        activePlanId: 'free',
+        isLoading: false,
+        storeAvailable: false,
+        statusMessage:
+            'Premium satın alımları şu anda iOS App Store üzerinden destekleniyor.',
+      );
+      return;
+    }
+
+    // Ürün sorgusundan bağımsız olarak mevcut Apple yetkilerini kontrol et.
+    try {
+      await _refreshStoreKitEntitlements();
+    } catch (_) {
+      state = state.copyWith(
+        isPremium: false,
+        activePlanId: 'free',
+        statusMessage: 'Apple Premium durumu şu anda doğrulanamadı.',
+      );
+    }
 
     try {
       final available = await _iap.isAvailable();
+
       if (!available) {
-        state = state.copyWith(storeAvailable: false);
+        state = state.copyWith(
+          storeAvailable: false,
+          isLoading: false,
+          statusMessage:
+              state.isPremium ? null : 'App Store şu anda kullanılamıyor.',
+        );
         return;
       }
+
       final response = await _iap.queryProductDetails(_productIds);
-      final map = <String, ProductDetails>{};
-      for (final p in response.productDetails) {
-        map[p.id] = p;
+      final products = <String, ProductDetails>{};
+
+      for (final product in response.productDetails) {
+        if (_productIds.contains(product.id)) {
+          products[product.id] = product;
+        }
       }
+
       final base = _detectOffer(Platform.localeName);
+
       final liveOffer = RegionalOffer(
         localeCode: base.localeCode,
         regionLabel: base.regionLabel,
         currencySymbol: base.currencySymbol,
-        monthlyPrice: map[kMonthlyId]?.price ?? base.monthlyPrice,
-        annualPrice: map[kAnnualId]?.price ?? base.annualPrice,
+        monthlyPrice: products[kMonthlyId]?.price ?? base.monthlyPrice,
+        annualPrice: products[kAnnualId]?.price ?? base.annualPrice,
         annualMonthlyEquivalent: base.annualMonthlyEquivalent,
-        lifetimePrice: map[kLifetimeId]?.price ?? base.lifetimePrice,
+        lifetimePrice: products[kLifetimeId]?.price ?? base.lifetimePrice,
       );
-      state = state.copyWith(storeAvailable: true, storeProducts: map, regionalOffer: liveOffer);
-    } catch (_) {}
+
+      state = state.copyWith(
+        storeAvailable: true,
+        storeProducts: products,
+        regionalOffer: liveOffer,
+        statusMessage: response.notFoundIDs.isNotEmpty
+            ? 'Bazı Premium ürünleri App Store Connect üzerinde bulunamadı.'
+            : null,
+      );
+    } catch (_) {
+      state = state.copyWith(
+        storeAvailable: false,
+        statusMessage:
+            state.isPremium ? null : 'App Store ürünleri şu anda yüklenemedi.',
+      );
+    }
   }
 
-  String _mapPlanToStoreId(String planId) {
+  String? _mapPlanToStoreId(String planId) {
     switch (planId) {
-      case 'monthly': return kMonthlyId;
-      case 'lifetime': return kLifetimeId;
-      default: return kAnnualId;
+      case 'monthly':
+        return kMonthlyId;
+      case 'annual':
+        return kAnnualId;
+      case 'lifetime':
+        return kLifetimeId;
+      default:
+        return null;
     }
+  }
+
+  int _purchaseDateMillis(SK2Transaction transaction) {
+    return int.tryParse(transaction.purchaseDate) ?? 0;
+  }
+
+  /// StoreKit 2'nin currentEntitlements listesi:
+  /// Apple tarafından doğrulanmış ve şu anda erişim hakkı veren
+  /// işlemleri döndürür.
+  ///
+  /// Bu listede bulunmayan bir ürün Premium erişimi açamaz.
+  bool _applyCurrentEntitlements(
+    List<SK2Transaction> transactions, {
+    String? message,
+  }) {
+    final validProducts = transactions
+        .where((transaction) => _productIds.contains(transaction.productId))
+        .toList();
+
+    if (validProducts.isEmpty) {
+      state = state.copyWith(
+        isPremium: false,
+        activePlanId: 'free',
+        isLoading: false,
+        statusMessage: message,
+      );
+      return false;
+    }
+
+    // Ömür boyu ürün mevcutsa önceliği ona ver.
+    final lifetime = validProducts.where(
+      (transaction) => transaction.productId == kLifetimeId,
+    );
+
+    late final SK2Transaction selected;
+
+    if (lifetime.isNotEmpty) {
+      selected = lifetime.first;
+    } else {
+      validProducts.sort(
+        (a, b) => _purchaseDateMillis(b).compareTo(_purchaseDateMillis(a)),
+      );
+      selected = validProducts.first;
+    }
+
+    state = state.copyWith(
+      isPremium: true,
+      activePlanId: selected.productId,
+      isLoading: false,
+      statusMessage: message,
+    );
+
+    return true;
+  }
+
+  Future<bool> _refreshStoreKitEntitlements({
+    String? successMessage,
+  }) async {
+    if (!Platform.isIOS) {
+      return false;
+    }
+
+    final transactions = await SK2Transaction.currentEntitlements();
+
+    return _applyCurrentEntitlements(
+      transactions,
+      message: successMessage,
+    );
   }
 
   Future<void> activatePlan(String planId) async {
-    state = state.copyWith(isLoading: true, statusMessage: null);
-    final storeId = _mapPlanToStoreId(planId);
-    final product = state.storeProducts[storeId];
+    if (state.isLoading) return;
 
-    if (product != null) {
-      final param = PurchaseParam(productDetails: product);
-      try {
-        if (planId == 'lifetime') {
-          await _iap.buyNonConsumable(purchaseParam: param);
-        } else {
-          await _iap.buyNonConsumable(purchaseParam: param);
-        }
-      } catch (_) {
-        state = state.copyWith(isLoading: false, statusMessage: 'App Store satın alma penceresi açılamadı.');
+    if (!Platform.isIOS) {
+      state = state.copyWith(
+        statusMessage:
+            'StoreKit 2 satın alımları yalnızca iOS üzerinde kullanılabilir.',
+      );
+      return;
+    }
+
+    final storeId = _mapPlanToStoreId(planId);
+
+    if (storeId == null) {
+      state = state.copyWith(
+        statusMessage: 'Geçersiz Premium planı seçildi.',
+      );
+      return;
+    }
+
+    state = state.copyWith(
+      isLoading: true,
+      statusMessage: null,
+    );
+
+    try {
+      final available = await _iap.isAvailable();
+
+      if (!available) {
+        state = state.copyWith(
+          isLoading: false,
+          statusMessage: 'App Store şu anda kullanılamıyor.',
+        );
+        return;
       }
-    } else {
-      await Future.delayed(const Duration(milliseconds: 400));
+
+      ProductDetails? product = state.storeProducts[storeId];
+
+      if (product == null) {
+        final response = await _iap.queryProductDetails(_productIds);
+
+        final refreshedProducts = <String, ProductDetails>{};
+
+        for (final item in response.productDetails) {
+          if (_productIds.contains(item.id)) {
+            refreshedProducts[item.id] = item;
+          }
+        }
+
+        state = state.copyWith(
+          storeAvailable: true,
+          storeProducts: refreshedProducts,
+        );
+
+        product = refreshedProducts[storeId];
+      }
+
+      if (product == null) {
+        state = state.copyWith(
+          isLoading: false,
+          statusMessage:
+              'Seçilen Premium ürünü App Store Connect üzerinde bulunamadı.',
+        );
+        return;
+      }
+
+      // Flutter IAP API'sinde abonelikler ve tüketilemeyen ürünler
+      // buyNonConsumable ile başlatılır.
+      final started = await _iap.buyNonConsumable(
+        purchaseParam: PurchaseParam(productDetails: product),
+      );
+
+      if (!started) {
+        state = state.copyWith(
+          isLoading: false,
+          statusMessage: 'App Store satın alma penceresi açılamadı.',
+        );
+      }
+    } catch (_) {
       state = state.copyWith(
         isLoading: false,
-        statusMessage: 'App Store Connect ürün kimliği (\$storeId) onay bekliyor.',
+        statusMessage: 'App Store satın alma işlemi başlatılamadı.',
       );
     }
   }
 
-  Future<void> _onPurchaseUpdate(List<PurchaseDetails> detailsList) async {
+  Future<void> _onPurchaseUpdate(
+    List<PurchaseDetails> detailsList,
+  ) async {
     for (final purchase in detailsList) {
-      if (purchase.status == PurchaseStatus.pending) {
-        state = state.copyWith(isLoading: true, statusMessage: 'Apple StoreKit işlemi onaylanıyor...');
-      } else if (purchase.status == PurchaseStatus.error) {
-        state = state.copyWith(isLoading: false, statusMessage: 'Ödeme işlemi tamamlanamadı.');
-      } else if (purchase.status == PurchaseStatus.purchased || purchase.status == PurchaseStatus.restored) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setBool('v50_verified_premium', true);
-        await prefs.setString('v50_active_plan_id', purchase.productID);
-        state = state.copyWith(
-          isLoading: false,
-          isPremium: true,
-          activePlanId: purchase.productID,
-          statusMessage: 'Huzur Özel aboneliğiniz Apple tarafından doğrulandı.',
-        );
-      } else if (purchase.status == PurchaseStatus.canceled) {
-        state = state.copyWith(isLoading: false, statusMessage: 'Satın alma işlemi iptal edildi.');
-      }
-      if (purchase.pendingCompletePurchase) {
-        await _iap.completePurchase(purchase);
+      switch (purchase.status) {
+        case PurchaseStatus.pending:
+          state = state.copyWith(
+            isLoading: true,
+            statusMessage: 'Apple satın alma işlemi bekleniyor...',
+          );
+          break;
+
+        case PurchaseStatus.error:
+          state = state.copyWith(
+            isLoading: false,
+            statusMessage: 'Ödeme işlemi tamamlanamadı.',
+          );
+          break;
+
+        case PurchaseStatus.canceled:
+          state = state.copyWith(
+            isLoading: false,
+            statusMessage: 'Satın alma işlemi iptal edildi.',
+          );
+          break;
+
+        case PurchaseStatus.purchased:
+        case PurchaseStatus.restored:
+          if (!Platform.isIOS) {
+            state = state.copyWith(
+              isLoading: false,
+              statusMessage:
+                  'Bu platform için satın alma doğrulaması yapılandırılmadı.',
+            );
+            break;
+          }
+
+          bool exactPurchaseVerified = false;
+
+          try {
+            // PurchaseStatus tek başına doğrulama değildir.
+            // Yalnızca Apple'ın doğruladığı currentEntitlements
+            // listesinde aynı ürün bulunursa işlem onaylanır.
+            final transactions = await SK2Transaction.currentEntitlements();
+
+            exactPurchaseVerified = transactions.any(
+              (transaction) =>
+                  transaction.productId == purchase.productID &&
+                  _productIds.contains(transaction.productId),
+            );
+
+            if (exactPurchaseVerified) {
+              _applyCurrentEntitlements(
+                transactions,
+                message: 'Premium erişiminiz Apple tarafından doğrulandı.',
+              );
+            } else {
+              // Başka geçerli bir Premium ürünü varsa onu koru.
+              _applyCurrentEntitlements(transactions);
+
+              state = state.copyWith(
+                isLoading: false,
+                statusMessage:
+                    'Bu satın alma Apple tarafından aktif yetki olarak doğrulanamadı. Premium erişimi bu işlemle açılmadı.',
+              );
+            }
+          } catch (_) {
+            state = state.copyWith(
+              isLoading: false,
+              statusMessage:
+                  'Apple doğrulamasına şu anda ulaşılamadı. Premium erişimi açılmadı.',
+            );
+          }
+
+          // İşlem ancak doğrulanmış ve uygulamaya teslim edilmişse bitirilir.
+          if (exactPurchaseVerified && purchase.pendingCompletePurchase) {
+            try {
+              await _iap.completePurchase(purchase);
+            } catch (_) {
+              state = state.copyWith(
+                statusMessage:
+                    'Premium doğrulandı; ancak satın alma işlemi App Store üzerinde henüz tamamlanamadı.',
+              );
+            }
+          }
+          break;
       }
     }
   }
 
   Future<void> restorePurchases() async {
-    state = state.copyWith(isLoading: true, statusMessage: 'Apple ID satın alımlarınız sorgulanıyor...');
+    if (!Platform.isIOS) {
+      state = state.copyWith(
+        isLoading: false,
+        statusMessage:
+            'Satın alım geri yükleme yalnızca iOS App Store için yapılandırıldı.',
+      );
+      return;
+    }
+
+    state = state.copyWith(
+      isLoading: true,
+      statusMessage: 'Apple satın alımlarınız kontrol ediliyor...',
+    );
+
     try {
       await _iap.restorePurchases();
-      await Future.delayed(const Duration(milliseconds: 600));
-      if (!state.isPremium) {
-        state = state.copyWith(isLoading: false, statusMessage: 'Bu Apple kimliğine ait aktif abonelik bulunamadı.');
+
+      final restored = await _refreshStoreKitEntitlements(
+        successMessage: 'Satın alımlarınız Apple tarafından doğrulandı.',
+      );
+
+      if (!restored) {
+        state = state.copyWith(
+          isLoading: false,
+          statusMessage:
+              'Bu Apple hesabında aktif Huzur Premium satın alımı bulunamadı.',
+        );
       }
     } catch (_) {
-      state = state.copyWith(isLoading: false, statusMessage: 'Geri yükleme sırasında bağlantı hatası oluştu.');
+      state = state.copyWith(
+        isLoading: false,
+        statusMessage: 'Satın alımlar geri yüklenirken bir hata oluştu.',
+      );
     }
   }
 
   static RegionalOffer _detectOffer(String locale) {
     final lower = locale.toLowerCase();
+
     if (lower.contains('tr')) {
       return const RegionalOffer(
         localeCode: 'tr_TR',
         regionLabel: 'Türkiye',
         currencySymbol: 'TL',
-        monthlyPrice: '49,99 TL / ay',
-        annualPrice: '299,99 TL / yıl',
-        annualMonthlyEquivalent: 'Aylık 24,99 TL (%50 Avantaj)',
-        lifetimePrice: '749,99 TL',
+        monthlyPrice: '120 TL / ay',
+        annualPrice: '799 TL / yıl',
+        annualMonthlyEquivalent: 'Aylık 66,58 TL',
+        lifetimePrice: '1.500 TL',
       );
     }
+
     return const RegionalOffer(
       localeCode: 'en_US',
       regionLabel: 'Global',
       currencySymbol: 'USD',
       monthlyPrice: '4.99 USD / mo',
       annualPrice: '29.99 USD / yr',
-      annualMonthlyEquivalent: '2.49 USD / mo (Save 50%)',
+      annualMonthlyEquivalent: '2.49 USD / mo',
       lifetimePrice: '79.99 USD',
     );
   }
@@ -240,16 +520,4 @@ class PremiumServiceNotifier extends StateNotifier<PremiumState> {
     _purchaseSub?.cancel();
     super.dispose();
   }
-
-  Future<void> unlockFounderByUdidTap() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('v50_verified_premium', true);
-    await prefs.setString('v50_active_plan_id', 'founder_lifetime');
-    state = state.copyWith(
-      isPremium: true,
-      activePlanId: 'founder_lifetime',
-      statusMessage: 'Kurucu Cihaz (00008140-001D793E2230801C) Ömür Boyu Tam Erişim Aktif!',
-    );
-  }
-
 }
