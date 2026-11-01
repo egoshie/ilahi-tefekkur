@@ -78,154 +78,45 @@ class _HuzurLiveSupportSheet extends StatefulWidget {
 }
 
 class _HuzurLiveSupportSheetState extends State<_HuzurLiveSupportSheet> {
+  bool _showDeveloperConnectForm = false;
+  bool _isHuzurAiTyping = false;
+  int _huzurAiReqToken = 0;
 
-  Widget _buildHuzurAiSection() {
-    return HuzurLiquidGlassSurface(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      borderRadius: 20,
-      blurSigma: 18,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const HuzurAiCrescentAvatar(size: 38),
-              const SizedBox(width: 11),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Text(
-                          HuzurAiGuideData.title,
-                          style: TextStyle(
-                            color: Color(0xFFFFE082),
-                            fontSize: 15,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        const SizedBox(width: 7),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF9CE5C9).withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Text(
-                            'Rehber',
-                            style: TextStyle(
-                              color: Color(0xFF9CE5C9),
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      HuzurAiGuideData.subtitle,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.60),
-                        fontSize: 11.2,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: const Color(0xFF091D16).withValues(alpha: 0.85),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-            ),
-            child: Text(
-              HuzurAiGuideData.welcomeMessage,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.90),
-                fontSize: 12.6,
-                height: 1.45,
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _buildHuzurAiOptionChip(
-                icon: Icons.self_improvement_rounded,
-                label: HuzurAiGuideData.optWhatIsHuzur,
-                onTap: () => _onSelectHuzurAiPrompt(
-                  HuzurAiGuideData.optWhatIsHuzur,
-                  HuzurAiGuideData.ansWhatIsHuzur,
-                ),
-              ),
-              _buildHuzurAiOptionChip(
-                icon: Icons.auto_awesome_rounded,
-                label: HuzurAiGuideData.optWhatDoesHuzurOffer,
-                onTap: () => _onSelectHuzurAiPrompt(
-                  HuzurAiGuideData.optWhatDoesHuzurOffer,
-                  HuzurAiGuideData.ansWhatDoesHuzurOffer,
-                ),
-              ),
-            ],
-          ),
-          if (_huzurAiThread.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            ..._huzurAiThread.map(_buildHuzurAiThreadItem),
-          ] else if (_isHuzurAiTyping) ...[
-            const SizedBox(height: 8),
-            const HuzurAiTypingBubble(),
-          ],
-        ],
-      ),
-    );
-  }
-
+    final List<Map<String, String>> _huzurAiThread = <Map<String, String>>[];
 
   Widget _buildHuzurAiOptionChip({
     required IconData icon,
     required String label,
     required VoidCallback onTap,
   }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
-          decoration: BoxDecoration(
-            color: const Color(0xFF123529).withValues(alpha: 0.85),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: const Color(0xFFD4AF37).withValues(alpha: 0.38),
-              width: 1,
+    final isConnect = label == HuzurAiGuideData.optConnectDeveloper;
+    return GlassContainer(
+      borderRadius: 14,
+      blurSigma: 18,
+      goldAccentBorder: isConnect,
+      emeraldGlow: isConnect,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      onTap: onTap,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 15.5,
+            color: isConnect ? const Color(0xFF9CE5C9) : const Color(0xFFFFE082),
+          ),
+          const SizedBox(width: 7),
+          Flexible(
+            child: Text(
+              label,
+              style: TextStyle(
+                color: isConnect ? const Color(0xFFFFE082) : Colors.white,
+                fontSize: 12.3,
+                fontWeight: isConnect ? FontWeight.w800 : FontWeight.w600,
+              ),
             ),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 15, color: const Color(0xFFFFE082)),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12.2,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ),
+        ],
       ),
     );
   }
@@ -235,26 +126,17 @@ class _HuzurLiveSupportSheetState extends State<_HuzurLiveSupportSheet> {
     final a = item['answer'] ?? '';
     final isTyping = item['status'] == 'typing';
     return Padding(
-      padding: const EdgeInsets.only(top: 6),
+      padding: const EdgeInsets.only(top: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Align(
             alignment: Alignment.centerRight,
-            child: Container(
+            child: GlassContainer(
+              borderRadius: 14,
+              blurSigma: 16,
+              goldAccentBorder: true,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFD4AF37).withValues(alpha: 0.18),
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(14),
-                  topRight: Radius.circular(14),
-                  bottomLeft: Radius.circular(14),
-                  bottomRight: Radius.circular(4),
-                ),
-                border: Border.all(
-                  color: const Color(0xFFD4AF37).withValues(alpha: 0.40),
-                ),
-              ),
               child: Text(
                 q,
                 style: const TextStyle(
@@ -281,20 +163,11 @@ class _HuzurLiveSupportSheetState extends State<_HuzurLiveSupportSheet> {
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Container(
+                  child: GlassContainer(
+                    borderRadius: 14,
+                    blurSigma: 18,
+                    emeraldGlow: true,
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF0A2018).withValues(alpha: 0.95),
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(4),
-                        topRight: Radius.circular(14),
-                        bottomLeft: Radius.circular(14),
-                        bottomRight: Radius.circular(14),
-                      ),
-                      border: Border.all(
-                        color: const Color(0xFF9CE5C9).withValues(alpha: 0.24),
-                      ),
-                    ),
                     child: Text(
                       a,
                       style: TextStyle(
@@ -312,11 +185,123 @@ class _HuzurLiveSupportSheetState extends State<_HuzurLiveSupportSheet> {
     );
   }
 
-
-  // --- HUZUR AI REHBER STATE & AKSİYONLARI (ADIM 4B) ---
-  bool _isHuzurAiTyping = false;
-  int _huzurAiReqToken = 0;
-  final List<Map<String, String>> _huzurAiThread = <Map<String, String>>[];
+  Widget _buildHuzurAiSection() {
+    return GlassContainer(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(15),
+      borderRadius: 22,
+      blurSigma: 24,
+      emeraldGlow: true,
+      goldAccentBorder: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const HuzurAiCrescentAvatar(size: 40),
+              const SizedBox(width: 11),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Text(
+                          HuzurAiGuideData.title,
+                          style: TextStyle(
+                            color: Color(0xFFFFE082),
+                            fontSize: 15.5,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(width: 7),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF9CE5C9).withValues(alpha: 0.16),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Text(
+                            'Rehber',
+                            style: TextStyle(
+                              color: Color(0xFF9CE5C9),
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      HuzurAiGuideData.subtitle,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.65),
+                        fontSize: 11.2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 11),
+          GlassContainer(
+            borderRadius: 16,
+            blurSigma: 18,
+            padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+            child: Text(
+              HuzurAiGuideData.welcomeMessage,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.92),
+                fontSize: 12.8,
+                height: 1.48,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildHuzurAiOptionChip(
+                icon: Icons.self_improvement_rounded,
+                label: HuzurAiGuideData.optWhatIsHuzur,
+                onTap: () => _onSelectHuzurAiPrompt(
+                  HuzurAiGuideData.optWhatIsHuzur,
+                  HuzurAiGuideData.ansWhatIsHuzur,
+                ),
+              ),
+              _buildHuzurAiOptionChip(
+                icon: Icons.auto_awesome_rounded,
+                label: HuzurAiGuideData.optWhatDoesHuzurOffer,
+                onTap: () => _onSelectHuzurAiPrompt(
+                  HuzurAiGuideData.optWhatDoesHuzurOffer,
+                  HuzurAiGuideData.ansWhatDoesHuzurOffer,
+                ),
+              ),
+              _buildHuzurAiOptionChip(
+                icon: Icons.support_agent_rounded,
+                label: HuzurAiGuideData.optConnectDeveloper,
+                onTap: () {
+                  setState(() {
+                    _showDeveloperConnectForm = true;
+                  });
+                },
+              ),
+            ],
+          ),
+          if (_huzurAiThread.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            ..._huzurAiThread.map(_buildHuzurAiThreadItem),
+          ] else if (_isHuzurAiTyping) ...[
+            const SizedBox(height: 8),
+            const HuzurAiTypingBubble(),
+          ],
+        ],
+      ),
+    );
+  }
 
   Future<void> _onSelectHuzurAiPrompt(String question, String answer) async {
     final int token = ++_huzurAiReqToken;
@@ -692,7 +677,58 @@ class _HuzurLiveSupportSheetState extends State<_HuzurLiveSupportSheet> {
     );
   }
 
-  Widget _entryView() {
+    Widget _entryView() {
+    if (!_showDeveloperConnectForm) {
+      return SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(18, 8, 18, 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildHuzurAiSection(),
+          ],
+        ),
+      );
+    }
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(18, 8, 18, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const EgeDenizDeveloperHeaderBadge(),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: GlassContainer(
+                borderRadius: 12,
+                blurSigma: 14,
+                padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+                onTap: () => setState(() => _showDeveloperConnectForm = false),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.arrow_back_ios_new_rounded, size: 12, color: Color(0xFFFFE082)),
+                    SizedBox(width: 6),
+                    Text(
+                      'Huzur AI Rehberine Dön',
+                      style: TextStyle(
+                        color: Color(0xFFFFE082),
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          _entryFormContent(),
+        ],
+      ),
+    );
+  }
+
+  Widget _entryFormContent() {
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(22, 25, 22, 30),
       child: Form(
@@ -1360,11 +1396,12 @@ class HuzurAiGuideData {
 
   static const String welcomeMessage =
       'Selamünaleyküm, Huzur rehberine hoş geldiniz. '
-      'Aşağıdaki başlıklardan Huzur uygulamasının gerçek özelliklerini hemen inceleyebilir '
+      'Aşağıdaki seçeneklerden Huzur uygulamasının gerçek özelliklerini inceleyebilir '
       'veya doğrudan Huzur Geliştiricisi Ege Deniz ile canlı sohbete bağlanabilirsiniz.';
 
   static const String optWhatIsHuzur = 'Huzur nedir?';
   static const String optWhatDoesHuzurOffer = 'Huzur bizlere neler sunuyor?';
+  static const String optConnectDeveloper = 'Geliştiriciyle sohbet etmek istiyorum.';
 
   static const String ansWhatIsHuzur =
       'Huzur; ibadet, tefekkür ve günlük manevi alışkanlıkları tek bir sade deneyimde '
@@ -1373,7 +1410,7 @@ class HuzurAiGuideData {
 
   static const String ansWhatDoesHuzurOffer =
       'Huzur uygulaması içerisinde yer alan gerçek modüller şunlardır:\n'
-      '• Namaz Vakitleri ve Vakit Atmosferi: Konuma dayalı vakit hesaplaması (Adhan), ezan bildirimleri ve vakte uyumlu görsel atmosfer.\n'
+      '• Namaz Vakitleri ve Vakit Atmosferi: Konuma dayalı vakit hesaplaması, ezan bildirimleri ve vakte uyumlu görsel atmosfer.\n'
       '• Kur’an ve Kutsal Metinlerde Arama: Ayetler, ilahi metinler ve tefekkür notları arasında hızlı okuma ve arama.\n'
       '• Esmaül Hüsna ve Zikir Takibi: Kişisel zikir sayacı, Esmaül Hüsna rehberi ve günlük manevi takip.\n'
       '• Huzur Sesleri (Atmosfer): Ney, yağmur, su ve rüzgar sesleriyle tefekkür ve odaklanma arka planı.\n'
