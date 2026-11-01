@@ -23,3 +23,11 @@ service-account*.json
 .huzur_final_backup_*/
 *.bak_v1
 *.bak_v1.*
+
+# Retired Huzur live support backend
+/backend/
+**/__pycache__/
+*.py[cod]
+*.db
+*.sqlite
+*.sqlite3

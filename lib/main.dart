@@ -15,7 +15,6 @@ import 'features/tasbih/fluid_tasbih_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await HuzurAppStartupPushManager.initializeOnAppLaunch();
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -48,10 +47,10 @@ class LiquidRootShell extends ConsumerStatefulWidget {
   const LiquidRootShell({super.key, required this.palette});
 
   @override
-  ConsumerState< LiquidRootShell > createState() => _LiquidRootShellState();
+  ConsumerState<LiquidRootShell> createState() => _LiquidRootShellState();
 }
 
-class _LiquidRootShellState extends ConsumerState< LiquidRootShell > {
+class _LiquidRootShellState extends ConsumerState<LiquidRootShell> {
   int _currentIndex = 0;
 
   @override
@@ -59,7 +58,7 @@ class _LiquidRootShellState extends ConsumerState< LiquidRootShell > {
     final audioState = ref.watch(quranAudioProvider);
     final audioNotifier = ref.read(quranAudioProvider.notifier);
 
-    final pages = < Widget >[
+    final pages = <Widget>[
       MainDashboardScreen(
         onSwitchTab: (idx) => setState(() => _currentIndex = idx),
       ),
@@ -148,7 +147,8 @@ class _LiquidRootShellState extends ConsumerState< LiquidRootShell > {
                             padding: const EdgeInsets.all(8),
                             margin: const EdgeInsets.symmetric(horizontal: 4),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF64FFDA).withValues(alpha: 0.22),
+                              color: const Color(0xFF64FFDA)
+                                  .withValues(alpha: 0.22),
                               shape: BoxShape.circle,
                             ),
                             child: BespokeVectorIcon(
@@ -198,7 +198,8 @@ class _LiquidRootShellState extends ConsumerState< LiquidRootShell > {
                         end: Alignment.bottomCenter,
                         colors: [
                           widget.palette.deepCosmicMid.withValues(alpha: 0.88),
-                          widget.palette.deepCosmicStart.withValues(alpha: 0.96),
+                          widget.palette.deepCosmicStart
+                              .withValues(alpha: 0.96),
                         ],
                       ),
                       border: Border(
@@ -223,8 +224,8 @@ class _LiquidRootShellState extends ConsumerState< LiquidRootShell > {
                                   1, "Kitaplar", BespokeIconType.sacredScroll),
                             ),
                             Expanded(
-                              child: _buildNavItem(
-                                  2, "Zikirmatik", BespokeIconType.tasbihRipple),
+                              child: _buildNavItem(2, "Zikirmatik",
+                                  BespokeIconType.tasbihRipple),
                             ),
                             Expanded(
                               child: _buildNavItem(
@@ -232,13 +233,14 @@ class _LiquidRootShellState extends ConsumerState< LiquidRootShell > {
                             ),
                             const SizedBox(width: 6),
                             GestureDetector(
-                              onTap: () => LiquidGlassPaywallSheet.show(context),
+                              onTap: () =>
+                                  LiquidGlassPaywallSheet.show(context),
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 11, vertical: 6),
                                 decoration: BoxDecoration(
-                                  color:
-                                      const Color(0xFFFFE082).withValues(alpha: 0.14),
+                                  color: const Color(0xFFFFE082)
+                                      .withValues(alpha: 0.14),
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
                                     color: const Color(0xFFFFE082)
@@ -295,7 +297,9 @@ class _LiquidRootShellState extends ConsumerState< LiquidRootShell > {
         duration: const Duration(milliseconds: 160),
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
         decoration: BoxDecoration(
-          color: selected ? Colors.white.withValues(alpha: 0.12) : Colors.transparent,
+          color: selected
+              ? Colors.white.withValues(alpha: 0.12)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(

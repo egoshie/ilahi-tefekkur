@@ -14,10 +14,9 @@ import '../../core/theme/liquid_glass_theme.dart';
 import '../../core/theme/story_share_sheet.dart';
 import '../esma/esmaul_husna_sheet.dart';
 import '../paywall/liquid_glass_paywall.dart';
-import '../support/huzur_live_support.dart';
 
 class MainDashboardScreen extends ConsumerStatefulWidget {
-  final ValueChanged< int >? onSwitchTab;
+  final ValueChanged<int>? onSwitchTab;
 
   const MainDashboardScreen({
     super.key,
@@ -25,11 +24,11 @@ class MainDashboardScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState< MainDashboardScreen > createState() =>
+  ConsumerState<MainDashboardScreen> createState() =>
       _MainDashboardScreenState();
 }
 
-class _MainDashboardScreenState extends ConsumerState< MainDashboardScreen >
+class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _waveController;
   Timer? _hourlyChecker;
@@ -37,7 +36,7 @@ class _MainDashboardScreenState extends ConsumerState< MainDashboardScreen >
   bool _alarmConfirmed = false;
   bool _widgetPinnedFeedback = false;
 
-  static const Map< int, String > _trHijriMonths = {
+  static const Map<int, String> _trHijriMonths = {
     1: 'Muharrem',
     2: 'Safer',
     3: 'Rebîülevvel',
@@ -70,7 +69,7 @@ class _MainDashboardScreenState extends ConsumerState< MainDashboardScreen >
     });
   }
 
-  Future< void > _initSilentWidgetSync() async {
+  Future<void> _initSilentWidgetSync() async {
     final prefs = await SharedPreferences.getInstance();
     final offset = prefs.getInt('hourly_verse_offset') ?? 0;
     if (mounted) {
@@ -171,7 +170,6 @@ class _MainDashboardScreenState extends ConsumerState< MainDashboardScreen >
           ],
         ),
         const SizedBox(height: 16),
-
         GlassContainer(
           borderRadius: 32,
           emeraldGlow: true,
@@ -240,7 +238,6 @@ class _MainDashboardScreenState extends ConsumerState< MainDashboardScreen >
                 ),
               ),
               const SizedBox(height: 18),
-
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -259,7 +256,6 @@ class _MainDashboardScreenState extends ConsumerState< MainDashboardScreen >
                 ],
               ),
               const SizedBox(height: 14),
-
               Row(
                 children: [
                   Expanded(
@@ -354,7 +350,6 @@ class _MainDashboardScreenState extends ConsumerState< MainDashboardScreen >
           ),
         ),
         const SizedBox(height: 16),
-
         GlassContainer(
           borderRadius: 30,
           goldAccentBorder: true,
@@ -482,7 +477,9 @@ class _MainDashboardScreenState extends ConsumerState< MainDashboardScreen >
                           const SizedBox(width: 6),
                           Flexible(
                             child: Text(
-                              _widgetPinnedFeedback ? "Widget'ta" : 'Widget Yap',
+                              _widgetPinnedFeedback
+                                  ? "Widget'ta"
+                                  : 'Widget Yap',
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 fontSize: 12,
@@ -537,7 +534,6 @@ class _MainDashboardScreenState extends ConsumerState< MainDashboardScreen >
           ),
         ),
         const SizedBox(height: 16),
-
         Row(
           children: [
             Expanded(
@@ -651,61 +647,6 @@ class _MainDashboardScreenState extends ConsumerState< MainDashboardScreen >
           ],
         ),
         const SizedBox(height: 16),
-
-        // Huzur Canlı Destek Kartı
-        GlassContainer(
-          borderRadius: 24,
-          emeraldGlow: true,
-          goldAccentBorder: true,
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-          onTap: () => HuzurLiveSupportSheet.show(context),
-          child: Row(
-            children: [
-              const EgeDenizDeveloperAvatar(size: 40),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Row(
-                      children: [
-                        Text(
-                          'Huzur Canlı Destek',
-                          style: TextStyle(
-                            fontSize: 14.5,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFFFFE082),
-                          ),
-                        ),
-                        SizedBox(width: 6),
-                        BespokeVectorIcon(
-                          type: BespokeIconType.verifiedSeal,
-                          color: Color(0xFF64FFDA),
-                          size: 14,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Ege Deniz ile doğrudan canlı destek ve geri bildirim hattı',
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        color: Colors.white.withOpacity(0.75),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const BespokeVectorIcon(
-                type: BespokeIconType.supportChat,
-                color: Color(0xFF64FFDA),
-                size: 20,
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-
         GlassContainer(
           borderRadius: 24,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),

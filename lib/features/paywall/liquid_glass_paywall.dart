@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/services/pricing_and_premium_service.dart';
 import '../../core/theme/glass_container.dart';
 import '../../core/theme/liquid_glass_theme.dart';
-import 'huzur_live_support.dart';
 
 class LiquidGlassPaywallSheet extends ConsumerStatefulWidget {
   const LiquidGlassPaywallSheet({super.key});
@@ -124,8 +123,6 @@ class _LiquidGlassPaywallSheetState
               ),
               const SizedBox(height: 14),
               const HuzurDeveloperStoryButton(),
-              const SizedBox(height: 10),
-              const HuzurLiveSupportButton(),
               const SizedBox(height: 18),
               _buildFeatureRow(
                 "Tevrat (39 Kitap) ve İncil (27 Kitap) Canlı Türkçe Külliyat",
@@ -697,7 +694,6 @@ class HuzurDeveloperSvgBadge extends StatelessWidget {
 
 // ============================================================
 // HUZUR UYGULAMA İÇİ CANLI DESTEK BUTONU
-// Canli destek ekrani huzur_live_support.dart dosyasina tasindi.
 
 // HUZUR DEVELOPER STORY - TETİKLEYİCİ BUTON
 // ============================================================
@@ -851,34 +847,6 @@ Future<void> showHuzurDeveloperStoryModal(
                           textAlign: TextAlign.start,
                         ),
                         const SizedBox(height: 22),
-                        GlassContainer(
-                          borderRadius: 16,
-                          goldAccentBorder: true,
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 13,
-                          ),
-                          onTap: () {
-                            Navigator.of(sheetContext).pop();
-                            showHuzurInAppLiveChatModal(context);
-                          },
-                          child: const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              HuzurCrescentEmblemSvg(size: 18),
-                              SizedBox(width: 8),
-                              Text(
-                                'Ege Deniz ile Canlı Sohbete Bağlan',
-                                style: TextStyle(
-                                  color: Color(0xFFFFE082),
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              SizedBox(width: 6),
-                              HuzurGlowingStarSvg(size: 16),
-                            ],
-                          ),
-                        ),
                         const SizedBox(height: 10),
                         GlassContainer(
                           borderRadius: 16,

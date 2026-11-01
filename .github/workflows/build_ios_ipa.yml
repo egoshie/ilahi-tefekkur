@@ -17,7 +17,7 @@ jobs:
       - name: Configure Flutter iOS & Pods (--no-codesign)
         run: |
           flutter pub get
-          flutter build ios --config-only --release --no-codesign --dart-define=HUZUR_SUPPORT_API_URL=https://56.228.42.81.nip.io
+          flutter build ios --config-only --release --no-codesign
           cd ios
           pod install
       - name: Inject HuzurWidgetExtension into Xcode Project
