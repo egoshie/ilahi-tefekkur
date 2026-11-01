@@ -1,49 +1,236 @@
-name: Build Huzur iOS IPA V1.0
+name: Huzur iOS App Store Build
+
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: [main]
   workflow_dispatch:
+
+permissions:
+  contents: read
+
 jobs:
-  build-ipa:
-    runs-on: macos-latest
+  build-ios:
+    name: Archive and export signed iOS app
+    runs-on: macos-26
+    timeout-minutes: 60
+
+    env:
+      TEAM_ID: 9JL6TJ7722
+      APP_BUNDLE_ID: com.ilahi.tefekkur.ilahiTefekkur
+      WIDGET_BUNDLE_ID: com.ilahi.tefekkur.ilahiTefekkur.HuzurWidget
+      APP_PROFILE_NAME: Huzur_AppStore_Profile
+      WIDGET_PROFILE_NAME: Huzur_Widget_AppStore_Profile
+      APP_GROUP_ID: group.com.ilahi.tefekkur
+
     steps:
-      - name: Checkout Repository
+      - name: Checkout
         uses: actions/checkout@v4
-      - name: Setup Flutter SDK
+
+      - name: Check Xcode
+        run: |
+          set -euo pipefail
+          xcodebuild -version
+          swift --version
+
+      - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
-      - name: Configure Flutter iOS & Pods (--no-codesign)
+
+      - name: Resolve Flutter dependencies
         run: |
+          set -euo pipefail
+          flutter --version
           flutter pub get
           flutter build ios --config-only --release --no-codesign
-          cd ios
-          pod install
-      - name: Inject HuzurWidgetExtension into Xcode Project
+          test -f ios/Flutter/Generated.xcconfig
+          test -d ios/Flutter/ephemeral/Packages/FlutterGeneratedPluginSwiftPackage
+
+      - name: Configure widget and signing
         run: |
-          gem install xcodeproj --no-document
-          cd ios
-          ruby fix_and_add_widget.rb
-      - name: Build Runner & WidgetExtension Separately
+          set -euo pipefail
+          sudo gem install xcodeproj --no-document
+          ruby ios/fix_and_add_widget.rb
+          plutil -lint ios/Runner/Runner.entitlements
+          plutil -lint ios/HuzurWidget/HuzurWidget.entitlements
+          plutil -lint ios/HuzurWidget/Info.plist
+
+      - name: Install signing certificate and profiles
+        env:
+          IOS_P12_BASE64: ${{ secrets.IOS_P12_BASE64 }}
+          IOS_P12_PASSWORD: ${{ secrets.IOS_P12_PASSWORD }}
+          IOS_PROFILE_APP_BASE64: ${{ secrets.IOS_PROFILE_APP_BASE64 }}
+          IOS_PROFILE_WIDGET_BASE64: ${{ secrets.IOS_PROFILE_WIDGET_BASE64 }}
         run: |
-          cd ios
-          xcodebuild -workspace Runner.xcworkspace -scheme Runner -configuration Release -sdk iphoneos -derivedDataPath "$PWD/build_runner" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO AD_HOC_CODE_SIGNING_ALLOWED=YES COMPILER_INDEX_STORE_ENABLE=NO
-          xcodebuild -project Runner.xcodeproj -target HuzurWidgetExtension -configuration Release -sdk iphoneos SYMROOT="$PWD/build_widget" OBJROOT="$PWD/build_widget/obj" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO AD_HOC_CODE_SIGNING_ALLOWED=YES COMPILER_INDEX_STORE_ENABLE=NO
-      - name: Embed Widget into Runner.app & Package IPA
+          set -euo pipefail
+
+          test -n "$IOS_P12_BASE64"
+          test -n "$IOS_P12_PASSWORD"
+          test -n "$IOS_PROFILE_APP_BASE64"
+          test -n "$IOS_PROFILE_WIDGET_BASE64"
+
+          KEYCHAIN_PATH="$RUNNER_TEMP/huzur-signing.keychain-db"
+          KEYCHAIN_PASSWORD="$(openssl rand -hex 24)"
+
+          echo "HUZUR_KEYCHAIN_PATH=$KEYCHAIN_PATH" >> "$GITHUB_ENV"
+          echo "HUZUR_KEYCHAIN_PASSWORD=$KEYCHAIN_PASSWORD" >> "$GITHUB_ENV"
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          P12_PATH="$RUNNER_TEMP/Huzur_Apple_Distribution.p12"
+          printf '%s' "$IOS_P12_BASE64" |
+            openssl base64 -d -A -out "$P12_PATH"
+
+          security import "$P12_PATH" \
+            -k "$KEYCHAIN_PATH" \
+            -P "$IOS_P12_PASSWORD" \
+            -T /usr/bin/codesign \
+            -T /usr/bin/security
+
+          security set-key-partition-list \
+            -S apple-tool:,apple:,codesign: \
+            -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          security list-keychains -d user -s "$KEYCHAIN_PATH"
+          security default-keychain -d user -s "$KEYCHAIN_PATH"
+
+          security find-identity -v -p codesigning "$KEYCHAIN_PATH" |
+            tee "$RUNNER_TEMP/signing-identities.txt"
+
+          grep -q 'Apple Distribution' "$RUNNER_TEMP/signing-identities.txt"
+
+          PROFILE_DIR="$HOME/Library/MobileDevice/Provisioning Profiles"
+          mkdir -p "$PROFILE_DIR"
+
+          install_profile() {
+            PROFILE_BASE64="$1"
+            EXPECTED_NAME="$2"
+            EXPECTED_BUNDLE_ID="$3"
+            PROFILE_PATH="$RUNNER_TEMP/$EXPECTED_NAME.mobileprovision"
+            PROFILE_PLIST="$RUNNER_TEMP/$EXPECTED_NAME.plist"
+
+            printf '%s' "$PROFILE_BASE64" |
+              openssl base64 -d -A -out "$PROFILE_PATH"
+
+            security cms -D -i "$PROFILE_PATH" > "$PROFILE_PLIST"
+
+            ACTUAL_NAME=$(/usr/libexec/PlistBuddy -c 'Print :Name' "$PROFILE_PLIST")
+            ACTUAL_UUID=$(/usr/libexec/PlistBuddy -c 'Print :UUID' "$PROFILE_PLIST")
+            ACTUAL_APP_ID=$(/usr/libexec/PlistBuddy -c 'Print :Entitlements:application-identifier' "$PROFILE_PLIST")
+            ACTUAL_GROUP=$(/usr/libexec/PlistBuddy -c 'Print :Entitlements:com.apple.security.application-groups:0' "$PROFILE_PLIST")
+
+            test "$ACTUAL_NAME" = "$EXPECTED_NAME"
+            test "$ACTUAL_APP_ID" = "$TEAM_ID.$EXPECTED_BUNDLE_ID"
+            test "$ACTUAL_GROUP" = "$APP_GROUP_ID"
+
+            cp "$PROFILE_PATH" "$PROFILE_DIR/$ACTUAL_UUID.mobileprovision"
+            echo "Installed profile: $ACTUAL_NAME"
+          }
+
+          install_profile "$IOS_PROFILE_APP_BASE64" "$APP_PROFILE_NAME" "$APP_BUNDLE_ID"
+          install_profile "$IOS_PROFILE_WIDGET_BASE64" "$WIDGET_PROFILE_NAME" "$WIDGET_BUNDLE_ID"
+
+      - name: Resolve Xcode packages
         run: |
-          cd ios
-          RUNNER_APP="$PWD/build_runner/Build/Products/Release-iphoneos/Runner.app"
-          WIDGET_APPEX="$PWD/build_widget/Release-iphoneos/HuzurWidgetExtension.appex"
-          mkdir -p "$RUNNER_APP/PlugIns"
-          cp -r "$WIDGET_APPEX" "$RUNNER_APP/PlugIns/"
-          mkdir -p Payload
-          cp -r "$RUNNER_APP" Payload/
-          zip -qq -r Huzur-V1.0-Release.ipa Payload
-          mkdir -p $GITHUB_WORKSPACE/output_ipa
-          mv Huzur-V1.0-Release.ipa $GITHUB_WORKSPACE/output_ipa/Huzur-Release.ipa
-      - name: Upload Huzur IPA Artifact
+          set -euo pipefail
+          xcodebuild -resolvePackageDependencies \
+            -workspace ios/Runner.xcworkspace \
+            -scheme Runner
+
+      - name: Archive signed app and widget
+        run: |
+          set -euo pipefail
+          security unlock-keychain -p "$HUZUR_KEYCHAIN_PASSWORD" "$HUZUR_KEYCHAIN_PATH"
+
+          ARCHIVE_PATH="$RUNNER_TEMP/Huzur.xcarchive"
+
+          xcodebuild \
+            -workspace ios/Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$ARCHIVE_PATH" \
+            archive \
+            DEVELOPMENT_TEAM="$TEAM_ID" \
+            CODE_SIGNING_ALLOWED=YES
+
+          APP_PATH="$ARCHIVE_PATH/Products/Applications/Runner.app"
+          WIDGET_PATH="$APP_PATH/PlugIns/HuzurWidgetExtension.appex"
+
+          test -d "$APP_PATH"
+          test -d "$WIDGET_PATH"
+          test -s "$APP_PATH/embedded.mobileprovision"
+          test -s "$WIDGET_PATH/embedded.mobileprovision"
+
+          /usr/bin/codesign --verify --strict --verbose=2 "$WIDGET_PATH"
+          /usr/bin/codesign --verify --deep --strict --verbose=2 "$APP_PATH"
+
+          APP_ID=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP_PATH/Info.plist")
+          EXT_ID=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$WIDGET_PATH/Info.plist")
+
+          test "$APP_ID" = "$APP_BUNDLE_ID"
+          test "$EXT_ID" = "$WIDGET_BUNDLE_ID"
+
+          echo "Signed archive verified: $APP_ID + $EXT_ID"
+
+      - name: Export App Store Connect IPA
+        run: |
+          set -euo pipefail
+
+          ARCHIVE_PATH="$RUNNER_TEMP/Huzur.xcarchive"
+          EXPORT_PATH="$RUNNER_TEMP/Huzur-export"
+          EXPORT_OPTIONS="$RUNNER_TEMP/ExportOptions.plist"
+
+          cat > "$EXPORT_OPTIONS" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>teamID</key><string>$TEAM_ID</string>
+            <key>signingStyle</key><string>manual</string>
+            <key>signingCertificate</key><string>Apple Distribution</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>$APP_BUNDLE_ID</key><string>$APP_PROFILE_NAME</string>
+              <key>$WIDGET_BUNDLE_ID</key><string>$WIDGET_PROFILE_NAME</string>
+            </dict>
+            <key>stripSwiftSymbols</key><true/>
+            <key>uploadSymbols</key><true/>
+          </dict>
+          </plist>
+          PLIST
+
+          plutil -lint "$EXPORT_OPTIONS"
+          mkdir -p output
+
+          xcodebuild -exportArchive \
+            -archivePath "$ARCHIVE_PATH" \
+            -exportPath "$EXPORT_PATH" \
+            -exportOptionsPlist "$EXPORT_OPTIONS"
+
+          IPA_SOURCE="$(find "$EXPORT_PATH" -maxdepth 1 -name '*.ipa' -print -quit)"
+          test -n "$IPA_SOURCE"
+
+          cp "$IPA_SOURCE" output/Huzur-1.0.0-11.ipa
+          unzip -t output/Huzur-1.0.0-11.ipa >/dev/null
+          shasum -a 256 output/Huzur-1.0.0-11.ipa
+          ls -lh output/Huzur-1.0.0-11.ipa
+
+      - name: Upload signed IPA artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Huzur-iOS-V1.0-IPA
-          path: output_ipa/Huzur-Release.ipa
+          name: Huzur-AppStore-IPA
+          path: output/Huzur-1.0.0-11.ipa
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Remove temporary signing keychain
+        if: always()
+        run: |
+          if [ -n "${HUZUR_KEYCHAIN_PATH:-}" ] && [ -f "$HUZUR_KEYCHAIN_PATH" ]; then
+            security delete-keychain "$HUZUR_KEYCHAIN_PATH" || true
+          fi
