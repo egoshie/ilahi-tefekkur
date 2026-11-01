@@ -15,6 +15,7 @@ import 'features/tasbih/fluid_tasbih_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await HuzurAppStartupPushManager.initializeOnAppLaunch();
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,

@@ -79,6 +79,8 @@ class _HuzurLiveSupportSheet extends StatefulWidget {
 
 class _HuzurLiveSupportSheetState extends State<_HuzurLiveSupportSheet> {
   bool _showDeveloperConnectForm = false;
+  bool _privacyConsentAccepted = false;
+  static const String _privacyPolicyVersion = 'v1.0';
   bool _isHuzurAiTyping = false;
   int _huzurAiReqToken = 0;
 
@@ -647,7 +649,7 @@ class _HuzurLiveSupportSheetState extends State<_HuzurLiveSupportSheet> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Huzur Canlı Destek',
+                  'Huzur Canlı Destek • Liquid Glass',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 16,
@@ -795,7 +797,50 @@ class _HuzurLiveSupportSheetState extends State<_HuzurLiveSupportSheet> {
                 height: 1.5,
               ),
             ),
-            const SizedBox(height: 22),
+                      const SizedBox(height: 12),
+          GlassContainer(
+            borderRadius: 16,
+            blurSigma: 18,
+            goldAccentBorder: _privacyConsentAccepted,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            onTap: () => setState(() => _privacyConsentAccepted = !_privacyConsentAccepted),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: Checkbox(
+                    value: _privacyConsentAccepted,
+                    activeColor: const Color(0xFFD4AF37),
+                    checkColor: const Color(0xFF04100C),
+                    side: BorderSide(
+                      color: const Color(0xFFFFE082).withValues(alpha: 0.75),
+                      width: 1.4,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    onChanged: (val) {
+                      setState(() => _privacyConsentAccepted = val ?? false);
+                    },
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Ad ve e-posta bilgilerimin yalnızca canlı destek iletişimi kapsamında işlenmesini ve gizlilik aydınlatma metnini (v1.0) okuduğumu, onayladığımı beyan ederim.',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.88),
+                      fontSize: 11.8,
+                      height: 1.42,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+const SizedBox(height: 22),
             FilledButton(
               onPressed: _starting ? null : _startSession,
               style: FilledButton.styleFrom(
@@ -823,29 +868,63 @@ class _HuzurLiveSupportSheetState extends State<_HuzurLiveSupportSheet> {
     );
   }
 
-  Widget _inputField({
+      Widget _inputField({
     required TextEditingController controller,
     required String label,
-    required IconData icon,
+    String? hint,
+    IconData? icon,
     TextInputType? keyboardType,
+    TextInputAction? textInputAction,
     String? Function(String?)? validator,
+    ValueChanged<String>? onFieldSubmitted,
+    int maxLines = 1,
   }) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      validator: validator,
-      style: const TextStyle(color: Colors.white),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(color: Color(0xFFADC1B7)),
-        prefixIcon: Icon(icon, color: _accent, size: 20),
-        filled: true,
-        fillColor: _surface,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: BorderSide.none,
+    return GlassContainer(
+      borderRadius: 18,
+      blurSigma: 22,
+      emeraldGlow: true,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      child: TextFormField(
+        controller: controller,
+        keyboardType: keyboardType,
+        textInputAction: textInputAction,
+        validator: validator,
+        onFieldSubmitted: onFieldSubmitted,
+        maxLines: maxLines,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 13.5,
+          fontWeight: FontWeight.w500,
         ),
-        errorStyle: const TextStyle(color: Color(0xFFFFA5A5)),
+        cursorColor: const Color(0xFFFFE082),
+        decoration: InputDecoration(
+          icon: icon != null
+              ? Icon(icon, color: const Color(0xFF9CE5C9), size: 19)
+              : null,
+          labelText: label,
+          labelStyle: TextStyle(
+            color: const Color(0xFFFFE082).withValues(alpha: 0.88),
+            fontSize: 12.5,
+            fontWeight: FontWeight.w600,
+          ),
+          hintText: hint,
+          hintStyle: TextStyle(
+            color: Colors.white.withValues(alpha: 0.38),
+            fontSize: 12.5,
+          ),
+          errorStyle: const TextStyle(
+            color: Color(0xFFFFB4AB),
+            fontSize: 11.2,
+            fontWeight: FontWeight.w600,
+          ),
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          errorBorder: InputBorder.none,
+          focusedErrorBorder: InputBorder.none,
+          isDense: true,
+          contentPadding: const EdgeInsets.symmetric(vertical: 8),
+        ),
       ),
     );
   }
@@ -1173,7 +1252,15 @@ class _HuzurLiveSupportSheetState extends State<_HuzurLiveSupportSheet> {
             filter: ui.ImageFilter.blur(sigmaX: 26, sigmaY: 26),
             child: Container(
               decoration: BoxDecoration(
-                color: _background.withValues(alpha: 0.84),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    const Color(0xFF103528).withValues(alpha: 0.82),
+                    const Color(0xFF071913).withValues(alpha: 0.90),
+                    const Color(0xFF030A07).withValues(alpha: 0.95),
+                  ],
+                ),
                 borderRadius:
                     const BorderRadius.vertical(top: Radius.circular(28)),
                 border: Border(

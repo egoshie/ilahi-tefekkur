@@ -1,3 +1,5 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -66,15 +68,12 @@ class NotificationAndWidgetService {
     final hourSeed = now.year * 8760 + now.month * 720 + now.day * 24 + now.hour + offset;
     if (offset == 0) return getActiveHourlyVerse(offset: 0);
     try {
-      final ayahId = ((hourSeed * 37) % 6236) + 1;
       final res = await http.get(Uri.parse('https://api.alquran.cloud/v1/ayah/\$ayahId/editions/quran-uthmani,tr.yazir')).timeout(const Duration(seconds: 6));
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body)['data'] as List<dynamic>;
         final arObj = data[0] as Map<String, dynamic>;
         final trObj = data[1] as Map<String, dynamic>;
         final surahNum = int.tryParse((arObj['surah'] as Map)['number'].toString()) ?? 1;
-        final inSurah = int.tryParse(arObj['numberInSurah'].toString()) ?? 1;
-        final sName = (surahNum >= 1 && surahNum <= 114) ? OfflineSacredRepository.kSurahNamesTr[surahNum - 1] : 'Sûre \$surahNum';
         final splitTr = smartSplitTurkishSentence((trObj['text'] ?? '').toString());
         final splitAr = smartSplitArabic((arObj['text'] ?? '').toString());
         final liveItem = HourlyShortVerse(index: offset, ayahKey: '\$surahNum:\$inSurah', arabicShort: splitAr, turkishShort: splitTr, reference: '\$sName, \$inSurah');
@@ -148,4 +147,106 @@ String resolveSupportNotificationTitle({
   return (incomingTitle != null && incomingTitle.trim().isNotEmpty)
       ? incomingTitle.trim()
       : developerSupportNotificationTitle;
+}
+
+// ============================================================================
+// İLK AÇILIŞ iOS/ANDROID SİSTEM BİLDİRİM İZNİ & FCM/APNs YÖNETİCİSİ (ADIM 4)
+// ============================================================================
+
+@pragma('vm:entry-point')
+Future<void> huzurFirebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  try {
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp();
+    }
+  } catch (_) {}
+}
+
+class HuzurAppStartupPushManager {
+  static const String cachedPushTokenKey = 'huzur_cached_fcm_push_token_v1';
+  static const String permissionStatusKey = 'huzur_push_permission_status_v1';
+  static bool _initialized = false;
+  static AuthorizationStatus _lastStatus = AuthorizationStatus.notDetermined;
+
+  static AuthorizationStatus get lastAuthorizationStatus => _lastStatus;
+  static bool get isPermissionDenied => _lastStatus == AuthorizationStatus.denied;
+
+  /// Uygulama ilk açıldığında Firebase -> APNs -> Sistem Bildirim İzni -> FCM Token
+  /// sırasıyla başlatmayı gerçekleştirir.
+  static Future<void> initializeOnAppLaunch() async {
+    if (_initialized) return;
+    _initialized = true;
+
+    try {
+      if (Firebase.apps.isEmpty) {
+        await Firebase.initializeApp();
+      }
+    } catch (_) {
+      // Firebase yapılandırma dosyası olmayan ortamlarda çökmemesi için güvenli geçiş
+      return;
+    }
+
+    try {
+      FirebaseMessaging.onBackgroundMessage(huzurFirebaseMessagingBackgroundHandler);
+      final messaging = FirebaseMessaging.instance;
+
+      // 1. Gerçek iOS / Android sistem bildirim izni penceresi (İzin Ver / İzin Verme)
+      final settings = await messaging.requestPermission(
+        alert: true,
+        announcement: false,
+        badge: true,
+        carPlay: false,
+        criticalAlert: false,
+        provisional: false,
+        sound: true,
+      );
+      _lastStatus = settings.authorizationStatus;
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(permissionStatusKey, _lastStatus.name);
+
+      // 2. iOS ön plan bildirim gösterim ayarları (uygulama açıkken de bildirim düşsün)
+      await messaging.setForegroundNotificationPresentationOptions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+
+      // 3. iOS için önce APNs token hazırlığını bekle, ardından FCM token al
+      try {
+        await messaging.getAPNSToken();
+      } catch (_) {}
+
+      final token = await messaging.getToken();
+      if (token != null && token.trim().isNotEmpty) {
+        await prefs.setString(cachedPushTokenKey, token.trim());
+      }
+
+      // 4. Token yenilendiğinde (onTokenRefresh) önbelleği güncelle
+      messaging.onTokenRefresh.listen((newToken) async {
+        if (newToken.trim().isNotEmpty) {
+          final p = await SharedPreferences.getInstance();
+          await p.setString(cachedPushTokenKey, newToken.trim());
+        }
+      });
+    } catch (_) {}
+  }
+
+  static Future<String?> getCachedOrFreshToken() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final cached = prefs.getString(cachedPushTokenKey);
+      if (cached != null && cached.trim().isNotEmpty) {
+        return cached.trim();
+      }
+      if (Firebase.apps.isNotEmpty) {
+        final fresh = await FirebaseMessaging.instance.getToken();
+        if (fresh != null && fresh.trim().isNotEmpty) {
+          await prefs.setString(cachedPushTokenKey, fresh.trim());
+          return fresh.trim();
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
 }
