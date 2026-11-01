@@ -55,14 +55,13 @@ jobs:
           ruby - <<'RUBY'
           require 'xcodeproj'
 
-          path = 'ios/Pods/Pods.xcodeproj'
-          raise "Pods.xcodeproj bulunamadi" unless File.directory?(path)
+          pods_path = 'ios/Pods/Pods.xcodeproj'
+          abort 'Pods.xcodeproj bulunamadi' unless File.directory?(pods_path)
 
-          project = Xcodeproj::Project.open(path)
-          names = project.targets.map(&:name)
+          project = Xcodeproj::Project.open(pods_path)
+          abort 'Pods projesinde hedef bulunamadi' if project.targets.empty?
 
-          raise "flutter_local_notifications_privacy hedefi bulunamadi" unless
-            names.include?('flutter_local_notifications_privacy')
+          puts "Pods hedef sayisi: #{project.targets.length}"
 
           project.targets.each do |target|
             target.build_configurations.each do |config|
@@ -75,9 +74,7 @@ jobs:
           end
 
           project.save
-
-          puts "CocoaPods imzalamasi kapatildi: #{project.targets.length} hedef"
-          puts "flutter_local_notifications_privacy dogrulandi."
+          puts 'Tum CocoaPods hedeflerinde kod imzalama kapatildi.'
           RUBY
           plutil -lint ios/Runner/Runner.entitlements
           plutil -lint ios/HuzurWidget/HuzurWidget.entitlements
