@@ -16,6 +16,7 @@ jobs:
 
     env:
       TEAM_ID: 9JL6TJ7722
+      AUDIO_SESSION_MICROPHONE: '0'
       APP_BUNDLE_ID: com.ilahi.tefekkur.ilahiTefekkur
       WIDGET_BUNDLE_ID: com.ilahi.tefekkur.ilahiTefekkur.HuzurWidget
       APP_PROFILE_NAME: Huzur_AppStore_Profile
@@ -42,8 +43,9 @@ jobs:
         run: |
           set -euo pipefail
           flutter --version
-          flutter pub get
-          flutter build ios --config-only --release --no-codesign
+          AUDIO_SESSION_MICROPHONE=0 flutter clean
+          AUDIO_SESSION_MICROPHONE=0 flutter pub get
+          AUDIO_SESSION_MICROPHONE=0 flutter build ios --config-only --release --no-codesign
           test -f ios/Flutter/Generated.xcconfig
           test -d ios/Flutter/ephemeral/Packages/FlutterGeneratedPluginSwiftPackage
 
@@ -160,7 +162,7 @@ jobs:
       - name: Resolve Xcode packages
         run: |
           set -euo pipefail
-          xcodebuild -resolvePackageDependencies \
+          AUDIO_SESSION_MICROPHONE=0 xcodebuild -resolvePackageDependencies \
             -workspace ios/Runner.xcworkspace \
             -scheme Runner
 
@@ -171,7 +173,7 @@ jobs:
 
           ARCHIVE_PATH="$RUNNER_TEMP/Huzur.xcarchive"
 
-          xcodebuild \
+          AUDIO_SESSION_MICROPHONE=0 xcodebuild \
             -workspace ios/Runner.xcworkspace \
             -scheme Runner \
             -configuration Release \
@@ -238,16 +240,16 @@ jobs:
           IPA_SOURCE="$(find "$EXPORT_PATH" -maxdepth 1 -name '*.ipa' -print -quit)"
           test -n "$IPA_SOURCE"
 
-          cp "$IPA_SOURCE" output/Huzur-1.0.0-11.ipa
-          unzip -t output/Huzur-1.0.0-11.ipa >/dev/null
-          shasum -a 256 output/Huzur-1.0.0-11.ipa
-          ls -lh output/Huzur-1.0.0-11.ipa
+          cp "$IPA_SOURCE" output/Huzur-1.0.0-12.ipa
+          unzip -t output/Huzur-1.0.0-12.ipa >/dev/null
+          shasum -a 256 output/Huzur-1.0.0-12.ipa
+          ls -lh output/Huzur-1.0.0-12.ipa
 
       - name: Upload signed IPA artifact
         uses: actions/upload-artifact@v4
         with:
           name: Huzur-AppStore-IPA
-          path: output/Huzur-1.0.0-11.ipa
+          path: output/Huzur-1.0.0-12.ipa
           if-no-files-found: error
           retention-days: 7
 
@@ -276,7 +278,7 @@ jobs:
 
           openssl pkey -in "$KEY_FILE" -noout
 
-          IPA_PATH="output/Huzur-1.0.0-11.ipa"
+          IPA_PATH="output/Huzur-1.0.0-12.ipa"
           test -s "$IPA_PATH"
 
           echo "Uploading Huzur IPA to App Store Connect..."
