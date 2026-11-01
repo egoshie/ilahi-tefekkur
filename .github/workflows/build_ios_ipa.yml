@@ -52,6 +52,33 @@ jobs:
           set -euo pipefail
           sudo gem install xcodeproj --no-document
           ruby ios/fix_and_add_widget.rb
+          ruby - <<'RUBY'
+          require 'xcodeproj'
+
+          path = 'ios/Pods/Pods.xcodeproj'
+          raise "Pods.xcodeproj bulunamadi" unless File.directory?(path)
+
+          project = Xcodeproj::Project.open(path)
+          names = project.targets.map(&:name)
+
+          raise "flutter_local_notifications_privacy hedefi bulunamadi" unless
+            names.include?('flutter_local_notifications_privacy')
+
+          project.targets.each do |target|
+            target.build_configurations.each do |config|
+              settings = config.build_settings
+              settings['CODE_SIGNING_ALLOWED'] = 'NO'
+              settings['CODE_SIGNING_REQUIRED'] = 'NO'
+              settings['CODE_SIGN_IDENTITY'] = ''
+              settings['CODE_SIGN_IDENTITY[sdk=iphoneos*]'] = ''
+            end
+          end
+
+          project.save
+
+          puts "CocoaPods imzalamasi kapatildi: #{project.targets.length} hedef"
+          puts "flutter_local_notifications_privacy dogrulandi."
+          RUBY
           plutil -lint ios/Runner/Runner.entitlements
           plutil -lint ios/HuzurWidget/HuzurWidget.entitlements
           plutil -lint ios/HuzurWidget/Info.plist
@@ -155,7 +182,6 @@ jobs:
             -archivePath "$ARCHIVE_PATH" \
             archive \
             DEVELOPMENT_TEAM="$TEAM_ID" \
-            CODE_SIGNING_ALLOWED=YES
 
           APP_PATH="$ARCHIVE_PATH/Products/Applications/Runner.app"
           WIDGET_PATH="$APP_PATH/PlugIns/HuzurWidgetExtension.appex"
