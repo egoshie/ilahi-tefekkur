@@ -80,7 +80,7 @@ class _HuzurLiveSupportSheet extends StatefulWidget {
 class _HuzurLiveSupportSheetState extends State<_HuzurLiveSupportSheet> {
   bool _showDeveloperConnectForm = false;
   bool _privacyConsentAccepted = false;
-  static const String _privacyPolicyVersion = 'v1.0';
+  static const String _privacyPolicyVersion = '';
   bool _isHuzurAiTyping = false;
   int _huzurAiReqToken = 0;
 
@@ -649,7 +649,7 @@ class _HuzurLiveSupportSheetState extends State<_HuzurLiveSupportSheet> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Huzur Canlı Destek • Liquid Glass',
+                  'Huzur Canlı Destek',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 16,
@@ -829,7 +829,7 @@ class _HuzurLiveSupportSheetState extends State<_HuzurLiveSupportSheet> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Ad ve e-posta bilgilerimin yalnızca canlı destek iletişimi kapsamında işlenmesini ve gizlilik aydınlatma metnini (v1.0) okuduğumu, onayladığımı beyan ederim.',
+                    'Ad ve e-posta bilgilerimin yalnızca canlı destek iletişimi kapsamında işlenmesini ve gizlilik aydınlatma metnini () okuduğumu, onayladığımı beyan ederim.',
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.88),
                       fontSize: 11.8,

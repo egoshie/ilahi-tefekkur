@@ -14,8 +14,10 @@ import '../../core/theme/liquid_glass_theme.dart';
 import '../../core/theme/story_share_sheet.dart';
 import '../esma/esmaul_husna_sheet.dart';
 import '../paywall/liquid_glass_paywall.dart';
+import '../support/huzur_live_support.dart';
+
 class MainDashboardScreen extends ConsumerStatefulWidget {
-  final ValueChanged<int>? onSwitchTab;
+  final ValueChanged< int >? onSwitchTab;
 
   const MainDashboardScreen({
     super.key,
@@ -23,11 +25,11 @@ class MainDashboardScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<MainDashboardScreen> createState() =>
+  ConsumerState< MainDashboardScreen > createState() =>
       _MainDashboardScreenState();
 }
 
-class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
+class _MainDashboardScreenState extends ConsumerState< MainDashboardScreen >
     with SingleTickerProviderStateMixin {
   late final AnimationController _waveController;
   Timer? _hourlyChecker;
@@ -35,19 +37,19 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
   bool _alarmConfirmed = false;
   bool _widgetPinnedFeedback = false;
 
-  static const Map<int, String> _trHijriMonths = {
-    1: "Muharrem",
-    2: "Safer",
-    3: "Rebîülevvel",
-    4: "Rebîülâhir",
-    5: "Cemâziyelevvel",
-    6: "Cemâziyelâhir",
-    7: "Recep",
-    8: "Şaban",
-    9: "Ramazan",
-    10: "Şevval",
-    11: "Zilkade",
-    12: "Zilhicce",
+  static const Map< int, String > _trHijriMonths = {
+    1: 'Muharrem',
+    2: 'Safer',
+    3: 'Rebîülevvel',
+    4: 'Rebîülâhir',
+    5: 'Cemâziyelevvel',
+    6: 'Cemâziyelâhir',
+    7: 'Recep',
+    8: 'Şaban',
+    9: 'Ramazan',
+    10: 'Şevval',
+    11: 'Zilkade',
+    12: 'Zilhicce',
   };
 
   @override
@@ -68,7 +70,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
     });
   }
 
-  Future<void> _initSilentWidgetSync() async {
+  Future< void > _initSilentWidgetSync() async {
     final prefs = await SharedPreferences.getInstance();
     final offset = prefs.getInt('hourly_verse_offset') ?? 0;
     if (mounted) {
@@ -90,7 +92,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
     final h = d.inHours.abs().toString().padLeft(2, '0');
     final m = (d.inMinutes.abs() % 60).toString().padLeft(2, '0');
     final s = (d.inSeconds.abs() % 60).toString().padLeft(2, '0');
-    return "$h:$m:$s";
+    return '$h:$m:$s';
   }
 
   @override
@@ -107,7 +109,6 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
         .getActiveHourlyVerse(offset: _manualVerseOffset);
 
     return ListView(
-      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(18, 14, 18, 32),
       children: [
@@ -120,7 +121,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    "Huzur",
+                    'Huzur',
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.w800,
@@ -129,13 +130,13 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    "${prayerState.selectedCity.name} • ${hijri.hDay} $hijriMonthTr ${hijri.hYear}",
+                    '${prayerState.selectedCity.name} • ${hijri.hDay} $hijriMonthTr ${hijri.hYear}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w500,
-                      color: Colors.white.withValues(alpha: 0.78),
+                      color: Colors.white.withOpacity(0.78),
                     ),
                   ),
                 ],
@@ -157,7 +158,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                   ),
                   SizedBox(width: 6),
                   Text(
-                    "Huzur Özel",
+                    'Huzur Özel',
                     style: TextStyle(
                       fontSize: 11.5,
                       fontWeight: FontWeight.w700,
@@ -170,6 +171,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
           ],
         ),
         const SizedBox(height: 16),
+
         GlassContainer(
           borderRadius: 32,
           emeraldGlow: true,
@@ -194,11 +196,11 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                "${prayerState.nextPrayerName} Vaktine",
+                                '${prayerState.nextPrayerName} Vaktine',
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,
-                                  color: Colors.white.withValues(alpha: 0.82),
+                                  color: Colors.white.withOpacity(0.82),
                                 ),
                               ),
                               const SizedBox(height: 6),
@@ -217,7 +219,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                                   vertical: 3,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.10),
+                                  color: Colors.white.withOpacity(0.10),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Text(
@@ -238,24 +240,26 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                 ),
               ),
               const SizedBox(height: 18),
+
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildTimePillar("İmsak", timeFmt.format(prayerState.fajr),
+                  _buildTimePillar('İmsak', timeFmt.format(prayerState.fajr),
                       prayerState.activePeriod == PrayerPeriod.imsak, palette),
-                  _buildTimePillar("Güneş", timeFmt.format(prayerState.sunrise),
+                  _buildTimePillar('Güneş', timeFmt.format(prayerState.sunrise),
                       prayerState.activePeriod == PrayerPeriod.gunes, palette),
-                  _buildTimePillar("Öğle", timeFmt.format(prayerState.dhuhr),
+                  _buildTimePillar('Öğle', timeFmt.format(prayerState.dhuhr),
                       prayerState.activePeriod == PrayerPeriod.ogle, palette),
-                  _buildTimePillar("İkindi", timeFmt.format(prayerState.asr),
+                  _buildTimePillar('İkindi', timeFmt.format(prayerState.asr),
                       prayerState.activePeriod == PrayerPeriod.ikindi, palette),
-                  _buildTimePillar("Akşam", timeFmt.format(prayerState.maghrib),
+                  _buildTimePillar('Akşam', timeFmt.format(prayerState.maghrib),
                       prayerState.activePeriod == PrayerPeriod.aksam, palette),
-                  _buildTimePillar("Yatsı", timeFmt.format(prayerState.isha),
+                  _buildTimePillar('Yatsı', timeFmt.format(prayerState.isha),
                       prayerState.activePeriod == PrayerPeriod.yatsi, palette),
                 ],
               ),
               const SizedBox(height: 14),
+
               Row(
                 children: [
                   Expanded(
@@ -281,7 +285,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                           SizedBox(width: 6),
                           Flexible(
                             child: Text(
-                              "Şehir & Makam",
+                              'Şehir & Makam',
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 fontSize: 12,
@@ -330,8 +334,8 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                           Flexible(
                             child: Text(
                               _alarmConfirmed
-                                  ? "Hatırlatıcı Açık"
-                                  : "Vakit Hatırlatıcı",
+                                  ? 'Hatırlatıcı Açık'
+                                  : 'Vakit Hatırlatıcı',
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 fontSize: 12,
@@ -350,6 +354,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
           ),
         ),
         const SizedBox(height: 16),
+
         GlassContainer(
           borderRadius: 30,
           goldAccentBorder: true,
@@ -367,7 +372,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
-                    "Günün İlhamı",
+                    'Günün İlhamı',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
@@ -400,7 +405,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
               ),
               const SizedBox(height: 10),
               Text(
-                "\"${activeShortVerse.turkishShort}\"",
+                '"${activeShortVerse.turkishShort}"',
                 style: const TextStyle(
                   fontSize: 16.5,
                   fontWeight: FontWeight.w600,
@@ -424,7 +429,6 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                             .syncHourlyVerseToWidget(
                           manualOffset: _manualVerseOffset,
                         );
-                        if (mounted) setState(() {});
                       },
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -436,7 +440,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                           ),
                           SizedBox(width: 6),
                           Text(
-                            "Yenile",
+                            'Yenile',
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -478,9 +482,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                           const SizedBox(width: 6),
                           Flexible(
                             child: Text(
-                              _widgetPinnedFeedback
-                                  ? "Widget'ta"
-                                  : "Widget Yap",
+                              _widgetPinnedFeedback ? "Widget'ta" : 'Widget Yap',
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 fontSize: 12,
@@ -516,7 +518,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                           SizedBox(width: 6),
                           Flexible(
                             child: Text(
-                              "Paylaş",
+                              'Paylaş',
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 fontSize: 12,
@@ -535,6 +537,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
           ),
         ),
         const SizedBox(height: 16),
+
         Row(
           children: [
             Expanded(
@@ -558,7 +561,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                           size: 20,
                         ),
                         Text(
-                          "99 İsim",
+                          '99 İsim',
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
@@ -569,7 +572,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                     ),
                     const SizedBox(height: 10),
                     const Text(
-                      "Esmaül Hüsna",
+                      'Esmaül Hüsna',
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
@@ -577,10 +580,10 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      "Anlamlar ve zikir hedefleri",
+                      'Anlamlar ve zikir hedefleri',
                       style: TextStyle(
                         fontSize: 11.5,
-                        color: Colors.white.withValues(alpha: 0.68),
+                        color: Colors.white.withOpacity(0.68),
                       ),
                     ),
                   ],
@@ -607,8 +610,8 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                         ),
                         Text(
                           progress.lastRead != null
-                              ? "Kaldığım Yer"
-                              : "${progress.favorites.length} Favori",
+                              ? 'Kaldığım Yer'
+                              : '${progress.favorites.length} Favori',
                           style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
@@ -621,7 +624,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                     Text(
                       progress.lastRead != null
                           ? progress.lastRead!.title
-                          : "İlahi Kitaplar",
+                          : 'İlahi Kitaplar',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -632,13 +635,13 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                     const SizedBox(height: 2),
                     Text(
                       progress.lastRead != null
-                          ? "Ayet / Bölüm ${progress.lastRead!.chapterOrAyah}"
+                          ? 'Ayet / Bölüm ${progress.lastRead!.chapterOrAyah}'
                           : "Kur'ân, Tevrat ve İncil",
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 11.5,
-                        color: Colors.white.withValues(alpha: 0.68),
+                        color: Colors.white.withOpacity(0.68),
                       ),
                     ),
                   ],
@@ -648,6 +651,61 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
           ],
         ),
         const SizedBox(height: 16),
+
+        // Huzur Canlı Destek Kartı
+        GlassContainer(
+          borderRadius: 24,
+          emeraldGlow: true,
+          goldAccentBorder: true,
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+          onTap: () => HuzurLiveSupportSheet.show(context),
+          child: Row(
+            children: [
+              const EgeDenizDeveloperAvatar(size: 40),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      children: [
+                        Text(
+                          'Huzur Canlı Destek',
+                          style: TextStyle(
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFFFFE082),
+                          ),
+                        ),
+                        SizedBox(width: 6),
+                        BespokeVectorIcon(
+                          type: BespokeIconType.verifiedSeal,
+                          color: Color(0xFF64FFDA),
+                          size: 14,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Ege Deniz ile doğrudan canlı destek ve geri bildirim hattı',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        color: Colors.white.withOpacity(0.75),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const BespokeVectorIcon(
+                type: BespokeIconType.supportChat,
+                color: Color(0xFF64FFDA),
+                size: 20,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+
         GlassContainer(
           borderRadius: 24,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -655,40 +713,35 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "Vakit Atmosferi",
+                'Vakit Atmosferi',
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: Colors.white.withValues(alpha: 0.85),
+                  color: Colors.white.withOpacity(0.85),
                 ),
               ),
               const SizedBox(height: 10),
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
-                keyboardDismissBehavior:
-                    ScrollViewKeyboardDismissBehavior.onDrag,
                 physics: const BouncingScrollPhysics(),
                 padding: const EdgeInsets.only(right: 12),
                 child: Row(
                   children: [
-                    _buildAtmosphereChip("Otomatik", null, prayerNotifier),
+                    _buildAtmosphereChip('Otomatik', null, prayerNotifier),
                     _buildAtmosphereChip(
-                        "Seher", PrayerPeriod.imsak, prayerNotifier),
+                        'Seher', PrayerPeriod.imsak, prayerNotifier),
                     _buildAtmosphereChip(
-                        "Gün Ortası", PrayerPeriod.ogle, prayerNotifier),
+                        'Gün Ortası', PrayerPeriod.ogle, prayerNotifier),
                     _buildAtmosphereChip(
-                        "Grup", PrayerPeriod.aksam, prayerNotifier),
+                        'Grup', PrayerPeriod.aksam, prayerNotifier),
                     _buildAtmosphereChip(
-                        "Gece", PrayerPeriod.yatsi, prayerNotifier),
+                        'Gece', PrayerPeriod.yatsi, prayerNotifier),
                   ],
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 18),
-
-
       ],
     );
   }
@@ -703,13 +756,13 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
         color: isActive
-            ? Colors.white.withValues(alpha: 0.16)
-            : Colors.white.withValues(alpha: 0.04),
+            ? Colors.white.withOpacity(0.16)
+            : Colors.white.withOpacity(0.04),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: isActive
-              ? palette.crystalAccent.withValues(alpha: 0.85)
-              : Colors.white.withValues(alpha: 0.12),
+              ? palette.crystalAccent.withOpacity(0.85)
+              : Colors.white.withOpacity(0.12),
           width: 1.0,
         ),
       ),
@@ -748,10 +801,10 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.08),
+            color: Colors.white.withOpacity(0.08),
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: Colors.white.withValues(alpha: 0.20),
+              color: Colors.white.withOpacity(0.20),
               width: 0.9,
             ),
           ),
@@ -781,7 +834,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
             shrinkWrap: true,
             children: [
               const Text(
-                "Şehir ve Ezan Makamı Seçimi",
+                'Şehir ve Ezan Makamı Seçimi',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
@@ -803,7 +856,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                     ),
                     SizedBox(width: 8),
                     Text(
-                      "Bulunduğum Şehri Otomatik Algıla",
+                      'Bulunduğum Şehri Otomatik Algıla',
                       style: TextStyle(
                         color: Color(0xFF64FFDA),
                         fontWeight: FontWeight.bold,
@@ -814,7 +867,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
               ),
               const SizedBox(height: 14),
               const Text(
-                "Şehirler:",
+                'Şehirler:',
                 style: TextStyle(fontSize: 12, color: Colors.white70),
               ),
               const SizedBox(height: 8),
@@ -833,7 +886,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                         vertical: 7,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.08),
+                        color: Colors.white.withOpacity(0.08),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: Colors.white12),
                       ),
@@ -847,7 +900,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
               ),
               const SizedBox(height: 14),
               const Text(
-                "Ezan Makamı:",
+                'Ezan Makamı:',
                 style: TextStyle(fontSize: 12, color: Colors.white70),
               ),
               const SizedBox(height: 8),
@@ -855,11 +908,11 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  "Saba Makamı",
-                  "Hicaz Makamı",
-                  "Rast Makamı",
-                  "Uşşak Makamı",
-                  "Nahavend Makamı"
+                  'Saba Makamı',
+                  'Hicaz Makamı',
+                  'Rast Makamı',
+                  'Uşşak Makamı',
+                  'Nahavend Makamı'
                 ].map((m) {
                   return GestureDetector(
                     onTap: () {
@@ -872,7 +925,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                         vertical: 7,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.08),
+                        color: Colors.white.withOpacity(0.08),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: Colors.white12),
                       ),
@@ -915,8 +968,8 @@ class _CrystalOrbGaugePainter extends CustomPainter {
         center: const Alignment(-0.35, -0.45),
         radius: 1.1,
         colors: [
-          Colors.white.withValues(alpha: 0.18),
-          Colors.white.withValues(alpha: 0.04),
+          Colors.white.withOpacity(0.18),
+          Colors.white.withOpacity(0.04),
           Colors.transparent,
         ],
       ).createShader(Rect.fromCircle(center: center, radius: radius));
@@ -942,8 +995,8 @@ class _CrystalOrbGaugePainter extends CustomPainter {
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
         colors: [
-          accentColor.withValues(alpha: 0.38),
-          const Color(0xFF00E5FF).withValues(alpha: 0.14),
+          accentColor.withOpacity(0.38),
+          const Color(0xFF00E5FF).withOpacity(0.14),
         ],
       ).createShader(Offset.zero & size);
 
@@ -957,9 +1010,9 @@ class _CrystalOrbGaugePainter extends CustomPainter {
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: [
-          Colors.white.withValues(alpha: 0.75),
-          Colors.white.withValues(alpha: 0.15),
-          accentColor.withValues(alpha: 0.65),
+          Colors.white.withOpacity(0.75),
+          Colors.white.withOpacity(0.15),
+          accentColor.withOpacity(0.65),
         ],
       ).createShader(Rect.fromCircle(center: center, radius: radius));
     canvas.drawCircle(center, radius, rimPaint);

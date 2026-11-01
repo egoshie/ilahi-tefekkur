@@ -258,7 +258,7 @@ class HuzurLiveSupportApi {
 
   Future<HuzurSupportSessionCreated> createSession({
     bool privacyConsent = true,
-    String privacyPolicyVersion = 'v1.0',
+    String privacyPolicyVersion = '',
     required String name,
     required String email,
   }) async {

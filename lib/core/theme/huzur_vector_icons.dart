@@ -31,6 +31,12 @@ enum BespokeIconType {
   skipNext,
   skipPrev,
   closeCross,
+  supportChat,
+  sendPlane,
+  starFilled,
+  starOutline,
+  shieldCheck,
+  userPerson,
 }
 
 typedef HuzurIcon = BespokeVectorIcon;
@@ -265,6 +271,93 @@ class _PureCanvasVectorIconPainter extends CustomPainter {
         canvas.drawPath(shackle, stroke);
         break;
 
+      case BespokeIconType.shieldCheck:
+        final shield = Path()
+          ..moveTo(w * 0.50, h * 0.12)
+          ..lineTo(w * 0.82, h * 0.24)
+          ..lineTo(w * 0.82, h * 0.50)
+          ..quadraticBezierTo(w * 0.82, h * 0.76, w * 0.50, h * 0.88)
+          ..quadraticBezierTo(w * 0.18, h * 0.76, w * 0.18, h * 0.50)
+          ..lineTo(w * 0.18, h * 0.24)
+          ..close();
+        canvas.drawPath(shield, stroke);
+        final chk = Path()
+          ..moveTo(w * 0.36, h * 0.50)
+          ..lineTo(w * 0.46, h * 0.60)
+          ..lineTo(w * 0.65, h * 0.40);
+        canvas.drawPath(chk, stroke);
+        break;
+
+      case BespokeIconType.userPerson:
+        canvas.drawCircle(Offset(w * 0.50, h * 0.34), w * 0.16, stroke);
+        final shoulders = Path()
+          ..moveTo(w * 0.22, h * 0.82)
+          ..quadraticBezierTo(w * 0.22, h * 0.58, w * 0.50, h * 0.58)
+          ..quadraticBezierTo(w * 0.78, h * 0.58, w * 0.78, h * 0.82);
+        canvas.drawPath(shoulders, stroke);
+        break;
+
+      case BespokeIconType.supportChat:
+        final bubble = Path()
+          ..addRRect(
+            RRect.fromRectAndRadius(
+              Rect.fromLTWH(w * 0.14, h * 0.18, w * 0.72, h * 0.52),
+              Radius.circular(w * 0.16),
+            ),
+          );
+        canvas.drawPath(bubble, stroke);
+        final tail = Path()
+          ..moveTo(w * 0.32, h * 0.70)
+          ..lineTo(w * 0.22, h * 0.86)
+          ..lineTo(w * 0.46, h * 0.70);
+        canvas.drawPath(tail, stroke);
+        canvas.drawCircle(Offset(w * 0.36, h * 0.44), w * 0.045, fill);
+        canvas.drawCircle(Offset(w * 0.50, h * 0.44), w * 0.045, fill);
+        canvas.drawCircle(Offset(w * 0.64, h * 0.44), w * 0.045, fill);
+        break;
+
+      case BespokeIconType.sendPlane:
+      case BespokeIconType.whatsappShare:
+        final send = Path()
+          ..moveTo(w * 0.14, h * 0.46)
+          ..lineTo(w * 0.86, h * 0.18)
+          ..lineTo(w * 0.58, h * 0.86)
+          ..lineTo(w * 0.46, h * 0.56)
+          ..close();
+        canvas.drawPath(send, stroke);
+        canvas.drawLine(
+          Offset(w * 0.46, h * 0.56),
+          Offset(w * 0.86, h * 0.18),
+          stroke,
+        );
+        break;
+
+      case BespokeIconType.starFilled:
+      case BespokeIconType.starOutline:
+        final starPath = Path();
+        final outerR = w * 0.40;
+        final innerR = w * 0.18;
+        for (int i = 0; i < 10; i++) {
+          final r = i.isEven ? outerR : innerR;
+          final angle = (i * math.pi / 5.0) - (math.pi / 2.0);
+          final pt = Offset(
+            c.dx + math.cos(angle) * r,
+            c.dy + math.sin(angle) * r,
+          );
+          if (i == 0) {
+            starPath.moveTo(pt.dx, pt.dy);
+          } else {
+            starPath.lineTo(pt.dx, pt.dy);
+          }
+        }
+        starPath.close();
+        if (type == BespokeIconType.starFilled) {
+          canvas.drawPath(starPath, fill);
+        } else {
+          canvas.drawPath(starPath, stroke);
+        }
+        break;
+
       case BespokeIconType.bookmarkStar:
         final bm = Path()
           ..moveTo(w * 0.25, h * 0.16)
@@ -279,38 +372,10 @@ class _PureCanvasVectorIconPainter extends CustomPainter {
       case BespokeIconType.heartFavorite:
         final heart = Path()
           ..moveTo(w * 0.50, h * 0.82)
-          ..cubicTo(
-            w * 0.12,
-            h * 0.58,
-            w * 0.14,
-            h * 0.22,
-            w * 0.36,
-            h * 0.22,
-          )
-          ..cubicTo(
-            w * 0.45,
-            h * 0.22,
-            w * 0.50,
-            h * 0.30,
-            w * 0.50,
-            h * 0.34,
-          )
-          ..cubicTo(
-            w * 0.50,
-            h * 0.30,
-            w * 0.55,
-            h * 0.22,
-            w * 0.64,
-            h * 0.22,
-          )
-          ..cubicTo(
-            w * 0.86,
-            h * 0.22,
-            w * 0.88,
-            h * 0.58,
-            w * 0.50,
-            h * 0.82,
-          );
+          ..cubicTo(w * 0.12, h * 0.58, w * 0.14, h * 0.22, w * 0.36, h * 0.22)
+          ..cubicTo(w * 0.45, h * 0.22, w * 0.50, h * 0.30, w * 0.50, h * 0.34)
+          ..cubicTo(w * 0.50, h * 0.30, w * 0.55, h * 0.22, w * 0.64, h * 0.22)
+          ..cubicTo(w * 0.86, h * 0.22, w * 0.88, h * 0.58, w * 0.50, h * 0.82);
         canvas.drawPath(heart, stroke);
         break;
 
@@ -385,11 +450,11 @@ class _PureCanvasVectorIconPainter extends CustomPainter {
       case BespokeIconType.checkBadge:
       case BespokeIconType.verifiedSeal:
         canvas.drawCircle(c, w * 0.38, stroke);
-        final chk = Path()
+        final chk2 = Path()
           ..moveTo(w * 0.32, h * 0.52)
           ..lineTo(w * 0.45, h * 0.65)
           ..lineTo(w * 0.68, h * 0.38);
-        canvas.drawPath(chk, stroke);
+        canvas.drawPath(chk2, stroke);
         break;
 
       case BespokeIconType.plusCircle:
@@ -441,16 +506,6 @@ class _PureCanvasVectorIconPainter extends CustomPainter {
         );
         canvas.drawCircle(c, w * 0.16, stroke);
         canvas.drawCircle(Offset(w * 0.68, h * 0.32), w * 0.045, fill);
-        break;
-
-      case BespokeIconType.whatsappShare:
-        final send = Path()
-          ..moveTo(w * 0.14, h * 0.46)
-          ..lineTo(w * 0.86, h * 0.18)
-          ..lineTo(w * 0.58, h * 0.86)
-          ..lineTo(w * 0.46, h * 0.56)
-          ..close();
-        canvas.drawPath(send, stroke);
         break;
 
       case BespokeIconType.downloadCard:
