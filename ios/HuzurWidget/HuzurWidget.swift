@@ -10,6 +10,19 @@ struct HuzurVerseEntry: TimelineEntry {
 }
 
 struct HuzurTimelineProvider: TimelineProvider {
+
+    private func compactText(_ raw: String, maxWords: Int) -> String {
+        let words = raw.split(whereSeparator: { $0.isWhitespace })
+
+        guard words.count > maxWords else { return raw }
+
+        let excerpt = words.prefix(maxWords)
+            .map { String($0) }
+            .joined(separator: " ")
+
+        return excerpt + " …"
+    }
+
     let verses: [(ar: String, tr: String, ref: String)] = [
         ("مَا وَدَّعَكَ رَبُّكَ", "Rabbin seni terk etmedi.", "Duhâ, 3"),
         ("إِنَّ مَعَ ٱلْعُسْرِ يُسْرًا", "Zorlukla beraber kolaylık vardır.", "İnşirah, 6"),
@@ -121,8 +134,8 @@ struct HuzurTimelineProvider: TimelineProvider {
                 completion(
                     HuzurVerseEntry(
                         date: Date(),
-                        arabic: arabic,
-                        turkish: turkish,
+                        arabic: compactText(arabic, maxWords: 6),
+                        turkish: compactText(turkish, maxWords: 8),
                         reference: "Sure \(surahNumber) • Ayet \(ayahNumber)"
                     )
                 )
@@ -152,8 +165,8 @@ struct HuzurTimelineProvider: TimelineProvider {
         if isPinned && !customTr.isEmpty {
             let pinned = HuzurVerseEntry(
                 date: now,
-                arabic: customAr,
-                turkish: customTr,
+                arabic: compactText(customAr, maxWords: 6),
+                turkish: compactText(customTr, maxWords: 8),
                 reference: customRef
             )
             completion(
@@ -248,7 +261,7 @@ struct HuzurKisaAyetWidgetView: View {
                     Text(entry.turkish)
                         .font(.system(size: 12.5, weight: .semibold))
                         .foregroundColor(.white)
-                        .lineLimit(family == .systemLarge ? nil : (family == .systemMedium ? 8 : 3))
+                        .lineLimit(family == .systemLarge ? 7 : (family == .systemMedium ? 5 : 3))
                         .minimumScaleFactor(0.50)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -299,17 +312,18 @@ struct HuzurGenisAyetWidgetView: View {
                     Spacer(minLength: 2)
                     if !entry.arabic.isEmpty {
                         Text(entry.arabic)
-                            .font(.system(size: family == .systemMedium ? 20 : 15, weight: .bold))
+                            .font(.system(size: family == .systemMedium ? 18 : 15, weight: .bold))
                             .foregroundColor(Color(red: 1.0, green: 0.96, blue: 0.88))
                             .frame(maxWidth: .infinity, alignment: .trailing)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.70)
+                            .lineLimit(family == .systemLarge ? 4 : (family == .systemMedium ? 2 : 1))
+                            .minimumScaleFactor(0.60)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                     Text(entry.turkish)
-                        .font(.system(size: family == .systemMedium ? 14 : 12, weight: .semibold))
+                        .font(.system(size: family == .systemLarge ? 13 : (family == .systemMedium ? 12 : 11), weight: .semibold))
                         .foregroundColor(.white)
-                        .lineLimit(3)
-                        .minimumScaleFactor(0.65)
+                        .lineLimit(family == .systemLarge ? 7 : (family == .systemMedium ? 4 : 2))
+                        .minimumScaleFactor(0.60)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 .padding(family == .systemMedium ? 14 : 10)

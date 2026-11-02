@@ -149,7 +149,6 @@ class QuranBackgroundAudioNotifier
 
     _player.currentIndexStream.listen((idx) {
       if (idx != null && idx >= 0 && idx < state.playlist.length) {
-        final nextAyah = state.playlist[idx];
         state = state.copyWith(
           currentIndex: idx,
         );

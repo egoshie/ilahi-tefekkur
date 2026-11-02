@@ -390,6 +390,8 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                 child: Text(
                   activeShortVerse.arabicShort,
                   textAlign: TextAlign.right,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontSize: 25,
                     height: 1.5,
@@ -401,6 +403,8 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
               const SizedBox(height: 10),
               Text(
                 '"${activeShortVerse.turkishShort}"',
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   fontSize: 16.5,
                   fontWeight: FontWeight.w600,

@@ -53,6 +53,25 @@ class _LiquidGlassPaywallSheetState
     final notifier = ref.read(premiumServiceProvider.notifier);
     final offer = premium.regionalOffer;
 
+    final selectedStoreId = _selectedTier == 'monthly'
+        ? PremiumServiceNotifier.kMonthlyId
+        : _selectedTier == 'annual'
+            ? PremiumServiceNotifier.kAnnualId
+            : PremiumServiceNotifier.kLifetimeId;
+
+    final selectedPlanAlreadyActive = premium.isPremium &&
+        (premium.activePlanId == selectedStoreId ||
+            premium.activePlanId == PremiumServiceNotifier.kLifetimeId);
+
+    final activePlanName =
+        premium.activePlanId == PremiumServiceNotifier.kMonthlyId
+            ? 'Aylık Huzur Planı'
+            : premium.activePlanId == PremiumServiceNotifier.kAnnualId
+                ? 'Yıllık Huzur Planı'
+                : premium.activePlanId == PremiumServiceNotifier.kLifetimeId
+                    ? 'Ömür Boyu Tam Erişim'
+                    : 'Huzur Özel';
+
     return DraggableScrollableSheet(
       initialChildSize: 0.88,
       minChildSize: 0.65,
@@ -166,13 +185,28 @@ class _LiquidGlassPaywallSheetState
                     ),
                   ),
                 ),
+              if (premium.isPremium)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Text(
+                    'Apple hesabınızda etkin plan: $activePlanName',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF64FFDA),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
               GlassContainer(
                 goldAccentBorder: true,
                 emeraldGlow: true,
                 borderRadius: 22,
                 padding: const EdgeInsets.symmetric(vertical: 15),
                 onTap: () async {
-                  await notifier.activatePlan(_selectedTier);
+                  if (!selectedPlanAlreadyActive) {
+                    await notifier.activatePlan(_selectedTier);
+                  }
                 },
                 child: Center(
                   child: premium.isLoading
@@ -195,7 +229,12 @@ class _LiquidGlassPaywallSheetState
                             const SizedBox(width: 8),
                             Text(
                               premium.isPremium
-                                  ? "Huzur Özel Etkin"
+                                  ? (selectedPlanAlreadyActive
+                                      ? (premium.activePlanId ==
+                                              PremiumServiceNotifier.kLifetimeId
+                                          ? "Ömür Boyu Erişim Etkin"
+                                          : "Bu Plan Zaten Etkin")
+                                      : "Aktif Planı Değiştir")
                                   : "App Store ile Güvenle Abone Ol",
                               style: const TextStyle(
                                 fontSize: 15,

@@ -815,8 +815,6 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
     final rawVerses = testament == 'torah' ? _torahVerses : _gospelVerses;
     final verses = _filterBibleVerses(rawVerses);
     final loading = testament == 'torah' ? _loadingTorah : _loadingGospel;
-    final categoryLabel =
-        testament == 'torah' ? "Tevrat • Tanah" : "İncil • Yeni Ahit";
 
     return Column(
       children: [

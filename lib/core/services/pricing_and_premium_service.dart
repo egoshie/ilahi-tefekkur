@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:in_app_purchase_storekit/store_kit_2_wrappers.dart';
@@ -296,6 +298,18 @@ class PremiumServiceNotifier extends StateNotifier<PremiumState> {
       return;
     }
 
+    // Aynı aktif aboneliği tekrar satın alma isteği gönderme.
+    if (state.isPremium &&
+        (state.activePlanId == storeId || state.activePlanId == kLifetimeId)) {
+      state = state.copyWith(
+        isLoading: false,
+        statusMessage: state.activePlanId == kLifetimeId
+            ? 'Bu Apple hesabında ömür boyu Huzur erişimi zaten etkin.'
+            : 'Seçilen Huzur planı bu Apple hesabında zaten etkin.',
+      );
+      return;
+    }
+
     state = state.copyWith(
       isLoading: true,
       statusMessage: null,
@@ -344,6 +358,11 @@ class PremiumServiceNotifier extends StateNotifier<PremiumState> {
 
       // Flutter IAP API'sinde abonelikler ve tüketilemeyen ürünler
       // buyNonConsumable ile başlatılır.
+      debugPrint(
+        'HUZUR_IAP purchase request: '
+        'plan=$planId product=${product.id} price=${product.price}',
+      );
+
       final started = await _iap.buyNonConsumable(
         purchaseParam: PurchaseParam(productDetails: product),
       );
@@ -354,7 +373,73 @@ class PremiumServiceNotifier extends StateNotifier<PremiumState> {
           statusMessage: 'App Store satın alma penceresi açılamadı.',
         );
       }
-    } catch (_) {
+    } on PlatformException catch (error, stackTrace) {
+      debugPrint(
+        'HUZUR_IAP activatePlan failed: '
+        'plan=$planId product=$storeId '
+        'code=${error.code} message=${error.message} '
+        'details=${error.details}\n$stackTrace',
+      );
+
+      var message = 'App Store işlemi başlatılamadı. Kod: ${error.code}.';
+
+      if (error.code == 'storekit_duplicate_product_object') {
+        var hasPendingTransaction = false;
+
+        try {
+          final unfinished = await SK2Transaction.unfinishedTransactions();
+
+          hasPendingTransaction = unfinished.any(
+            (transaction) => transaction.productId == storeId,
+          );
+
+          await _refreshStoreKitEntitlements();
+        } catch (diagnosticError, diagnosticStack) {
+          debugPrint(
+            'HUZUR_IAP unfinished transaction check failed: '
+            '$diagnosticError\n$diagnosticStack',
+          );
+        }
+
+        if (state.isPremium &&
+            (state.activePlanId == storeId ||
+                state.activePlanId == kLifetimeId)) {
+          message = 'Bu Apple hesabında seçilen Huzur planı zaten etkin.';
+        } else if (hasPendingTransaction) {
+          message = 'Bu ürün için önceki bir Apple işlemi hâlâ beklemede. '
+              'Satın alımları geri yükleyin ve önceki işlemin sonuçlanmasını bekleyin.';
+        } else {
+          message =
+              'Apple önceki bir satın alma işlemini tamamlanmamış görüyor. '
+              'Satın alımları geri yükleyip tekrar deneyin.';
+        }
+      } else {
+        final details =
+            '${error.message ?? ''} ${error.details ?? ''}'.toLowerCase();
+
+        if (details.contains('3532') ||
+            details.contains('already subscribed') ||
+            details.contains('itemalreadyowned')) {
+          try {
+            await _refreshStoreKitEntitlements();
+          } catch (_) {}
+
+          message = state.isPremium
+              ? 'Bu Apple hesabında zaten etkin bir Huzur planı var.'
+              : 'Apple hesabınızda mevcut bir satın alma görünüyor. '
+                  'Satın alımları geri yükleyin.';
+        }
+      }
+
+      state = state.copyWith(
+        isLoading: false,
+        statusMessage: message,
+      );
+    } catch (error, stackTrace) {
+      debugPrint(
+        'HUZUR_IAP unexpected purchase error: $error\n$stackTrace',
+      );
+
       state = state.copyWith(
         isLoading: false,
         statusMessage: 'App Store satın alma işlemi başlatılamadı.',

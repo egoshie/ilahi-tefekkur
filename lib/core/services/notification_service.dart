@@ -68,27 +68,44 @@ class NotificationAndWidgetService {
 
   static String smartSplitTurkishSentence(String raw) {
     final clean = raw.replaceAll(RegExp(r'\s+'), ' ').trim();
-    final sentences = clean.split(RegExp(r'(?<=[.!?;:])\s+'));
-    for (final s in sentences) {
-      final w = s.trim().split(' ').where((e) => e.isNotEmpty).toList();
-      if (w.length >= 3 && w.length <= 6) return w.join(' ');
+    if (clean.isEmpty) return clean;
+
+    final sentences = clean.split(RegExp(r'(?<=[.!?])\s+'));
+
+    // Kısa ve tamamlanmış bir cümle varsa onu koru.
+    for (final sentence in sentences) {
+      final words =
+          sentence.trim().split(' ').where((word) => word.isNotEmpty).toList();
+
+      if (words.length >= 3 && words.length <= 8) {
+        return sentence.trim();
+      }
     }
+
+    // Uzun ayetlerde anlamlı ilk ifadeyi alıntı olarak göster.
     final clauses = clean.split(RegExp(r'[,;:]'));
-    for (final c in clauses) {
-      final w = c.trim().split(' ').where((e) => e.isNotEmpty).toList();
-      if (w.length >= 3 && w.length <= 6) return w.join(' ') + '.';
+    for (final clause in clauses) {
+      final words =
+          clause.trim().split(' ').where((word) => word.isNotEmpty).toList();
+
+      if (words.length >= 3) {
+        return '${words.take(8).join(' ')}…';
+      }
     }
-    final allWords = clean.split(' ').where((e) => e.isNotEmpty).toList();
-    if (allWords.length <= 6) return allWords.join(' ');
-    String cut = allWords.take(5).join(' ');
-    if (!cut.endsWith('.')) cut += '.';
-    return cut;
+
+    final words = clean.split(' ').where((word) => word.isNotEmpty).toList();
+
+    if (words.length <= 8) return clean;
+
+    return '${words.take(8).join(' ')}…';
   }
 
   static String smartSplitArabic(String raw) {
     final words = raw.trim().split(RegExp(r'\s+'));
-    if (words.length <= 4) return raw.trim();
-    return words.take(4).join(' ');
+
+    if (words.length <= 6) return raw.trim();
+
+    return '${words.take(6).join(' ')} …';
   }
 
   HourlyShortVerse getActiveHourlyVerse({int offset = 0}) {
@@ -148,8 +165,8 @@ class NotificationAndWidgetService {
             final verse = HourlyShortVerse(
               index: offset,
               ayahKey: '$surahNumber:$ayahNumber',
-              arabicShort: arabicText,
-              turkishShort: turkishText,
+              arabicShort: smartSplitArabic(arabicText),
+              turkishShort: smartSplitTurkishSentence(turkishText),
               reference: '$surahName, $ayahNumber',
             );
 
@@ -188,8 +205,8 @@ class NotificationAndWidgetService {
       required String turkish,
       required String reference}) async {
     final prefs = await SharedPreferences.getInstance();
-    final shortTr = turkish.replaceAll(RegExp(r'\s+'), ' ').trim();
-    final shortAr = arabic.replaceAll(RegExp(r'\s+'), ' ').trim();
+    final shortTr = smartSplitTurkishSentence(turkish);
+    final shortAr = smartSplitArabic(arabic);
     await prefs.setString('v42_pinned_widget_arabic', shortAr);
     await prefs.setString('v42_pinned_widget_turkish', shortTr);
     await prefs.setString('v42_pinned_widget_reference', reference);
