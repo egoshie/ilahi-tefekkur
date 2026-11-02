@@ -38,11 +38,17 @@ WidgetCenter.shared.reloadAllTimelines()
                         let ar = args["arabic"] as? String ?? ""
                         let tr = args["translation"] as? String ?? ""
                         let rf = args["reference"] as? String ?? ""
+                        let source = args["source"] as? String ?? "auto"
+                        UserDefaults.standard.set(source, forKey: "hourly_source")
                         UserDefaults.standard.set(ar, forKey: "hourly_arabic")
                         UserDefaults.standard.set(tr, forKey: "hourly_translation")
                         UserDefaults.standard.set(rf, forKey: "hourly_reference")
                         if let sh = UserDefaults(suiteName: "group.com.ilahi.tefekkur") {
-                            sh.set(ar, forKey: "hourly_arabic"); sh.set(tr, forKey: "hourly_translation"); sh.set(rf, forKey: "hourly_reference"); sh.synchronize()
+                            sh.set(source, forKey: "hourly_source")
+                            sh.set(ar, forKey: "hourly_arabic")
+                            sh.set(tr, forKey: "hourly_translation")
+                            sh.set(rf, forKey: "hourly_reference")
+                            sh.synchronize()
                         }
                         if #available(iOS 14.0, *) {
 #if canImport(WidgetKit)

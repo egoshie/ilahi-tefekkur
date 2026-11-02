@@ -106,55 +106,66 @@ class NotificationAndWidgetService {
     final hourSeed =
         now.year * 8760 + now.month * 720 + now.day * 24 + now.hour + offset;
 
-    final selectedVerse = getActiveHourlyVerse(offset: offset);
-
-    if (offset == 0) {
-      return selectedVerse;
+    if (_cachedLiveSplitVerse != null && _lastFetchedHourSeed == hourSeed) {
+      return _cachedLiveSplitVerse!;
     }
 
-    try {
-      // Offline depodaki ayet referansı kullanılır: örneğin 93:3.
-      final ayahId = selectedVerse.ayahKey;
+    final fallback = getActiveHourlyVerse(offset: offset);
 
-      final res = await http
+    try {
+      final response = await http
           .get(
             Uri.parse(
-              'https://api.alquran.cloud/v1/ayah/$ayahId/editions/quran-uthmani,tr.yazir',
+              'https://api.alquran.cloud/v1/ayah/random/editions/quran-uthmani,tr.yazir',
             ),
           )
-          .timeout(const Duration(seconds: 6));
+          .timeout(const Duration(seconds: 12));
 
-      if (res.statusCode == 200) {
-        final decoded = jsonDecode(res.body) as Map<String, dynamic>;
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body) as Map<String, dynamic>;
         final data = decoded['data'] as List<dynamic>;
 
         if (data.length >= 2) {
-          final arObj = data[0] as Map<String, dynamic>;
-          final trObj = data[1] as Map<String, dynamic>;
+          final arabic = data[0] as Map<String, dynamic>;
+          final turkish = data[1] as Map<String, dynamic>;
+          final surah = turkish['surah'] as Map<String, dynamic>;
 
-          final liveItem = HourlyShortVerse(
-            index: offset,
-            ayahKey: selectedVerse.ayahKey,
-            arabicShort: smartSplitArabic(
-              (arObj['text'] ?? '').toString(),
-            ),
-            turkishShort: smartSplitTurkishSentence(
-              (trObj['text'] ?? '').toString(),
-            ),
-            reference: selectedVerse.reference,
-          );
+          final surahNumber = int.tryParse(surah['number'].toString()) ?? 0;
+          final ayahNumber =
+              int.tryParse(turkish['numberInSurah'].toString()) ?? 0;
 
-          _cachedLiveSplitVerse = liveItem;
-          _lastFetchedHourSeed = hourSeed;
+          final arabicText = (arabic['text'] ?? '').toString().trim();
+          final turkishText = (turkish['text'] ?? '').toString().trim();
 
-          return liveItem;
+          if (surahNumber >= 1 &&
+              surahNumber <= 114 &&
+              ayahNumber > 0 &&
+              arabicText.isNotEmpty &&
+              turkishText.isNotEmpty) {
+            final surahName =
+                OfflineSacredRepository.kSurahNamesTr[surahNumber - 1];
+
+            final verse = HourlyShortVerse(
+              index: offset,
+              ayahKey: '$surahNumber:$ayahNumber',
+              arabicShort: arabicText,
+              turkishShort: turkishText,
+              reference: '$surahName, $ayahNumber',
+            );
+
+            _cachedLiveSplitVerse = verse;
+            _lastFetchedHourSeed = hourSeed;
+            return verse;
+          }
         }
       }
     } catch (_) {
-      // Bağlantı başarısızsa çevrimdışı ayet kullanılmaya devam edilir.
+      // Ağ yoksa mevcut çevrimdışı ayet kullanılır.
     }
 
-    return selectedVerse;
+    _cachedLiveSplitVerse = fallback;
+    _lastFetchedHourSeed = hourSeed;
+    return fallback;
   }
 
   Future<void> syncHourlyVerseToWidget({int manualOffset = 0}) async {
@@ -167,6 +178,7 @@ class NotificationAndWidgetService {
         'translation': verse.turkishShort,
         'reference': verse.reference,
         'badge': 'Günün İlhamı',
+        'source': 'auto',
       });
     } catch (_) {}
   }
@@ -176,8 +188,8 @@ class NotificationAndWidgetService {
       required String turkish,
       required String reference}) async {
     final prefs = await SharedPreferences.getInstance();
-    final shortTr = smartSplitTurkishSentence(turkish);
-    final shortAr = smartSplitArabic(arabic);
+    final shortTr = turkish.replaceAll(RegExp(r'\s+'), ' ').trim();
+    final shortAr = arabic.replaceAll(RegExp(r'\s+'), ' ').trim();
     await prefs.setString('v42_pinned_widget_arabic', shortAr);
     await prefs.setString('v42_pinned_widget_turkish', shortTr);
     await prefs.setString('v42_pinned_widget_reference', reference);
@@ -187,6 +199,7 @@ class NotificationAndWidgetService {
         'translation': shortTr,
         'reference': reference,
         'badge': 'Seçili Ayet',
+        'source': 'pinned',
       });
       return true;
     } catch (_) {

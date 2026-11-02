@@ -18,27 +18,27 @@ class SacredTextsScreen extends ConsumerStatefulWidget {
   const SacredTextsScreen({super.key});
 
   @override
-  ConsumerState< SacredTextsScreen > createState() => _SacredTextsScreenState();
+  ConsumerState<SacredTextsScreen> createState() => _SacredTextsScreenState();
 }
 
-class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
+class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
   String _selectedTab = 'quran';
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
 
-  List< SurahMeta > _surahs = [];
+  List<SurahMeta> _surahs = [];
   SurahMeta? _selectedSurah;
-  List< LiveAyahItem > _ayahs = [];
+  List<LiveAyahItem> _ayahs = [];
   bool _loadingQuran = false;
 
   late BibleBookMeta _selectedTorahBook;
   int _selectedTorahChapter = 1;
-  List< BibleVerseItem > _torahVerses = [];
+  List<BibleVerseItem> _torahVerses = [];
   bool _loadingTorah = false;
 
   late BibleBookMeta _selectedGospelBook;
   int _selectedGospelChapter = 1;
-  List< BibleVerseItem > _gospelVerses = [];
+  List<BibleVerseItem> _gospelVerses = [];
   bool _loadingGospel = false;
 
   @override
@@ -56,7 +56,7 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
     _loadInitialCatalogs();
   }
 
-  Future< void > _loadInitialCatalogs() async {
+  Future<void> _loadInitialCatalogs() async {
     setState(() => _loadingQuran = true);
     final db = ref.read(databaseServiceProvider);
     final surahs = await db.fetchAllSurahs();
@@ -71,7 +71,7 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
     _loadBibleChapter('gospel');
   }
 
-  Future< void > _loadSurahAyahs(int surahNum) async {
+  Future<void> _loadSurahAyahs(int surahNum) async {
     setState(() => _loadingQuran = true);
     try {
       final ayahs =
@@ -98,7 +98,7 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
     }
   }
 
-  Future< void > _loadBibleChapter(String testament) async {
+  Future<void> _loadBibleChapter(String testament) async {
     final db = ref.read(databaseServiceProvider);
     if (testament == 'torah') {
       setState(() => _loadingTorah = true);
@@ -137,7 +137,7 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
     super.dispose();
   }
 
-  List< SurahMeta > get _matchingSurahs {
+  List<SurahMeta> get _matchingSurahs {
     if (_searchQuery.trim().isEmpty) return const [];
     return _surahs.where((s) {
       final combined = '${s.number} ${s.nameTurkish}';
@@ -145,7 +145,7 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
     }).toList();
   }
 
-  List< LiveAyahItem > get _filteredAyahs {
+  List<LiveAyahItem> get _filteredAyahs {
     if (_searchQuery.trim().isEmpty) return _ayahs;
     return _ayahs.where((a) {
       final combined =
@@ -154,7 +154,7 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
     }).toList();
   }
 
-  List< BibleVerseItem > _filterBibleVerses(List< BibleVerseItem > source) {
+  List<BibleVerseItem> _filterBibleVerses(List<BibleVerseItem> source) {
     if (_searchQuery.trim().isEmpty) return source;
     return source.where((v) {
       final combined = '${v.bookName} ${v.chapter}:${v.verse} ${v.turkishText}';
@@ -165,8 +165,7 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
   @override
   Widget build(BuildContext context) {
     final premium = ref.watch(premiumServiceProvider);
-    final isLockedTab =
-        (_selectedTab == 'torah' ||
+    final isLockedTab = (_selectedTab == 'torah' ||
             _selectedTab == 'gospel' ||
             _selectedTab == 'cross_ref') &&
         !premium.isPremium;
@@ -203,14 +202,17 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                     controller: _searchController,
                     style: const TextStyle(fontSize: 13.5),
                     textInputAction: TextInputAction.search,
-                        onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
-                        decoration: const InputDecoration(
+                    onTapOutside: (_) =>
+                        FocusManager.instance.primaryFocus?.unfocus(),
+                    decoration: const InputDecoration(
                       hintText: "Sure adı, numarası veya ayet kelimesi ara...",
-                      hintStyle: TextStyle(color: Colors.white54, fontSize: 12.5),
+                      hintStyle:
+                          TextStyle(color: Colors.white54, fontSize: 12.5),
                       border: InputBorder.none,
                     ),
                     onChanged: (val) => setState(() => _searchQuery = val),
-                    onSubmitted: (_) => FocusManager.instance.primaryFocus?.unfocus(),
+                    onSubmitted: (_) =>
+                        FocusManager.instance.primaryFocus?.unfocus(),
                   ),
                 ),
                 if (_searchQuery.isNotEmpty)
@@ -239,16 +241,19 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
             child: ListView(
               scrollDirection: Axis.horizontal,
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-                  physics: const BouncingScrollPhysics(),
+              physics: const BouncingScrollPhysics(),
               padding: const EdgeInsets.only(right: 16),
               children: [
                 _buildTraditionTab("quran", "Kur'ân-ı Kerîm", false),
                 const SizedBox(width: 8),
-                _buildTraditionTab("torah", "Tevrat (39 Kitap)", !premium.isPremium),
+                _buildTraditionTab(
+                    "torah", "Tevrat (39 Kitap)", !premium.isPremium),
                 const SizedBox(width: 8),
-                _buildTraditionTab("gospel", "İncil (27 Kitap)", !premium.isPremium),
+                _buildTraditionTab(
+                    "gospel", "İncil (27 Kitap)", !premium.isPremium),
                 const SizedBox(width: 8),
-                _buildTraditionTab("cross_ref", "Karşılaştırma", !premium.isPremium),
+                _buildTraditionTab(
+                    "cross_ref", "Karşılaştırma", !premium.isPremium),
                 const SizedBox(width: 8),
                 _buildTraditionTab("saved", "Favorilerim", false),
               ],
@@ -327,6 +332,28 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
     );
   }
 
+  Future<void> _startSurahWithPremiumGate(
+    QuranBackgroundAudioNotifier audioNotifier, {
+    required int startIndex,
+  }) async {
+    await audioNotifier.ensurePlaybackCountLoaded();
+
+    final playback = ref.read(quranAudioProvider);
+    final premium = ref.read(premiumServiceProvider);
+
+    if (!premium.isPremium && playback.completedSurahCount >= 3) {
+      if (mounted) {
+        await LiquidGlassPaywallSheet.show(context);
+      }
+      return;
+    }
+
+    await audioNotifier.startSurahPlaylist(
+      _ayahs,
+      startIndex: startIndex,
+    );
+  }
+
   Widget _buildQuranLiveReader() {
     final progress = ref.watch(userProgressProvider);
     final progressNotifier = ref.read(userProgressProvider.notifier);
@@ -348,7 +375,7 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-                  physics: const BouncingScrollPhysics(),
+              physics: const BouncingScrollPhysics(),
               itemCount: matchedSurahs.length,
               separatorBuilder: (_, __) => const SizedBox(width: 8),
               itemBuilder: (context, idx) {
@@ -368,8 +395,8 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                     decoration: BoxDecoration(
                       color: const Color(0xFFFFE082).withValues(alpha: 0.18),
                       borderRadius: BorderRadius.circular(12),
-                      border:
-                          Border.all(color: const Color(0xFFFFE082), width: 0.9),
+                      border: Border.all(
+                          color: const Color(0xFFFFE082), width: 0.9),
                     ),
                     child: Center(
                       child: Text(
@@ -388,7 +415,6 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
           ),
           const SizedBox(height: 8),
         ],
-
         GlassContainer(
           borderRadius: 18,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -426,7 +452,10 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                   if (isCurrentSurahPlaying) {
                     await audioNotifier.togglePlayPause();
                   } else if (_ayahs.isNotEmpty) {
-                    await audioNotifier.startSurahPlaylist(_ayahs, startIndex: 0);
+                    await _startSurahWithPremiumGate(
+                      audioNotifier,
+                      startIndex: 0,
+                    );
                   }
                 },
                 child: Container(
@@ -478,14 +507,14 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
           ),
         ],
         const SizedBox(height: 10),
-
         Expanded(
           child: _loadingQuran
               ? const Center(
                   child: CircularProgressIndicator(color: Color(0xFF64FFDA)),
                 )
               : ListView.separated(
-                  keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
                   physics: const BouncingScrollPhysics(),
                   padding: const EdgeInsets.only(bottom: 24),
                   itemCount: ayahsToDisplay.length,
@@ -493,8 +522,8 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                   itemBuilder: (context, index) {
                     final a = ayahsToDisplay[index];
                     final origIdx = _ayahs.indexOf(a);
-                    final isPlaying = audioState.activeAyah?.uniqueKey ==
-                        a.uniqueKey;
+                    final isPlaying =
+                        audioState.activeAyah?.uniqueKey == a.uniqueKey;
                     final isFav = progress.isFavorite(a.uniqueKey);
                     final isBm = progress.isBookmarked(a.uniqueKey);
 
@@ -541,9 +570,10 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                                       if (isPlaying) {
                                         audioNotifier.togglePlayPause();
                                       } else {
-                                        audioNotifier.startSurahPlaylist(
-                                          _ayahs,
-                                          startIndex: origIdx >= 0 ? origIdx : 0,
+                                        _startSurahWithPremiumGate(
+                                          audioNotifier,
+                                          startIndex:
+                                              origIdx >= 0 ? origIdx : 0,
                                         );
                                       }
                                     },
@@ -606,7 +636,8 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                                     color: const Color(0xFF64FFDA),
                                     onTap: () async {
                                       HapticFeedback.mediumImpact();
-                                      await NotificationAndWidgetService.instance
+                                      await NotificationAndWidgetService
+                                          .instance
                                           .pinCustomVerseToWidget(
                                         arabic: a.arabicText,
                                         turkish: a.turkishText,
@@ -665,7 +696,7 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
 
   Widget _buildSavedVersesView() {
     final progress = ref.watch(userProgressProvider);
-    final combined = < SavedVerseRef >[
+    final combined = <SavedVerseRef>[
       ...progress.bookmarks,
       ...progress.favorites.where(
         (f) => !progress.bookmarks.any((b) => b.key == f.key),
@@ -688,7 +719,7 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
 
     return ListView.separated(
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-                  physics: const BouncingScrollPhysics(),
+      physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.only(bottom: 24),
       itemCount: combined.length,
       separatorBuilder: (_, __) => const SizedBox(height: 12),
@@ -890,7 +921,8 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                   child: CircularProgressIndicator(color: Color(0xFFFFE082)),
                 )
               : ListView.separated(
-                  keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
                   physics: const BouncingScrollPhysics(),
                   padding: const EdgeInsets.only(bottom: 24),
                   itemCount: verses.length,
@@ -905,7 +937,6 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                         arabic: v.originalScript,
                         turkishText: v.turkishText,
                         reference: "${v.bookName} ${v.chapter}:${v.verse}",
-                        
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -947,7 +978,6 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                                       turkishText: v.turkishText,
                                       reference:
                                           "${v.bookName} ${v.chapter}:${v.verse}",
-                                      
                                     ),
                                   ),
                                 ],
@@ -995,7 +1025,7 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
 
     return ListView.separated(
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-                  physics: const BouncingScrollPhysics(),
+      physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.only(bottom: 24),
       itemCount: topics.length,
       separatorBuilder: (_, __) => const SizedBox(height: 14),
@@ -1102,8 +1132,9 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                         child: TextField(
                           style: const TextStyle(fontSize: 13),
                           textInputAction: TextInputAction.search,
-                        onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
-                        decoration: const InputDecoration(
+                          onTapOutside: (_) =>
+                              FocusManager.instance.primaryFocus?.unfocus(),
+                          decoration: const InputDecoration(
                             hintText:
                                 "Sure adı veya numarası yazın (örn: duha, yasin)...",
                             hintStyle:
@@ -1159,7 +1190,7 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
   void _showBibleBookPicker(
     BuildContext context,
     String testament,
-    List< BibleBookMeta > books,
+    List<BibleBookMeta> books,
   ) {
     showModalBottomSheet(
       context: context,
@@ -1257,7 +1288,7 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                 ),
                 const SizedBox(height: 10),
                 const Text(
-                  "114 Sure Kur'ân-ı Kerîm ve sesli tilavet tamamen ücretsizdir. Tevrat, İncil ve Karşılaştırma modülü Huzur Özel kapsamındadır.",
+                  "114 Sure Kur'ân-ı Kerîm'i okuyabilir, ilk 3 sureyi ücretsiz dinleyebilirsiniz. Sonraki sure dinlemeleri Huzur Özel kapsamındadır. Tevrat, İncil ve Karşılaştırma modülleri de Premium kapsamındadır.",
                   textAlign: TextAlign.center,
                   style: TextStyle(
                       fontSize: 13, color: Colors.white70, height: 1.4),
@@ -1266,8 +1297,8 @@ class _SacredTextsScreenState extends ConsumerState< SacredTextsScreen > {
                 GlassContainer(
                   emeraldGlow: true,
                   borderRadius: 18,
-                  padding: const EdgeInsets.symmetric(
-                      vertical: 12, horizontal: 20),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
                   onTap: () => LiquidGlassPaywallSheet.show(context),
                   child: const Text(
                     "Huzur Özel'i Etkinleştir",

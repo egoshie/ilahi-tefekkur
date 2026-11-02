@@ -1,4 +1,5 @@
 import WidgetKit
+import Foundation
 import SwiftUI
 
 struct HuzurVerseEntry: TimelineEntry {
@@ -82,43 +83,100 @@ struct HuzurTimelineProvider: TimelineProvider {
         completion(placeholder(in: context))
     }
 
-    func getTimeline(in context: Context, completion: @escaping (Timeline<HuzurVerseEntry>) -> Void) {
-        var entries: [HuzurVerseEntry] = []
+    private func fetchRandomVerse(
+        completion: @escaping (HuzurVerseEntry?) -> Void
+    ) {
+        let endpoint =
+            "https://api.alquran.cloud/v1/ayah/random/editions/quran-uthmani,tr.yazir"
+
+        guard let url = URL(string: endpoint) else {
+            completion(nil)
+            return
+        }
+
+        URLSession.shared.dataTask(with: url) { data, _, error in
+            guard error == nil, let data = data else {
+                completion(nil)
+                return
+            }
+
+            do {
+                let root = try JSONSerialization.jsonObject(with: data)
+                    as? [String: Any]
+                let editions = root?["data"] as? [[String: Any]]
+
+                guard let editions = editions,
+                      editions.count >= 2,
+                      let arabic = editions[0]["text"] as? String,
+                      let turkish = editions[1]["text"] as? String,
+                      let surah = editions[1]["surah"] as? [String: Any],
+                      let surahNumber = surah["number"],
+                      let ayahNumber = editions[1]["numberInSurah"],
+                      !arabic.isEmpty,
+                      !turkish.isEmpty else {
+                    completion(nil)
+                    return
+                }
+
+                completion(
+                    HuzurVerseEntry(
+                        date: Date(),
+                        arabic: arabic,
+                        turkish: turkish,
+                        reference: "Sure \(surahNumber) • Ayet \(ayahNumber)"
+                    )
+                )
+            } catch {
+                completion(nil)
+            }
+        }.resume()
+    }
+
+    func getTimeline(
+        in context: Context,
+        completion: @escaping (Timeline<HuzurVerseEntry>) -> Void
+    ) {
         let now = Date()
-        let cal = Calendar.current
-        let baseHour = (Int(now.timeIntervalSince1970) / 3600)
+        let nextReload = Calendar.current.date(
+            byAdding: .hour,
+            value: 1,
+            to: now
+        ) ?? now.addingTimeInterval(3600)
 
         let shared = UserDefaults(suiteName: "group.com.ilahi.tefekkur")
+        let isPinned = shared?.string(forKey: "hourly_source") == "pinned"
         let customTr = shared?.string(forKey: "hourly_translation") ?? ""
         let customAr = shared?.string(forKey: "hourly_arabic") ?? ""
         let customRef = shared?.string(forKey: "hourly_reference") ?? ""
 
-        for offset in 0 ..< 24 {
-            let entryDate = cal.date(byAdding: .hour, value: offset, to: now) ?? now
-            if offset == 0 && !customTr.isEmpty {
-                entries.append(
-                    HuzurVerseEntry(
-                        date: entryDate,
-                        arabic: customAr,
-                        turkish: customTr,
-                        reference: customRef
-                    )
-                )
-            } else {
-                let item = verses[(baseHour + offset) % verses.count]
-                entries.append(
-                    HuzurVerseEntry(
-                        date: entryDate,
-                        arabic: item.ar,
-                        turkish: item.tr,
-                        reference: item.ref
-                    )
-                )
-            }
+        if isPinned && !customTr.isEmpty {
+            let pinned = HuzurVerseEntry(
+                date: now,
+                arabic: customAr,
+                turkish: customTr,
+                reference: customRef
+            )
+            completion(
+                Timeline(entries: [pinned], policy: .after(nextReload))
+            )
+            return
         }
 
-        let nextReload = cal.date(byAdding: .hour, value: 1, to: now) ?? now.addingTimeInterval(3600)
-        completion(Timeline(entries: entries, policy: .after(nextReload)))
+        let hourSeed = Int(now.timeIntervalSince1970 / 3600)
+        let fallback = verses[abs(hourSeed) % verses.count]
+        let fallbackEntry = HuzurVerseEntry(
+            date: now,
+            arabic: fallback.ar,
+            turkish: fallback.tr,
+            reference: fallback.ref
+        )
+
+        fetchRandomVerse { remoteEntry in
+            let entry = remoteEntry ?? fallbackEntry
+            completion(
+                Timeline(entries: [entry], policy: .after(nextReload))
+            )
+        }
     }
 }
 
@@ -190,8 +248,8 @@ struct HuzurKisaAyetWidgetView: View {
                     Text(entry.turkish)
                         .font(.system(size: 12.5, weight: .semibold))
                         .foregroundColor(.white)
-                        .lineLimit(3)
-                        .minimumScaleFactor(0.65)
+                        .lineLimit(family == .systemLarge ? nil : (family == .systemMedium ? 8 : 3))
+                        .minimumScaleFactor(0.50)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 .padding(10)
@@ -213,8 +271,9 @@ struct HuzurGenisAyetWidgetView: View {
                     if !entry.arabic.isEmpty {
                         Text(entry.arabic)
                             .font(.system(size: 12.5, weight: .bold))
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.70)
+                            .lineLimit(family == .systemLarge ? 6 : (family == .systemMedium ? 3 : 1))
+                            .minimumScaleFactor(0.50)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                     Text(entry.turkish)
                         .font(.system(size: 11.5, weight: .semibold))
@@ -280,7 +339,7 @@ struct HuzurGenisAyetWidget: Widget {
         }
         .configurationDisplayName("Huzur • Geniş İlham Kartı")
         .description("Arapça hat ve Türkçe meal içeren geniş kilit ekranı ve ana ekran kartı.")
-        .supportedFamilies([.systemMedium, .systemSmall, .accessoryRectangular])
+        .supportedFamilies([.systemMedium, .systemLarge, .systemSmall, .accessoryRectangular])
     }
 }
 
