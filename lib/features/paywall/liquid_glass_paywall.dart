@@ -431,8 +431,8 @@ class _LiquidGlassPaywallSheetState
         : "Kullanım Koşulları ve Lisans (EULA)";
 
     final body = isPrivacy
-        ? "1. CİHAZ İÇİ ÖNCELİKLİ MİMARİ VE VERİ KORUMA\nHuzur uygulaması kullanıcılarından hesap oluşturmasını talep etmez. Hiçbir reklam ağı ve takip kodu (Zero Tracking) barındırmaz.\n\n2. KONUM VE GALERİ İZİNLERİ\n• Konum İzni: Yalnızca bulunduğunuz şehrin astronomik ezan vakitlerini ve Kıble açısını cihaz içinde hesaplamak için kullanılır.\n• Fotoğraflar İzni: Yalnızca Paylaşım Stüdyosunda oluşturduğunuz ayet kartlarını galeriye kaydetmek için kullanılır.\n\nGeliştirici: Ege Deniz • berkwisy@gmail.com"
-        : "1. LİSANS KAPSAMI VE ABONELİK KURALLARI\n114 Sure Kur'ân-ı Kerîm, sesli tilavet, ezan vakitleri ve kıble pusulası ücretsizdir. Huzur Özel (Aylık ve Yıllık) abonelikleri, dönem bitiminden en az 24 saat önce iptal edilmediği sürece Apple ID hesabınız üzerinden otomatik yenilenir. Ayarlar > Apple Kimliği > Abonelikler menüsünden dilediğiniz an iptal edebilirsiniz.\n\nGeliştirici: Ege Deniz • berkwisy@gmail.com";
+        ? "1. CİHAZ İÇİ ÖNCELİKLİ MİMARİ VE VERİ KORUMA\nHuzur uygulaması kullanıcılarından hesap oluşturmasını talep etmez. Hiçbir reklam ağı ve takip kodu (Zero Tracking) barındırmaz.\n\n2. KONUM VE GALERİ İZİNLERİ\n• Konum İzni: Yalnızca bulunduğunuz şehrin astronomik ezan vakitlerini ve Kıble açısını cihaz içinde hesaplamak için kullanılır.\n• Fotoğraflar İzni: Yalnızca Paylaşım Stüdyosunda oluşturduğunuz ayet kartlarını galeriye kaydetmek için kullanılır.\n\nİletişim: Huzur Destek • halilibrahimcebeci0@icloud.com"
+        : "1. LİSANS KAPSAMI VE ABONELİK KURALLARI\n114 Sure Kur'ân-ı Kerîm, sesli tilavet, ezan vakitleri ve kıble pusulası ücretsizdir. Huzur Özel aylık ve yıllık abonelikleri, mevcut dönemin bitiminden en az 24 saat önce iptal edilmediği sürece Apple hesabınız üzerinden otomatik yenilenir. Ömür Boyu erişim seçeneği tek seferlik satın alımdır ve abonelik olarak otomatik yenilenmez. Aboneliklerinizi Ayarlar > Apple Kimliği > Abonelikler bölümünden yönetebilirsiniz.\n\nİletişim: Huzur Destek • halilibrahimcebeci0@icloud.com";
 
     showModalBottomSheet(
       context: context,
@@ -664,7 +664,7 @@ class HuzurDeveloperSvgBadge extends StatelessWidget {
         const SizedBox(width: 5),
         Flexible(
           child: Text(
-            'Ege Deniz • Geliştirici',
+            'Huzur Ekibi',
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: const Color(0xFFFFE082),
@@ -713,7 +713,7 @@ class HuzurDeveloperStoryButton extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Geliştirici Hikâyesi & Vizyon',
+                  'Huzur’un Hikâyesi & Vizyonu',
                   style: TextStyle(
                     color: Color(0xFF64FFDA),
                     fontSize: 13.5,
@@ -798,7 +798,7 @@ Future<void> showHuzurDeveloperStoryModal(
                       SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          'Geliştirici Hikâyesi & Vizyon',
+                          'Huzur’un Hikâyesi & Vizyonu',
                           style: TextStyle(
                             color: Color(0xFFFFE082),
                             fontSize: 16,
@@ -888,11 +888,6 @@ TextSpan _huzurDeveloperStoryText() {
     fontWeight: FontWeight.w700,
   );
 
-  const gold = TextStyle(
-    color: Color(0xFFFFE082),
-    fontWeight: FontWeight.w700,
-  );
-
   const signature = TextStyle(
     color: Color(0xFFFFE082),
     fontSize: 14,
@@ -906,73 +901,38 @@ TextSpan _huzurDeveloperStoryText() {
     children: [
       TextSpan(
         text:
-            'Her şey, modern dünyanın getirdiği o amansız hızın, karmaşanın ve samimiyetsizliğin içinde kalbimin sıkışmasıyla başladı. Ben de sizler gibi, henüz yolun başında, ',
+            'Huzur, günün yoğunluğu içinde insanın kendisine zaman ayırabilmesi, sakinleşebilmesi ve tefekkür edebilmesi için tasarlanmış bir dijital yol arkadaşıdır. Amacımız, manevi içerikleri ve günlük kullanım araçlarını sade bir deneyimde bir araya getirmektir.',
+      ),
+      TextSpan(text: '\n\n'),
+      TextSpan(
+        text: 'Huzur deneyiminin merkezinde ',
       ),
       TextSpan(
-        text: '21 yaşında bağımsız bir yazılımcıyım.',
+        text: 'sadelik, mahremiyet ve huzurlu kullanım',
         style: emerald,
       ),
       TextSpan(
         text:
-            ' Arkamda devasa bütçeleri olan şirketler, reklam ajansları ya da bana sermaye veren yatırımcılar yok. En önemlisi, benim bir bilgisayarım bile yok! Sadece elimdeki tek bir telefonla, ',
-      ),
-      TextSpan(
-        text: 'iPhone 16\'mla',
-        style: gold,
-      ),
-      TextSpan(
-        text:
-            ' gecelerce terminale bağlanarak, uykumu feda ederek bu kod satırlarını tek tek işledim. Bu uygulamanın adını bu yüzden ',
-      ),
-      TextSpan(
-        text: '"Huzur"',
-        style: gold,
-      ),
-      TextSpan(
-        text:
-            ' koydum. İstedim ki bir insan telefonunun ekranını açtığında, karşısında sadece parıldayan pikseller değil; ruhuna dokunan, onu sakinleştiren temiz bir sığınak bulsun.',
+            ' bulunur. Reklamlarla bölünmeyen, gereksiz karmaşadan uzak ve kullanıcıya kontrol veren bir uygulama deneyimi sunmayı hedefliyoruz.',
       ),
       TextSpan(text: '\n\n'),
       TextSpan(
         text:
-            'Bugün nereye baksak, hangi uygulamayı indirmeye kalksak her yerinden reklamlar fırlıyor. Kullanıcıların verilerini gizlice toplayıp satan, her saniye karşınıza zorla 30 saniyelik videolar çıkaran, insan ruhunu sadece birer "veri" ve "para" olarak gören koca bir endüstri var. Ben 21 yaşındaki bu genç yaşımda, bu sisteme tek başıma meydan okumak istedim. Huzur’u tasarlarken en büyük yeminim şuydu: ',
-      ),
-      TextSpan(
-        text:
-            'Bu uygulamada tek bir reklam ağı, tek bir takip kodu (Zero Tracking) olmayacak!',
-        style: emerald,
-      ),
-      TextSpan(
-        text:
-            ' İnsanlar buraya tefekkür etmeye, dinlenmeye geldiklerinde arkalarında iz bırakmayacaklar, rahatsız edilmeyecekler. Ben insanların verilerini değil, sadece samimi bir teşekkürlerini ve dualarını almak için yola çıktım.',
+            'Kur’ân-ı Kerîm içerikleri, sesli tilavet, ezan vakitleri, kıble araçları, zikir deneyimi, manevi içerikler ve kişiselleştirilebilir ses ortamları aynı çatı altında buluşur. Kilit ekranı araçları ve paylaşım özellikleri de bu deneyimi günlük yaşama taşımak için geliştirilir.',
       ),
       TextSpan(text: '\n\n'),
       TextSpan(
         text:
-            'Bu yolculuk benim için hiç kolay olmadı. Yaşıtlarım dışarıda gezip eğlenirken, ben avucumun içindeki o telefon ekranına bakarak sabaha karşı çöken sunucularla ve çözülmeyi bekleyen hata kodlarıyla baş başa kaldım. Kaç kez durup tıkandığımı, "acaba yapamayacak mıyım?" diye kendi kendimi yiyip bitirdiğimi ben bilirim. Apple\'ın o katı ödeme motorunu entegre etmekten, Tevrat ve İncil\'in canlı Türkçe API bağlantılarını hatasız kurmaya kadar her detayı telefonumdan, ilmek ilmek işledim. Sırf kilit ekranında ayetler taşmasın, alt alta temizce süzülsün, uzun cümleler arasında insan ruhu boğulmasın diye günlerce akıllı cümle bölücüler üzerinde çalıştım. Sesler geçiş yaparken kullanıcı uygulamayı kapandı sanmasın diye arka planda sıfır beklemeli ses sistemini kurmak için uykumu feda ettim.',
+            'Her ayrıntıda okunabilirliği, erişilebilirliği ve tutarlı bir tasarımı önemseriz. Huzur’u geliştirmeye devam ederken amacımız, teknolojinin dikkat dağıtan yönlerini azaltıp faydalı içeriklere daha sakin bir alan açmaktır.',
       ),
       TextSpan(text: '\n\n'),
       TextSpan(
         text:
-            'Bu uygulama, sadece satırlardan ve algoritmalardan ibaret ticari bir meta değil. Bu proje bağımsız bir geliştiricinin, 21 yaşındaki bir gencin tüm dünyaya ',
-      ),
-      TextSpan(
-        text:
-            '"Bir bilgisayarım olmasa bile, sadece bir telefonla reklamsız ve tertemiz bir dijital dünya inşa edebilirim"',
-        style: emerald,
-      ),
-      TextSpan(
-        text:
-            ' deme şeklidir. Arkamda büyük sermayeler olmasa da, bu projede her bir satır kodda saf bir emek, telefon başında dökülen alın teri ve koca bir inanç var.',
+            'Huzur’a gösterdiğiniz ilgi ve verdiğiniz destek için teşekkür ederiz. Bu yolculuğun bir parçası olduğunuz için mutluyuz.',
       ),
       TextSpan(text: '\n\n'),
       TextSpan(
-        text:
-            'Huzur, bir şirketin kazanç kapısı değil; bağımsız bir tefekkür, bir adanmışlık yolculuğudur. Bu limana sığınan, emeğime saygı duyan ve bu sessiz devrimde yanımda olan her bir kalbe selam olsun...',
-      ),
-      TextSpan(text: '\n\n'),
-      TextSpan(
-        text: 'Bağımsız Geliştirici: Ege Deniz (21)',
+        text: 'Huzur Ekibi',
         style: signature,
       ),
     ],

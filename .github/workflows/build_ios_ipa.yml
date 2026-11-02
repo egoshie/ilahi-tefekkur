@@ -240,16 +240,16 @@ jobs:
           IPA_SOURCE="$(find "$EXPORT_PATH" -maxdepth 1 -name '*.ipa' -print -quit)"
           test -n "$IPA_SOURCE"
 
-          cp "$IPA_SOURCE" output/Huzur-1.0.0-12.ipa
-          unzip -t output/Huzur-1.0.0-12.ipa >/dev/null
-          shasum -a 256 output/Huzur-1.0.0-12.ipa
-          ls -lh output/Huzur-1.0.0-12.ipa
+          cp "$IPA_SOURCE" output/Huzur-1.0.0-14.ipa
+          unzip -t output/Huzur-1.0.0-14.ipa >/dev/null
+          shasum -a 256 output/Huzur-1.0.0-14.ipa
+          ls -lh output/Huzur-1.0.0-14.ipa
 
       - name: Upload signed IPA artifact
         uses: actions/upload-artifact@v4
         with:
           name: Huzur-AppStore-IPA
-          path: output/Huzur-1.0.0-12.ipa
+          path: output/Huzur-1.0.0-14.ipa
           if-no-files-found: error
           retention-days: 7
 
@@ -278,7 +278,7 @@ jobs:
 
           openssl pkey -in "$KEY_FILE" -noout
 
-          IPA_PATH="output/Huzur-1.0.0-12.ipa"
+          IPA_PATH="output/Huzur-1.0.0-14.ipa"
           test -s "$IPA_PATH"
 
           echo "Uploading Huzur IPA to App Store Connect..."

@@ -51,6 +51,8 @@ WidgetCenter.shared.reloadAllTimelines()
 }
                     }
                     result(true)
+                case "getLocalTimeZone":
+                    result(TimeZone.current.identifier)
                 case "openExternalUrl":
                     if let args = call.arguments as? [String: Any], let uStr = args["url"] as? String, let u = URL(string: uStr) {
                         DispatchQueue.main.async { UIApplication.shared.open(u, options: [:], completionHandler: nil) }

@@ -24,6 +24,16 @@ class NotificationAndWidgetService {
   Future<void> initialize() async {
     if (_initialized) return;
     tz.initializeTimeZones();
+    try {
+      final deviceTimeZone =
+          await _nativeChannel.invokeMethod<String>('getLocalTimeZone');
+
+      if (deviceTimeZone != null && deviceTimeZone.trim().isNotEmpty) {
+        tz.setLocalLocation(tz.getLocation(deviceTimeZone));
+      }
+    } catch (_) {
+      // Yerel saat dilimi sonraki native köprü adımında etkinleştirilecek.
+    }
     const androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings(
@@ -95,33 +105,56 @@ class NotificationAndWidgetService {
     final now = DateTime.now();
     final hourSeed =
         now.year * 8760 + now.month * 720 + now.day * 24 + now.hour + offset;
-    if (offset == 0) return getActiveHourlyVerse(offset: 0);
+
+    final selectedVerse = getActiveHourlyVerse(offset: offset);
+
+    if (offset == 0) {
+      return selectedVerse;
+    }
+
     try {
+      // Offline depodaki ayet referansı kullanılır: örneğin 93:3.
+      final ayahId = selectedVerse.ayahKey;
+
       final res = await http
-          .get(Uri.parse(
-              'https://api.alquran.cloud/v1/ayah/\$ayahId/editions/quran-uthmani,tr.yazir'))
+          .get(
+            Uri.parse(
+              'https://api.alquran.cloud/v1/ayah/$ayahId/editions/quran-uthmani,tr.yazir',
+            ),
+          )
           .timeout(const Duration(seconds: 6));
+
       if (res.statusCode == 200) {
-        final data = jsonDecode(res.body)['data'] as List<dynamic>;
-        final arObj = data[0] as Map<String, dynamic>;
-        final trObj = data[1] as Map<String, dynamic>;
-        final surahNum =
-            int.tryParse((arObj['surah'] as Map)['number'].toString()) ?? 1;
-        final splitTr =
-            smartSplitTurkishSentence((trObj['text'] ?? '').toString());
-        final splitAr = smartSplitArabic((arObj['text'] ?? '').toString());
-        final liveItem = HourlyShortVerse(
+        final decoded = jsonDecode(res.body) as Map<String, dynamic>;
+        final data = decoded['data'] as List<dynamic>;
+
+        if (data.length >= 2) {
+          final arObj = data[0] as Map<String, dynamic>;
+          final trObj = data[1] as Map<String, dynamic>;
+
+          final liveItem = HourlyShortVerse(
             index: offset,
-            ayahKey: '\$surahNum:\$inSurah',
-            arabicShort: splitAr,
-            turkishShort: splitTr,
-            reference: '\$sName, \$inSurah');
-        _cachedLiveSplitVerse = liveItem;
-        _lastFetchedHourSeed = hourSeed;
-        return liveItem;
+            ayahKey: selectedVerse.ayahKey,
+            arabicShort: smartSplitArabic(
+              (arObj['text'] ?? '').toString(),
+            ),
+            turkishShort: smartSplitTurkishSentence(
+              (trObj['text'] ?? '').toString(),
+            ),
+            reference: selectedVerse.reference,
+          );
+
+          _cachedLiveSplitVerse = liveItem;
+          _lastFetchedHourSeed = hourSeed;
+
+          return liveItem;
+        }
       }
-    } catch (_) {}
-    return getActiveHourlyVerse(offset: offset);
+    } catch (_) {
+      // Bağlantı başarısızsa çevrimdışı ayet kullanılmaya devam edilir.
+    }
+
+    return selectedVerse;
   }
 
   Future<void> syncHourlyVerseToWidget({int manualOffset = 0}) async {
@@ -161,36 +194,97 @@ class NotificationAndWidgetService {
     }
   }
 
-  Future<void> scheduleExactPrayerAlarm(
-      {required int id,
-      required String prayerName,
-      required DateTime prayerTime,
-      required String maqam,
-      required int preReminderMinutes}) async {
+  Future<void> scheduleExactPrayerAlarm({
+    required int id,
+    required String prayerName,
+    required DateTime prayerTime,
+    required String maqam,
+    required int preReminderMinutes,
+  }) async {
     await initialize();
+
     final iosPlugin = _notifications.resolvePlatformSpecificImplementation<
         IOSFlutterLocalNotificationsPlugin>();
-    await iosPlugin?.requestPermissions(alert: true, badge: true, sound: true);
+
+    await iosPlugin?.requestPermissions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
     final now = DateTime.now();
-    if (prayerTime.isAfter(now)) {
-      final scheduledDate = tz.TZDateTime.from(prayerTime, tz.local);
-      const androidDetails = AndroidNotificationDetails(
-          'huzur_adhan_channel', 'Huzur Ezan Vakitleri',
-          importance: Importance.max, priority: Priority.max);
-      const iosDetails = DarwinNotificationDetails(
-          presentAlert: true,
-          presentSound: true,
-          interruptionLevel: InterruptionLevel.timeSensitive);
-      await _notifications.zonedSchedule(
-          id,
-          '\$prayerName Vakti',
-          '\$maqam ile vakit çağrısı • Huzurla eda ediniz.',
-          scheduledDate,
-          const NotificationDetails(android: androidDetails, iOS: iosDetails),
+
+    if (!prayerTime.isAfter(now)) {
+      return;
+    }
+
+    final safePreReminderMinutes = preReminderMinutes.clamp(0, 180).toInt();
+
+    final reminderId = id + 10000;
+
+    // Önce aynı hatırlatıcının eski kayıtları temizlenir.
+    await _notifications.cancel(id);
+    await _notifications.cancel(reminderId);
+
+    const androidDetails = AndroidNotificationDetails(
+      'huzur_adhan_channel',
+      'Huzur Ezan Vakitleri',
+      importance: Importance.max,
+      priority: Priority.max,
+    );
+
+    const iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentSound: true,
+      interruptionLevel: InterruptionLevel.timeSensitive,
+    );
+
+    const details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    // 1. Önceden hatırlatma.
+    if (safePreReminderMinutes > 0) {
+      final reminderTime = prayerTime.subtract(
+        Duration(minutes: safePreReminderMinutes),
+      );
+
+      if (reminderTime.isAfter(now)) {
+        final reminderDate = tz.TZDateTime.from(
+          reminderTime,
+          tz.local,
+        );
+
+        await _notifications.zonedSchedule(
+          reminderId,
+          '$prayerName Vaktine Az Kaldı',
+          '$prayerName vaktine $safePreReminderMinutes dakika kaldı. Hazırlanabilirsiniz.',
+          reminderDate,
+          details,
           androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
           uiLocalNotificationDateInterpretation:
-              UILocalNotificationDateInterpretation.absoluteTime);
+              UILocalNotificationDateInterpretation.absoluteTime,
+        );
+      }
     }
+
+    // 2. Namaz vaktinin tam zamanındaki bildirim.
+    final prayerDate = tz.TZDateTime.from(
+      prayerTime,
+      tz.local,
+    );
+
+    await _notifications.zonedSchedule(
+      id,
+      '$prayerName Vakti',
+      '$prayerName vakti geldi. Huzurla ibadetinize vakit ayırın. Ezan makamı tercihiniz: $maqam.',
+      prayerDate,
+      details,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+    );
   }
 }
 
