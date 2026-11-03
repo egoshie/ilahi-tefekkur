@@ -187,7 +187,7 @@ jobs:
             archive \
             DART_OBFUSCATION=true \
             SPLIT_DEBUG_INFO="$GITHUB_WORKSPACE/build/huzur-symbols/14.4" \
-            DEVELOPMENT_TEAM="$TEAM_ID" \
+            DEVELOPMENT_TEAM="$TEAM_ID"
 
           APP_PATH="$ARCHIVE_PATH/Products/Applications/Runner.app"
           WIDGET_PATH="$APP_PATH/PlugIns/HuzurWidgetExtension.appex"
