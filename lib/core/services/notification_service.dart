@@ -36,10 +36,14 @@ class NotificationAndWidgetService {
         requestAlertPermission: false,
         requestBadgePermission: false,
         requestSoundPermission: false);
-    await _notifications.initialize(const InitializationSettings(
-        android: androidSettings, iOS: iosSettings));
+    await _notifications.initialize(
+      settings: const InitializationSettings(
+        android: androidSettings,
+        iOS: iosSettings,
+      ),
+    );
     try {
-      await _notifications.cancel(777);
+      await _notifications.cancel(id: 777);
     } catch (_) {}
 
     final retiredSupportPrefs = await SharedPreferences.getInstance();
@@ -250,8 +254,8 @@ class NotificationAndWidgetService {
     final reminderId = id + 10000;
 
     // Önce aynı hatırlatıcının eski kayıtları temizlenir.
-    await _notifications.cancel(id);
-    await _notifications.cancel(reminderId);
+    await _notifications.cancel(id: id);
+    await _notifications.cancel(id: reminderId);
 
     const androidDetails = AndroidNotificationDetails(
       'huzur_adhan_channel',
@@ -261,7 +265,8 @@ class NotificationAndWidgetService {
     );
 
     const iosDetails = DarwinNotificationDetails(
-      presentAlert: true,
+      presentBanner: true,
+      presentList: true,
       presentSound: true,
       interruptionLevel: InterruptionLevel.timeSensitive,
     );
@@ -284,14 +289,13 @@ class NotificationAndWidgetService {
         );
 
         await _notifications.zonedSchedule(
-          reminderId,
-          '$prayerName Vaktine Az Kaldı',
-          '$prayerName vaktine $safePreReminderMinutes dakika kaldı. Hazırlanabilirsiniz.',
-          reminderDate,
-          details,
+          id: reminderId,
+          title: '$prayerName Vaktine Az Kaldı',
+          body:
+              '$prayerName vaktine $safePreReminderMinutes dakika kaldı. Hazırlanabilirsiniz.',
+          scheduledDate: reminderDate,
+          notificationDetails: details,
           androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-          uiLocalNotificationDateInterpretation:
-              UILocalNotificationDateInterpretation.absoluteTime,
         );
       }
     }
@@ -303,14 +307,13 @@ class NotificationAndWidgetService {
     );
 
     await _notifications.zonedSchedule(
-      id,
-      '$prayerName Vakti',
-      '$prayerName vakti geldi. Huzurla ibadetinize vakit ayırın. Ezan makamı tercihiniz: $maqam.',
-      prayerDate,
-      details,
+      id: id,
+      title: '$prayerName Vakti',
+      body:
+          '$prayerName vakti geldi. Huzurla ibadetinize vakit ayırın. Ezan makamı tercihiniz: $maqam.',
+      scheduledDate: prayerDate,
+      notificationDetails: details,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
     );
   }
 }

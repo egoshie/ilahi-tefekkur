@@ -696,7 +696,7 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
     ];
 
     if (combined.isEmpty) {
-      return Center(
+      return const Center(
         child: GlassContainer(
           borderRadius: 24,
           padding: const EdgeInsets.all(24),
@@ -1004,7 +1004,7 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
   }
 
   Widget _buildCrossReferenceView() {
-    final allTopics = DatabaseService.kCrossReferenceTopics;
+    const allTopics = DatabaseService.kCrossReferenceTopics;
     final topics = _searchQuery.trim().isEmpty
         ? allTopics
         : allTopics

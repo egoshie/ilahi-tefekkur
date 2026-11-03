@@ -21,9 +21,27 @@ group.clear
 swift_ref = group.new_file('HuzurWidget.swift')
 group.new_file('Info.plist')
 group.new_file('HuzurWidget.entitlements')
+widget_privacy_ref = group.new_file('PrivacyInfo.xcprivacy')
 
 widget = project.targets.find { |t| t.name == 'HuzurWidgetExtension' }
 widget ||= project.new_target(:app_extension, 'HuzurWidgetExtension', :ios, '16.0')
+
+unless widget.resources_build_phase.files_references.include?(widget_privacy_ref)
+  widget.resources_build_phase.add_file_reference(widget_privacy_ref, true)
+end
+
+runner_group = project.main_group.find_subpath('Runner', true)
+runner_group.set_source_tree('<group>')
+runner_group.set_path('Runner')
+
+runner_privacy_ref = runner_group.files.find do |file|
+  file.path == 'PrivacyInfo.xcprivacy'
+end
+runner_privacy_ref ||= runner_group.new_file('PrivacyInfo.xcprivacy')
+
+unless runner.resources_build_phase.files_references.include?(runner_privacy_ref)
+  runner.resources_build_phase.add_file_reference(runner_privacy_ref, true)
+end
 
 widget.source_build_phase.files.dup.each(&:remove_from_project)
 widget.source_build_phase.add_file_reference(swift_ref, true)

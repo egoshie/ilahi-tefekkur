@@ -198,6 +198,21 @@ jobs:
           test -s "$APP_PATH/embedded.mobileprovision"
           test -s "$WIDGET_PATH/embedded.mobileprovision"
 
+          test -s "$APP_PATH/PrivacyInfo.xcprivacy"
+          test -s "$WIDGET_PATH/PrivacyInfo.xcprivacy"
+          plutil -lint "$APP_PATH/PrivacyInfo.xcprivacy"
+          plutil -lint "$WIDGET_PATH/PrivacyInfo.xcprivacy"
+
+          APP_VERSION=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP_PATH/Info.plist")
+          APP_BUILD=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$APP_PATH/Info.plist")
+          WIDGET_VERSION=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$WIDGET_PATH/Info.plist")
+          WIDGET_BUILD=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$WIDGET_PATH/Info.plist")
+
+          test "$APP_VERSION" = "1.0.0"
+          test "$APP_BUILD" = "14.4"
+          test "$WIDGET_VERSION" = "$APP_VERSION"
+          test "$WIDGET_BUILD" = "$APP_BUILD"
+
           /usr/bin/codesign --verify --strict --verbose=2 "$WIDGET_PATH"
           /usr/bin/codesign --verify --deep --strict --verbose=2 "$APP_PATH"
 
