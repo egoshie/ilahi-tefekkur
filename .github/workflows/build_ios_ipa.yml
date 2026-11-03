@@ -25,7 +25,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Verify generated hourly verse catalogs
         run: |
           set -euo pipefail
@@ -186,6 +186,7 @@ jobs:
             -archivePath "$ARCHIVE_PATH" \
             archive \
             DART_OBFUSCATION=true \
+            EXTRA_GEN_SNAPSHOT_OPTIONS=--strip \
             SPLIT_DEBUG_INFO="$GITHUB_WORKSPACE/build/huzur-symbols/14.4" \
             DEVELOPMENT_TEAM="$TEAM_ID"
 
@@ -273,7 +274,7 @@ jobs:
           shasum -a 256 "$IPA_ENCRYPTED"
 
       - name: Upload encrypted signed IPA artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Huzur-AppStore-IPA-Encrypted
           path: ${{ runner.temp }}/Huzur-1.0.0-14.4.ipa.enc
@@ -305,7 +306,7 @@ jobs:
           rm -f "$SYMBOL_ARCHIVE"
 
       - name: Upload encrypted Dart symbols
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Huzur-14.4-Dart-Symbols-Encrypted
           path: ${{ runner.temp }}/Huzur-14.4-Dart-Symbols.tar.gz.enc
