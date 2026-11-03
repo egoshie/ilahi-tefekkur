@@ -12,9 +12,9 @@ void main() {
     expect(verses.map((verse) => verse.ayahKey).toSet(), hasLength(27));
 
     for (final verse in verses) {
-      expect(verse.arabicShort.trim().split(RegExp(r'\\s+')).length,
+      expect(verse.arabicShort.trim().split(RegExp(r'\s+')).length,
           lessThanOrEqualTo(4));
-      expect(verse.turkishShort.trim().split(RegExp(r'\\s+')).length,
+      expect(verse.turkishShort.trim().split(RegExp(r'\s+')).length,
           lessThanOrEqualTo(4));
     }
   });

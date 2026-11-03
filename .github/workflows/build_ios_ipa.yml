@@ -26,6 +26,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Verify generated hourly verse catalogs
+        run: |
+          set -euo pipefail
+          python3 tools/generate_hourly_verse_catalog.py --check
+
 
       - name: Check Xcode
         run: |
@@ -180,6 +185,8 @@ jobs:
             -destination 'generic/platform=iOS' \
             -archivePath "$ARCHIVE_PATH" \
             archive \
+            DART_OBFUSCATION=true \
+            SPLIT_DEBUG_INFO="$GITHUB_WORKSPACE/build/huzur-symbols/14.4" \
             DEVELOPMENT_TEAM="$TEAM_ID" \
 
           APP_PATH="$ARCHIVE_PATH/Products/Applications/Runner.app"
@@ -240,20 +247,73 @@ jobs:
           IPA_SOURCE="$(find "$EXPORT_PATH" -maxdepth 1 -name '*.ipa' -print -quit)"
           test -n "$IPA_SOURCE"
 
-          cp "$IPA_SOURCE" output/Huzur-1.0.0-14.3.ipa
-          unzip -t output/Huzur-1.0.0-14.3.ipa >/dev/null
-          shasum -a 256 output/Huzur-1.0.0-14.3.ipa
-          ls -lh output/Huzur-1.0.0-14.3.ipa
+          cp "$IPA_SOURCE" output/Huzur-1.0.0-14.4.ipa
+          unzip -t output/Huzur-1.0.0-14.4.ipa >/dev/null
+          shasum -a 256 output/Huzur-1.0.0-14.4.ipa
+          ls -lh output/Huzur-1.0.0-14.4.ipa
 
-      - name: Upload signed IPA artifact
+      - name: Encrypt signed IPA for public artifact storage
+        env:
+          HUZUR_IPA_ENCRYPTION_KEY: ${{ secrets.HUZUR_IPA_ENCRYPTION_KEY }}
+        run: |
+          set -euo pipefail
+
+          IPA_SOURCE="output/Huzur-1.0.0-14.4.ipa"
+          IPA_ENCRYPTED="$RUNNER_TEMP/Huzur-1.0.0-14.4.ipa.enc"
+
+          test -s "$IPA_SOURCE"
+          test -n "$HUZUR_IPA_ENCRYPTION_KEY"
+
+          openssl enc -aes-256-cbc -salt -pbkdf2 -iter 600000 \
+            -pass env:HUZUR_IPA_ENCRYPTION_KEY \
+            -in "$IPA_SOURCE" \
+            -out "$IPA_ENCRYPTED"
+
+          test -s "$IPA_ENCRYPTED"
+          shasum -a 256 "$IPA_ENCRYPTED"
+
+      - name: Upload encrypted signed IPA artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Huzur-AppStore-IPA
-          path: output/Huzur-1.0.0-14.3.ipa
+          name: Huzur-AppStore-IPA-Encrypted
+          path: ${{ runner.temp }}/Huzur-1.0.0-14.4.ipa.enc
           if-no-files-found: error
           retention-days: 7
 
+
+      - name: Encrypt Dart obfuscation symbols
+        env:
+          HUZUR_SYMBOLS_ENCRYPTION_KEY: ${{ secrets.HUZUR_SYMBOLS_ENCRYPTION_KEY }}
+        run: |
+          set -euo pipefail
+
+          SYMBOL_DIR="$GITHUB_WORKSPACE/build/huzur-symbols/14.4"
+          test -s "$SYMBOL_DIR/app.ios-arm64.symbols"
+          test -n "$HUZUR_SYMBOLS_ENCRYPTION_KEY"
+
+          SYMBOL_ARCHIVE="$RUNNER_TEMP/Huzur-14.4-Dart-Symbols.tar.gz"
+          ENCRYPTED_ARCHIVE="$RUNNER_TEMP/Huzur-14.4-Dart-Symbols.tar.gz.enc"
+
+          tar -czf "$SYMBOL_ARCHIVE" -C "$SYMBOL_DIR" .
+          openssl enc -aes-256-cbc -salt -pbkdf2 -iter 600000 \
+            -pass env:HUZUR_SYMBOLS_ENCRYPTION_KEY \
+            -in "$SYMBOL_ARCHIVE" \
+            -out "$ENCRYPTED_ARCHIVE"
+
+          test -s "$ENCRYPTED_ARCHIVE"
+          shasum -a 256 "$ENCRYPTED_ARCHIVE"
+          rm -f "$SYMBOL_ARCHIVE"
+
+      - name: Upload encrypted Dart symbols
+        uses: actions/upload-artifact@v4
+        with:
+          name: Huzur-14.4-Dart-Symbols-Encrypted
+          path: ${{ runner.temp }}/Huzur-14.4-Dart-Symbols.tar.gz.enc
+          if-no-files-found: error
+          retention-days: 90
+
       - name: Upload IPA to App Store Connect
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
           APPSTORE_API_KEY_ID: ${{ secrets.APPSTORE_API_KEY_ID }}
           APPSTORE_API_ISSUER_ID: ${{ secrets.APPSTORE_API_ISSUER_ID }}
@@ -278,7 +338,7 @@ jobs:
 
           openssl pkey -in "$KEY_FILE" -noout
 
-          IPA_PATH="output/Huzur-1.0.0-14.3.ipa"
+          IPA_PATH="output/Huzur-1.0.0-14.4.ipa"
           test -s "$IPA_PATH"
 
           echo "Uploading Huzur IPA to App Store Connect..."

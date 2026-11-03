@@ -91,6 +91,8 @@ class _LiquidRootShellState extends ConsumerState<LiquidRootShell> {
                     borderRadius: 22,
                     emeraldGlow: true,
                     goldAccentBorder: true,
+                    enableBlur: true,
+                    blurSigma: 18,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 14,
                       vertical: 10,
@@ -190,16 +192,16 @@ class _LiquidRootShellState extends ConsumerState<LiquidRootShell> {
               // Alt Navigasyon Barı (Güçlü Bulanıklık & Koyu Kristal Zemin ile Korunmuş)
               ClipRRect(
                 child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 35, sigmaY: 35),
+                  filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
                   child: Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          widget.palette.deepCosmicMid.withValues(alpha: 0.88),
+                          widget.palette.deepCosmicMid.withValues(alpha: 0.62),
                           widget.palette.deepCosmicStart
-                              .withValues(alpha: 0.96),
+                              .withValues(alpha: 0.78),
                         ],
                       ),
                       border: Border(

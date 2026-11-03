@@ -11,40 +11,59 @@ struct HuzurVerseEntry: TimelineEntry {
 
 struct HuzurTimelineProvider: TimelineProvider {
     let verses: [(ar: String, tr: String, ref: String)] = [
-        ("مَا وَدَّعَكَ رَبُّكَ", "Rabbin seni terk etmedi.", "Duhâ, 3"),
+        // BEGIN GENERATED HOURLY VERSES
+        ("مَا وَدَّعَكَ رَبُّكَ…", "Rabbin seni terk etmedi…", "Duhâ, 3"),
         ("إِنَّ مَعَ ٱلْعُسْرِ يُسْرًا", "Zorlukla beraber kolaylık vardır.", "İnşirah, 6"),
         ("إِنَّ ٱللَّهَ مَعَ ٱلصَّـٰبِرِينَ", "Allah sabredenlerle beraberdir.", "Bakara, 153"),
         ("إِنَّ ٱللَّهَ مَعَنَا", "Allah bizimledir.", "Tevbe, 40"),
         ("كُلُّ نَفْسٍ ذَآئِقَةُ ٱلْمَوْتِ", "Her nefis ölümü tadacaktır.", "Âl-i İmrân, 185"),
         ("فَإِنِّى قَرِيبٌ", "Şüphesiz Ben çok yakınım.", "Bakara, 186"),
         ("لَئِن شَكَرْتُمْ لَأَزِيدَنَّكُمْ", "Şükrederseniz nimetimi artırırım.", "İbrâhîm, 7"),
-        ("إِيَّاكَ نَعْبُدُ", "Yalnız Sana kulluk ederiz.", "Fâtiha, 5"),
-        ("وَإِلَىٰ رَبِّكَ فَٱرْغَب", "Yalnızca Rabbine yönel.", "İnşirah, 8"),
+        ("إِيَّاكَ نَعْبُدُ…", "Yalnız Sana kulluk ederiz…", "Fâtiha, 5"),
+        ("وَإِلَىٰ رَبِّكَ فَٱرْغَب", "Rabbine yönel.", "İnşirah, 8"),
         ("فَفِرُّوٓا۟ إِلَى ٱللَّهِ", "Öyleyse Allah'a koşun!", "Zâriyât, 50"),
         ("إِنَّ ٱللَّهَ يُحِبُّ ٱلْمُتَوَكِّلِينَ", "Allah tevekkül edenleri sever.", "Âl-i İmrân, 159"),
         ("إِنَّ ٱللَّهَ يُحِبُّ ٱلْمُحْسِنِينَ", "Allah iyilik edenleri sever.", "Bakara, 195"),
-        ("ٱللَّهُ ٱلصَّمَدُ", "Her şey O'na muhtaçtır.", "İhlâs, 2"),
+        ("ٱللَّهُ ٱلصَّمَدُ", "Allah Samed'dir.", "İhlâs, 2"),
         ("وَرَحْمَتِى وَسِعَتْ كُلَّ شَىْءٍ", "Rahmetim her şeyi kuşatmıştır.", "A'râf, 156"),
         ("ٱللَّهُ لَطِيفٌۢ بِعِبَادِهِۦ", "Allah kullarına çok lütufkârdır.", "Şûrâ, 19"),
         ("وَكَفَىٰ بِٱللَّهِ وَكِيلًا", "Vekil olarak Allah yeter.", "Ahzâb, 3"),
         ("رَّبِّ زِدْنِى عِلْمًا", "Rabbim! İlmimi artır.", "Tâhâ, 114"),
-        ("إِنَّ ٱللَّهَ غَفُورٌ رَّحِيمٌ", "Şüphesiz Allah çok bağışlayandır.", "Bakara, 173"),
+        ("إِنَّ ٱللَّهَ غَفُورٌ رَّحِيمٌ", "Allah çok bağışlayandır, merhametlidir.", "Bakara, 173"),
         ("فَٱللَّهُ خَيْرٌ حَـٰفِظًا", "Allah en hayırlı koruyucudur.", "Yûsuf, 64"),
-        ("وَلَا تَهِنُوا۟ وَلَا تَحْزَنُوا۟", "Gevşemeyin, asla hüzünlenmeyin.", "Âl-i İmrân, 139"),
+        ("وَلَا تَهِنُوا۟ وَلَا تَحْزَنُوا۟", "Gevşemeyin, üzülmeyin…", "Âl-i İmrân, 139"),
         ("وَمَا تَوْفِيقِىٓ إِلَّا بِٱللَّهِ", "Başarım ancak Allah'ın yardımıyladır.", "Hûd, 88"),
-        ("إِنَّا نَحْنُ نَزَّلْنَا ٱلذِّكْرَ", "Zikri biz indirdik.", "Hicr, 9"),
+        ("إِنَّا نَحْنُ نَزَّلْنَا ٱلذِّكْرَ…", "Zikri biz indirdik…", "Hicr, 9"),
         ("وَإِنَّ ٱللَّهَ لَمَعَ ٱلْمُحْسِنِينَ", "Allah iyilik yapanlarla beraberdir.", "Ankebût, 69"),
-        ("وَٱصْبِرْ عَلَىٰ مَآ أَصَابَكَ", "Başına gelene güzelce sabret.", "Lokmân, 17"),
-        ("إِنَّمَا يُوَفَّى ٱلصَّـٰبِرُونَ أَجْرَهُم", "Sabredenlerin mükâfatı hesapsız verilir.", "Zümer, 10"),
+        ("وَٱصْبِرْ عَلَىٰ مَآ أَصَابَكَ", "Başına gelene sabret.", "Lokmân, 17"),
+        ("أَجْرَهُم بِغَيْرِ حِسَابٍ", "Mükâfatları hesapsız verilecektir.", "Zümer, 10"),
         ("إِنَّمَا ٱلْمُؤْمِنُونَ إِخْوَةٌ", "Müminler ancak birbirinin kardeşidir.", "Hucurât, 10"),
-        ("قَدْ أَفْلَحَ مَن تَزَكَّىٰ", "Arınan kimse kurtuluşa ermiştir.", "A'lâ, 14")
+        ("قَدْ أَفْلَحَ مَن تَزَكَّىٰ", "Arınan kimse kurtuluşa ermiştir.", "A'lâ, 14"),
+        // END GENERATED HOURLY VERSES
     ]
 
     private func entry(for date: Date, manualOffset: Int) -> HuzurVerseEntry {
+        if let shared = UserDefaults(suiteName: "group.com.ilahi.tefekkur"),
+           shared.string(forKey: "hourly_source") == "pinned",
+           let arabic = shared.string(forKey: "hourly_arabic"),
+           let turkish = shared.string(forKey: "hourly_translation"),
+           let reference = shared.string(forKey: "hourly_reference"),
+           !arabic.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+           !turkish.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+           !reference.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return HuzurVerseEntry(
+                date: date,
+                arabic: arabic,
+                turkish: turkish,
+                reference: reference
+            )
+        }
+
         let hourSlot = Int(date.timeIntervalSince1970 / 3600.0)
         let rawIndex = (hourSlot + manualOffset) % verses.count
         let index = rawIndex < 0 ? rawIndex + verses.count : rawIndex
         let verse = verses[index]
+
         return HuzurVerseEntry(
             date: date,
             arabic: verse.ar,

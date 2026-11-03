@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/v42_models.dart';
+import 'pricing_and_premium_service.dart';
 
 class QuranAudioPlaybackState {
   final List<LiveAyahItem> playlist;
@@ -59,16 +60,30 @@ class QuranAudioPlaybackState {
 
 final quranAudioProvider = StateNotifierProvider<QuranBackgroundAudioNotifier,
     QuranAudioPlaybackState>((ref) {
-  return QuranBackgroundAudioNotifier();
+  final premiumNotifier = ref.read(premiumServiceProvider.notifier);
+  return QuranBackgroundAudioNotifier(
+    isPremium: premiumNotifier.ensurePremiumAccess,
+  );
 });
 
 class QuranBackgroundAudioNotifier
     extends StateNotifier<QuranAudioPlaybackState> {
+  static const int freeSurahPlaybackLimit = 3;
+
+  static bool canStartPlaylist({
+    required bool isPremium,
+    required int completedSurahCount,
+  }) {
+    return isPremium || completedSurahCount < freeSurahPlaybackLimit;
+  }
+
   static const MethodChannel _mediaChannel =
       MethodChannel('com.ilahi.tefekkur/media');
 
+  final Future<bool> Function() _isPremium;
   final AudioPlayer _player = AudioPlayer();
   StreamSubscription<PlayerState>? _playerStateSub;
+  StreamSubscription<int?>? _indexSub;
   StreamSubscription<Duration>? _posSub;
   StreamSubscription<Duration?>? _durSub;
   bool _sessionReady = false;
@@ -76,7 +91,10 @@ class QuranBackgroundAudioNotifier
   bool _playbackCountLoaded = false;
   static const String _completedSurahsKey = 'huzur_completed_surah_plays_v1';
 
-  QuranBackgroundAudioNotifier() : super(const QuranAudioPlaybackState()) {
+  QuranBackgroundAudioNotifier({
+    Future<bool> Function()? isPremium,
+  })  : _isPremium = isPremium ?? (() async => false),
+        super(const QuranAudioPlaybackState()) {
     ensurePlaybackCountLoaded();
     _initAudioEngine();
   }
@@ -147,7 +165,7 @@ class QuranBackgroundAudioNotifier
       _syncIosNowPlayingCenter();
     });
 
-    _player.currentIndexStream.listen((idx) {
+    _indexSub = _player.currentIndexStream.listen((idx) {
       if (idx != null && idx >= 0 && idx < state.playlist.length) {
         state = state.copyWith(
           currentIndex: idx,
@@ -178,18 +196,37 @@ class QuranBackgroundAudioNotifier
     } catch (_) {}
   }
 
-  Future<void> startSurahPlaylist(
+  Future<bool> startSurahPlaylist(
     List<LiveAyahItem> ayahs, {
     int startIndex = 0,
   }) async {
-    if (ayahs.isEmpty) return;
+    if (ayahs.isEmpty) return false;
+
+    await ensurePlaybackCountLoaded();
+    final hasPremium = await _isPremium();
+
+    if (!canStartPlaylist(
+      isPremium: hasPremium,
+      completedSurahCount: state.completedSurahCount,
+    )) {
+      state = state.copyWith(
+        isLoading: false,
+        isPlaying: false,
+        errorMessage: 'Ücretsiz dinleme hakkınız doldu. '
+            'Huzur Özel ile sınırsız Kur’an ayeti dinleyebilirsiniz.',
+      );
+      return false;
+    }
+
     _completionRecordedForPlaylist = false;
     state = state.copyWith(
       playlist: ayahs,
       currentIndex: startIndex.clamp(0, ayahs.length - 1),
       errorMessage: null,
     );
+
     await playAyahAtIndex(startIndex.clamp(0, ayahs.length - 1));
+    return true;
   }
 
   Future<void> playAyahAtIndex(int index) async {
@@ -307,6 +344,7 @@ class QuranBackgroundAudioNotifier
   @override
   void dispose() {
     _playerStateSub?.cancel();
+    _indexSub?.cancel();
     _posSub?.cancel();
     _durSub?.cancel();
     _player.dispose();

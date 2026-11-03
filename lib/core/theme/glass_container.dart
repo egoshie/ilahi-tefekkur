@@ -27,8 +27,8 @@ class GlassContainer extends StatefulWidget {
     this.width,
     this.height,
     this.onTap,
-    this.enableBlur = true,
-    this.blurSigma = 24.0,
+    this.enableBlur = false,
+    this.blurSigma = 18.0,
     this.tintColor,
     this.borderColor,
     this.gradientColors,
@@ -65,20 +65,23 @@ class _GlassContainerState extends State<GlassContainer>
     super.dispose();
   }
 
+  bool get _reduceMotion =>
+      MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+
   void _handleTapDown(TapDownDetails _) {
-    if (widget.onTap == null) return;
+    if (widget.onTap == null || _reduceMotion) return;
     setState(() => _isPressed = true);
     _pressController.forward();
   }
 
   void _handleTapUp(TapUpDetails _) {
-    if (widget.onTap == null) return;
+    if (widget.onTap == null || _reduceMotion) return;
     setState(() => _isPressed = false);
     _pressController.reverse();
   }
 
   void _handleTapCancel() {
-    if (widget.onTap == null) return;
+    if (widget.onTap == null || _reduceMotion) return;
     setState(() => _isPressed = false);
     _pressController.reverse();
   }
@@ -90,7 +93,8 @@ class _GlassContainerState extends State<GlassContainer>
     final List<Color> effectiveGradient = widget.gradientColors ??
         (widget.emeraldGlow
             ? [
-                const Color(0xFF154233).withValues(alpha: _isPressed ? 0.62 : 0.50),
+                const Color(0xFF154233)
+                    .withValues(alpha: _isPressed ? 0.62 : 0.50),
                 const Color(0xFF0A241B).withValues(alpha: 0.68),
                 const Color(0xFF05110D).withValues(alpha: 0.82),
               ]
@@ -103,8 +107,32 @@ class _GlassContainerState extends State<GlassContainer>
 
     final Color outerBorderColor = widget.borderColor ??
         (widget.goldAccentBorder
-            ? const Color(0xFFFFE082).withValues(alpha: _isPressed ? 0.62 : 0.42)
-            : const Color(0xFF9CE5C9).withValues(alpha: _isPressed ? 0.36 : 0.22));
+            ? const Color(0xFFFFE082)
+                .withValues(alpha: _isPressed ? 0.62 : 0.42)
+            : const Color(0xFF9CE5C9)
+                .withValues(alpha: _isPressed ? 0.36 : 0.22));
+
+    final surfaceContent = CustomPaint(
+      foregroundPainter: _LiquidGlassRimPainter(
+        borderRadius: widget.borderRadius,
+        outerBorderColor: outerBorderColor,
+        goldAccent: widget.goldAccentBorder,
+        isPressed: _isPressed,
+      ),
+      child: Container(
+        padding: widget.padding,
+        decoration: BoxDecoration(
+          borderRadius: radius,
+          gradient: LinearGradient(
+            begin: const Alignment(-0.85, -1.0),
+            end: const Alignment(0.85, 1.0),
+            stops: const [0.0, 0.48, 1.0],
+            colors: effectiveGradient,
+          ),
+        ),
+        child: widget.child,
+      ),
+    );
 
     Widget surface = Container(
       width: widget.width,
@@ -113,52 +141,35 @@ class _GlassContainerState extends State<GlassContainer>
         borderRadius: radius,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.46),
-            blurRadius: 24,
-            spreadRadius: -2,
-            offset: const Offset(0, 10),
+            color: Colors.black.withValues(alpha: 0.34),
+            blurRadius: 20,
+            spreadRadius: -3,
+            offset: const Offset(0, 8),
           ),
           if (widget.emeraldGlow)
             BoxShadow(
-              color: const Color(0xFF3F9D7B).withValues(alpha: 0.16),
-              blurRadius: 22,
+              color: const Color(0xFF3F9D7B).withValues(alpha: 0.14),
+              blurRadius: 20,
               offset: const Offset(0, 4),
             ),
           if (widget.goldAccentBorder)
             BoxShadow(
-              color: const Color(0xFFD4AF37).withValues(alpha: 0.10),
-              blurRadius: 16,
+              color: const Color(0xFFD4AF37).withValues(alpha: 0.09),
+              blurRadius: 14,
             ),
         ],
       ),
       child: ClipRRect(
         borderRadius: radius,
-        child: BackdropFilter(
-          filter: widget.enableBlur
-              ? ImageFilter.blur(sigmaX: widget.blurSigma, sigmaY: widget.blurSigma)
-              : ImageFilter.blur(sigmaX: 0, sigmaY: 0),
-          child: CustomPaint(
-            foregroundPainter: _LiquidGlassRimPainter(
-              borderRadius: widget.borderRadius,
-              outerBorderColor: outerBorderColor,
-              goldAccent: widget.goldAccentBorder,
-              isPressed: _isPressed,
-            ),
-            child: Container(
-              padding: widget.padding,
-              decoration: BoxDecoration(
-                borderRadius: radius,
-                gradient: LinearGradient(
-                  begin: const Alignment(-0.85, -1.0),
-                  end: const Alignment(0.85, 1.0),
-                  stops: const [0.0, 0.48, 1.0],
-                  colors: effectiveGradient,
+        child: widget.enableBlur
+            ? BackdropFilter(
+                filter: ImageFilter.blur(
+                  sigmaX: widget.blurSigma,
+                  sigmaY: widget.blurSigma,
                 ),
-              ),
-              child: widget.child,
-            ),
-          ),
-        ),
+                child: surfaceContent,
+              )
+            : surfaceContent,
       ),
     );
 
@@ -172,7 +183,14 @@ class _GlassContainerState extends State<GlassContainer>
           HapticFeedback.selectionClick();
           widget.onTap?.call();
         },
-        child: ScaleTransition(scale: _scaleAnim, child: surface),
+        child: _reduceMotion
+            ? surface
+            : ScaleTransition(scale: _scaleAnim, child: surface),
+      );
+      surface = Semantics(
+        button: true,
+        enabled: true,
+        child: surface,
       );
     }
 
@@ -214,8 +232,10 @@ class _LiquidGlassRimPainter extends CustomPainter {
         stops: const [0.0, 0.35, 0.70, 1.0],
         colors: [
           goldAccent
-              ? const Color(0xFFFFF3C4).withValues(alpha: isPressed ? 0.85 : 0.68)
-              : const Color(0xFFE2FFF3).withValues(alpha: isPressed ? 0.62 : 0.45),
+              ? const Color(0xFFFFF3C4)
+                  .withValues(alpha: isPressed ? 0.85 : 0.68)
+              : const Color(0xFFE2FFF3)
+                  .withValues(alpha: isPressed ? 0.62 : 0.45),
           outerBorderColor,
           const Color(0xFF0A261D).withValues(alpha: 0.35),
           goldAccent

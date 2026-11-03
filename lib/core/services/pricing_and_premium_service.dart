@@ -91,16 +91,27 @@ class PremiumServiceNotifier extends StateNotifier<PremiumState> {
   final InAppPurchase _iap = InAppPurchase.instance;
 
   StreamSubscription<List<PurchaseDetails>>? _purchaseSub;
+  late final Future<void> _initialization;
 
   PremiumServiceNotifier()
       : super(
           PremiumState(
             isPremium: false,
+            isLoading: true,
             activePlanId: 'free',
             regionalOffer: _detectOffer(Platform.localeName),
           ),
         ) {
-    _initStoreKit();
+    _initialization = _initStoreKit();
+  }
+
+  Future<bool> ensurePremiumAccess() async {
+    try {
+      await _initialization;
+      return state.isPremium;
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<void> _initStoreKit() async {
@@ -142,6 +153,7 @@ class PremiumServiceNotifier extends StateNotifier<PremiumState> {
       state = state.copyWith(
         isPremium: false,
         activePlanId: 'free',
+        isLoading: false,
         statusMessage: 'Apple Premium durumu şu anda doğrulanamadı.',
       );
     }

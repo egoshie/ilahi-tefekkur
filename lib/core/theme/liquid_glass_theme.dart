@@ -139,10 +139,10 @@ class LiquidMeshBackground extends StatefulWidget {
   });
 
   @override
-  State< LiquidMeshBackground > createState() => _LiquidMeshBackgroundState();
+  State<LiquidMeshBackground> createState() => _LiquidMeshBackgroundState();
 }
 
-class _LiquidMeshBackgroundState extends State< LiquidMeshBackground >
+class _LiquidMeshBackgroundState extends State<LiquidMeshBackground>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 
@@ -151,8 +151,24 @@ class _LiquidMeshBackgroundState extends State< LiquidMeshBackground >
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 24),
-    )..repeat();
+      duration: const Duration(seconds: 30),
+    );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    final motionEnabled = TickerMode.valuesOf(context).enabled &&
+        !(MediaQuery.maybeOf(context)?.disableAnimations ?? false);
+
+    if (motionEnabled) {
+      if (!_controller.isAnimating) {
+        _controller.repeat();
+      }
+    } else if (_controller.isAnimating) {
+      _controller.stop();
+    }
   }
 
   @override
@@ -284,10 +300,10 @@ class LiveSvgAudioVisualizer extends StatefulWidget {
   });
 
   @override
-  State< LiveSvgAudioVisualizer > createState() => _LiveSvgAudioVisualizerState();
+  State<LiveSvgAudioVisualizer> createState() => _LiveSvgAudioVisualizerState();
 }
 
-class _LiveSvgAudioVisualizerState extends State< LiveSvgAudioVisualizer >
+class _LiveSvgAudioVisualizerState extends State<LiveSvgAudioVisualizer>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 

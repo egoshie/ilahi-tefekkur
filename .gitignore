@@ -31,3 +31,5 @@ service-account*.json
 *.db
 *.sqlite
 *.sqlite3
+*.symbols
+/docs_backup_20261101_201908/

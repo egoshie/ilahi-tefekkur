@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import '../models/v42_models.dart';
-import 'offline_sacred_repository.dart';
+import '../data/hourly_verses.g.dart';
 
 class NotificationAndWidgetService {
   static final NotificationAndWidgetService instance =
@@ -104,77 +104,119 @@ class NotificationAndWidgetService {
     return '${words.take(6).join(' ')} …';
   }
 
-
-  static final List<HourlyShortVerse> _widgetVerses =
-      List<HourlyShortVerse>.unmodifiable(
-    OfflineSacredRepository.kHourlyShortVerses.where((verse) {
-      if (verse.ayahKey == '25:63') return false;
-      final arabicWords =
-          verse.arabicShort.trim().split(RegExp(r'\s+')).length;
-      final turkishWords =
-          verse.turkishShort.trim().split(RegExp(r'\s+')).length;
-      return arabicWords <= 4 && turkishWords <= 4;
-    }),
-  );
+  static const List<HourlyShortVerse> _widgetVerses = kHourlyWidgetShortVerses;
 
   static int _hourSeed(DateTime value) {
     final hourStart = DateTime(
-      value.year, value.month, value.day, value.hour,
+      value.year,
+      value.month,
+      value.day,
+      value.hour,
     );
     return hourStart.millisecondsSinceEpoch ~/ 3600000;
   }
 
   HourlyShortVerse getActiveHourlyVerse({int offset = 0}) {
-    final verses = _widgetVerses;
+    const verses = _widgetVerses;
     final rawIndex = (_hourSeed(DateTime.now()) + offset) % verses.length;
     final index = rawIndex < 0 ? rawIndex + verses.length : rawIndex;
     return verses[index];
   }
 
-  Future<HourlyShortVerse> fetchLiveSplitVerseFromApi(
-      {int offset = 0}) async {
+  Future<HourlyShortVerse> fetchLiveSplitVerseFromApi({int offset = 0}) async {
     // Eski çağrılarla uyumluluk; artık internet isteği yapılmaz.
     return getActiveHourlyVerse(offset: offset);
   }
 
-  Future<void> syncHourlyVerseToWidget({int manualOffset = 0}) async {
+  Future<void> syncHourlyVerseToWidget({
+    int manualOffset = 0,
+    bool forceAuto = false,
+  }) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('hourly_verse_offset', manualOffset);
 
-    final verse = getActiveHourlyVerse(offset: manualOffset);
-    try {
-      await _nativeChannel.invokeMethod('enableHourlyLockScreenVerse', {
+    final pinnedArabic = prefs.getString('v42_pinned_widget_arabic');
+    final pinnedTurkish = prefs.getString('v42_pinned_widget_turkish');
+    final pinnedReference = prefs.getString('v42_pinned_widget_reference');
+
+    final usePinned = !forceAuto &&
+        prefs.getString('v42_widget_source') == 'pinned' &&
+        pinnedArabic != null &&
+        pinnedArabic.trim().isNotEmpty &&
+        pinnedTurkish != null &&
+        pinnedTurkish.trim().isNotEmpty &&
+        pinnedReference != null &&
+        pinnedReference.trim().isNotEmpty;
+
+    if (!usePinned) {
+      await prefs.setString('v42_widget_source', 'auto');
+    }
+
+    final Map<String, Object> payload;
+
+    if (usePinned) {
+      payload = {
+        'arabic': pinnedArabic,
+        'translation': pinnedTurkish,
+        'reference': pinnedReference,
+        'badge': 'Seçili Ayet',
+        'source': 'pinned',
+        'offset': manualOffset,
+      };
+    } else {
+      final verse = getActiveHourlyVerse(offset: manualOffset);
+      payload = {
         'arabic': verse.arabicShort,
         'translation': verse.turkishShort,
         'reference': verse.reference,
         'badge': 'Günün İlhamı',
         'source': 'auto',
         'offset': manualOffset,
-      });
-    } catch (_) {}
+      };
+    }
+
+    try {
+      await _nativeChannel.invokeMethod(
+        'enableHourlyLockScreenVerse',
+        payload,
+      );
+    } catch (_) {
+      // Uygulama tekrar açıldığında senkronizasyon yeniden denenir.
+    }
   }
 
-  Future<bool> pinCustomVerseToWidget(
-      {required String arabic,
-      required String turkish,
-      required String reference}) async {
+  Future<bool> pinCustomVerseToWidget({
+    required String arabic,
+    required String turkish,
+    required String reference,
+  }) async {
     final prefs = await SharedPreferences.getInstance();
+
     final shortTr = smartSplitTurkishSentence(turkish);
     final shortAr = smartSplitArabic(arabic);
+
     await prefs.setString('v42_pinned_widget_arabic', shortAr);
     await prefs.setString('v42_pinned_widget_turkish', shortTr);
     await prefs.setString('v42_pinned_widget_reference', reference);
+    await prefs.setString('v42_widget_source', 'pinned');
+
+    final offset = prefs.getInt('hourly_verse_offset') ?? 0;
+
     try {
-      await _nativeChannel.invokeMethod('enableHourlyLockScreenVerse', {
-        'arabic': shortAr,
-        'translation': shortTr,
-        'reference': reference,
-        'badge': 'Seçili Ayet',
-        'source': 'auto',
-        'offset': prefs.getInt('hourly_verse_offset') ?? 0,
-      });
+      await _nativeChannel.invokeMethod(
+        'enableHourlyLockScreenVerse',
+        {
+          'arabic': shortAr,
+          'translation': shortTr,
+          'reference': reference,
+          'badge': 'Seçili Ayet',
+          'source': 'pinned',
+          'offset': offset,
+        },
+      );
       return true;
     } catch (_) {
+      // Sabit ayet tercihi saklanır; sonraki senkronizasyonda denenir.
       return false;
     }
   }

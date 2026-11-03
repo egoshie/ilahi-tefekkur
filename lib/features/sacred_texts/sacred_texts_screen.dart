@@ -336,22 +336,14 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
     QuranBackgroundAudioNotifier audioNotifier, {
     required int startIndex,
   }) async {
-    await audioNotifier.ensurePlaybackCountLoaded();
-
-    final playback = ref.read(quranAudioProvider);
-    final premium = ref.read(premiumServiceProvider);
-
-    if (!premium.isPremium && playback.completedSurahCount >= 3) {
-      if (mounted) {
-        await LiquidGlassPaywallSheet.show(context);
-      }
-      return;
-    }
-
-    await audioNotifier.startSurahPlaylist(
+    final started = await audioNotifier.startSurahPlaylist(
       _ayahs,
       startIndex: startIndex,
     );
+
+    if (!started && mounted) {
+      await LiquidGlassPaywallSheet.show(context);
+    }
   }
 
   Widget _buildQuranLiveReader() {

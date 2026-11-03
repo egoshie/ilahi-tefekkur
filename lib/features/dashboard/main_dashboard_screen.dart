@@ -147,7 +147,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                     style: TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w500,
-                      color: Colors.white.withOpacity(0.78),
+                      color: Colors.white.withValues(alpha: 0.78),
                     ),
                   ),
                 ],
@@ -210,7 +210,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,
-                                  color: Colors.white.withOpacity(0.82),
+                                  color: Colors.white.withValues(alpha: 0.82),
                                 ),
                               ),
                               const SizedBox(height: 6),
@@ -229,7 +229,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                                   vertical: 3,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.10),
+                                  color: Colors.white.withValues(alpha: 0.10),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Text(
@@ -439,6 +439,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                         await NotificationAndWidgetService.instance
                             .syncHourlyVerseToWidget(
                           manualOffset: _manualVerseOffset,
+                          forceAuto: true,
                         );
                       },
                       child: const Row(
@@ -470,14 +471,15 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       onTap: () async {
                         HapticFeedback.mediumImpact();
-                        await NotificationAndWidgetService.instance
+                        final pinSucceeded = await NotificationAndWidgetService
+                            .instance
                             .pinCustomVerseToWidget(
                           arabic: activeShortVerse.arabicShort,
                           turkish: activeShortVerse.turkishShort,
                           reference: activeShortVerse.reference,
                         );
                         if (mounted) {
-                          setState(() => _widgetPinnedFeedback = true);
+                          setState(() => _widgetPinnedFeedback = pinSucceeded);
                         }
                       },
                       child: Row(
@@ -595,7 +597,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                       'Anlamlar ve zikir hedefleri',
                       style: TextStyle(
                         fontSize: 11.5,
-                        color: Colors.white.withOpacity(0.68),
+                        color: Colors.white.withValues(alpha: 0.68),
                       ),
                     ),
                   ],
@@ -653,7 +655,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 11.5,
-                        color: Colors.white.withOpacity(0.68),
+                        color: Colors.white.withValues(alpha: 0.68),
                       ),
                     ),
                   ],
@@ -674,7 +676,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: Colors.white.withOpacity(0.85),
+                  color: Colors.white.withValues(alpha: 0.85),
                 ),
               ),
               const SizedBox(height: 10),
@@ -713,13 +715,13 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
         color: isActive
-            ? Colors.white.withOpacity(0.16)
-            : Colors.white.withOpacity(0.04),
+            ? Colors.white.withValues(alpha: 0.16)
+            : Colors.white.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: isActive
-              ? palette.crystalAccent.withOpacity(0.85)
-              : Colors.white.withOpacity(0.12),
+              ? palette.crystalAccent.withValues(alpha: 0.85)
+              : Colors.white.withValues(alpha: 0.12),
           width: 1.0,
         ),
       ),
@@ -758,10 +760,10 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.08),
+            color: Colors.white.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: Colors.white.withOpacity(0.20),
+              color: Colors.white.withValues(alpha: 0.20),
               width: 0.9,
             ),
           ),
@@ -843,7 +845,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                         vertical: 7,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.08),
+                        color: Colors.white.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: Colors.white12),
                       ),
@@ -882,7 +884,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                         vertical: 7,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.08),
+                        color: Colors.white.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: Colors.white12),
                       ),
@@ -925,8 +927,8 @@ class _CrystalOrbGaugePainter extends CustomPainter {
         center: const Alignment(-0.35, -0.45),
         radius: 1.1,
         colors: [
-          Colors.white.withOpacity(0.18),
-          Colors.white.withOpacity(0.04),
+          Colors.white.withValues(alpha: 0.18),
+          Colors.white.withValues(alpha: 0.04),
           Colors.transparent,
         ],
       ).createShader(Rect.fromCircle(center: center, radius: radius));
@@ -952,8 +954,8 @@ class _CrystalOrbGaugePainter extends CustomPainter {
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
         colors: [
-          accentColor.withOpacity(0.38),
-          const Color(0xFF00E5FF).withOpacity(0.14),
+          accentColor.withValues(alpha: 0.38),
+          const Color(0xFF00E5FF).withValues(alpha: 0.14),
         ],
       ).createShader(Offset.zero & size);
 
@@ -967,9 +969,9 @@ class _CrystalOrbGaugePainter extends CustomPainter {
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: [
-          Colors.white.withOpacity(0.75),
-          Colors.white.withOpacity(0.15),
-          accentColor.withOpacity(0.65),
+          Colors.white.withValues(alpha: 0.75),
+          Colors.white.withValues(alpha: 0.15),
+          accentColor.withValues(alpha: 0.65),
         ],
       ).createShader(Rect.fromCircle(center: center, radius: radius));
     canvas.drawCircle(center, radius, rimPaint);

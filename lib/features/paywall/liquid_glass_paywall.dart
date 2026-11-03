@@ -139,7 +139,7 @@ class _LiquidGlassPaywallSheetState
                 "15 Büyük Kıssada 3'lü Karşılaştırmalı İnceleme",
               ),
               _buildFeatureRow(
-                "Arka Plan Kur'ân Tilaveti & Dynamic Island Medya",
+                "Sınırsız Kur'ân Ayeti Dinleme • Arka Plan Tilaveti & Dynamic Island Medya",
               ),
               _buildFeatureRow(
                 "Kilit Ekranı Saatlik Ayet Widget'ı & Hikâye Stüdyosu",
