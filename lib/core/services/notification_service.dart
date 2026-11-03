@@ -225,7 +225,7 @@ class NotificationAndWidgetService {
     }
   }
 
-  Future<void> scheduleExactPrayerAlarm({
+  Future<bool> scheduleExactPrayerAlarm({
     required int id,
     required String prayerName,
     required DateTime prayerTime,
@@ -234,26 +234,25 @@ class NotificationAndWidgetService {
   }) async {
     await initialize();
 
+    final now = DateTime.now();
+    if (!prayerTime.isAfter(now)) return false;
+
     final iosPlugin = _notifications.resolvePlatformSpecificImplementation<
         IOSFlutterLocalNotificationsPlugin>();
 
-    await iosPlugin?.requestPermissions(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
+    if (iosPlugin != null) {
+      final permissionGranted = await iosPlugin.requestPermissions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
 
-    final now = DateTime.now();
-
-    if (!prayerTime.isAfter(now)) {
-      return;
+      if (permissionGranted != true) return false;
     }
 
     final safePreReminderMinutes = preReminderMinutes.clamp(0, 180).toInt();
-
     final reminderId = id + 10000;
 
-    // Önce aynı hatırlatıcının eski kayıtları temizlenir.
     await _notifications.cancel(id: id);
     await _notifications.cancel(id: reminderId);
 
@@ -276,45 +275,35 @@ class NotificationAndWidgetService {
       iOS: iosDetails,
     );
 
-    // 1. Önceden hatırlatma.
     if (safePreReminderMinutes > 0) {
       final reminderTime = prayerTime.subtract(
         Duration(minutes: safePreReminderMinutes),
       );
 
       if (reminderTime.isAfter(now)) {
-        final reminderDate = tz.TZDateTime.from(
-          reminderTime,
-          tz.local,
-        );
-
         await _notifications.zonedSchedule(
           id: reminderId,
           title: '$prayerName Vaktine Az Kaldı',
           body:
               '$prayerName vaktine $safePreReminderMinutes dakika kaldı. Hazırlanabilirsiniz.',
-          scheduledDate: reminderDate,
+          scheduledDate: tz.TZDateTime.from(reminderTime, tz.local),
           notificationDetails: details,
           androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         );
       }
     }
 
-    // 2. Namaz vaktinin tam zamanındaki bildirim.
-    final prayerDate = tz.TZDateTime.from(
-      prayerTime,
-      tz.local,
-    );
-
     await _notifications.zonedSchedule(
       id: id,
       title: '$prayerName Vakti',
       body:
           '$prayerName vakti geldi. Huzurla ibadetinize vakit ayırın. Ezan makamı tercihiniz: $maqam.',
-      scheduledDate: prayerDate,
+      scheduledDate: tz.TZDateTime.from(prayerTime, tz.local),
       notificationDetails: details,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
     );
+
+    return true;
   }
 }
 

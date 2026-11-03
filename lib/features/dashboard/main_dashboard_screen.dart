@@ -315,7 +315,9 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                       ),
                       borderRadius: 16,
                       onTap: () async {
-                        await NotificationAndWidgetService.instance
+                        final messenger = ScaffoldMessenger.of(context);
+                        final scheduled = await NotificationAndWidgetService
+                            .instance
                             .scheduleExactPrayerAlarm(
                           id: 101,
                           prayerName: prayerState.nextPrayerName,
@@ -324,8 +326,16 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                           maqam: prayerState.selectedMaqam,
                           preReminderMinutes: prayerState.preReminderMinutes,
                         );
-                        if (mounted) {
-                          setState(() => _alarmConfirmed = true);
+                        if (!mounted) return;
+                        setState(() => _alarmConfirmed = scheduled);
+                        if (!scheduled) {
+                          messenger.showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Bildirim izni verilmedi. iPhone Ayarları üzerinden Huzur bildirimlerini açıp yeniden deneyin.',
+                              ),
+                            ),
+                          );
                         }
                       },
                       child: Row(

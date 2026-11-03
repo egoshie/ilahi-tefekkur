@@ -699,8 +699,8 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
       return const Center(
         child: GlassContainer(
           borderRadius: 24,
-          padding: const EdgeInsets.all(24),
-          child: const Text(
+          padding: EdgeInsets.all(24),
+          child: Text(
             "Henüz favori veya yer imi eklemediniz.\nAyet kartlarındaki kalp veya yer imi ikonuna dokunarak kaydedebilirsiniz.",
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 13, color: Colors.white70, height: 1.5),
