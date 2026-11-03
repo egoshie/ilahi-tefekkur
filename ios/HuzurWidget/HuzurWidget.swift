@@ -10,139 +10,67 @@ struct HuzurVerseEntry: TimelineEntry {
 }
 
 struct HuzurTimelineProvider: TimelineProvider {
-
-    private func compactText(_ raw: String, maxWords: Int) -> String {
-        let words = raw.split(whereSeparator: { $0.isWhitespace })
-
-        guard words.count > maxWords else { return raw }
-
-        let excerpt = words.prefix(maxWords)
-            .map { String($0) }
-            .joined(separator: " ")
-
-        return excerpt + " …"
-    }
-
     let verses: [(ar: String, tr: String, ref: String)] = [
         ("مَا وَدَّعَكَ رَبُّكَ", "Rabbin seni terk etmedi.", "Duhâ, 3"),
         ("إِنَّ مَعَ ٱلْعُسْرِ يُسْرًا", "Zorlukla beraber kolaylık vardır.", "İnşirah, 6"),
         ("إِنَّ ٱللَّهَ مَعَ ٱلصَّـٰبِرِينَ", "Allah sabredenlerle beraberdir.", "Bakara, 153"),
-        ("لَا تَحْزَنْ إِنَّ ٱللَّهَ مَعَنَا", "Üzülme! Allah bizimledir.", "Tevbe, 40"),
-        ("فَٱذْكُرُونِىٓ أَذْكُرْكُمْ", "Beni anın ki sizi anayım.", "Bakara, 152"),
-        ("وَهُوَ عَلَىٰ كُلِّ شَىْءٍ قَدِيرٌ", "O, her şeye kadirdir.", "Mülk, 1"),
+        ("إِنَّ ٱللَّهَ مَعَنَا", "Allah bizimledir.", "Tevbe, 40"),
         ("كُلُّ نَفْسٍ ذَآئِقَةُ ٱلْمَوْتِ", "Her nefis ölümü tadacaktır.", "Âl-i İmrân, 185"),
-        ("أَلَا بِذِكْرِ ٱللَّهِ تَطْمَئِنُّ ٱلْقُلُوبُ", "Kalpler Allah'ı anmakla huzur bulur.", "Ra'd, 28"),
-        ("وَنَحْنُ أَقْرَبُ إِلَيْهِ مِنْ حَبْلِ ٱلْوَرِيدِ", "Biz ona şah damarından yakınız.", "Kâf, 16"),
-        ("لَا تَقْنَطُوا۟ مِن رَّحْمَةِ ٱللَّهِ", "Allah'ın rahmetinden ümit kesmeyin.", "Zümer, 53"),
-        ("وَلَسَوْفَ يُعْطِيكَ رَبُّكَ فَتَرْضَىٰ", "Rabbin sana verecek ve razı olacaksın.", "Duhâ, 5"),
-        ("حَسْبُنَا ٱللَّهُ وَنِعْمَ ٱلْوَكِيلُ", "Allah bize yeter, O ne güzel vekildir.", "Âl-i İmrân, 173"),
-        ("ٱدْعُونِىٓ أَسْتَجِبْ لَكُمْ", "Bana dua edin, size icabet edeyim.", "Mü'min, 60"),
         ("فَإِنِّى قَرِيبٌ", "Şüphesiz Ben çok yakınım.", "Bakara, 186"),
         ("لَئِن شَكَرْتُمْ لَأَزِيدَنَّكُمْ", "Şükrederseniz nimetimi artırırım.", "İbrâhîm, 7"),
-        ("وَمَن يَتَوَكَّلْ عَلَى ٱللَّهِ فَهُوَ حَسْبُهُۥ", "Allah'a tevekkül edene O yeter.", "Talâk, 3"),
-        ("إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ", "Yalnız Sana kulluk ederiz.", "Fâtiha, 5"),
-        ("وَهُوَ مَعَكُمْ أَيْنَ مَا كُنتُمْ", "Nerede olursanız olun O sizinledir.", "Hadîd, 4"),
-        ("لَا يُكَلِّفُ ٱللَّهُ نَفْسًا إِلَّا وُسْعَهَا", "Allah kimseye gücünden fazlasını yüklemez.", "Bakara, 286"),
+        ("إِيَّاكَ نَعْبُدُ", "Yalnız Sana kulluk ederiz.", "Fâtiha, 5"),
         ("وَإِلَىٰ رَبِّكَ فَٱرْغَب", "Yalnızca Rabbine yönel.", "İnşirah, 8"),
-        ("أَن يَقُولَ لَهُۥ كُن فَيَكُونُ", "O'nun emri Ol! demektir, hemen olur.", "Yâsîn, 82"),
-        ("ٱللَّهُ نُورُ ٱلسَّمَـٰوَٰتِ وَٱلْأَرْضِ", "Allah göklerin ve yerin nûrudur.", "Nûr, 35"),
         ("فَفِرُّوٓا۟ إِلَى ٱللَّهِ", "Öyleyse Allah'a koşun!", "Zâriyât, 50"),
         ("إِنَّ ٱللَّهَ يُحِبُّ ٱلْمُتَوَكِّلِينَ", "Allah tevekkül edenleri sever.", "Âl-i İmrân, 159"),
         ("إِنَّ ٱللَّهَ يُحِبُّ ٱلْمُحْسِنِينَ", "Allah iyilik edenleri sever.", "Bakara, 195"),
-        ("فَمَن يَعْمَلْ مِثْقَالَ ذَرَّةٍ خَيْرًا يَرَهُۥ", "Zerre kadar iyilik yapan karşılığını görür.", "Zilzâl, 7"),
-        ("قُلْ هُوَ ٱللَّهُ أَحَدٌ", "De ki: O Allah tektir.", "İhlâs, 1"),
         ("ٱللَّهُ ٱلصَّمَدُ", "Her şey O'na muhtaçtır.", "İhlâs, 2"),
-        ("سَيَجْعَلُ ٱللَّهُ بَعْدَ عُسْرٍ يُسْرًا", "Allah zorluğun ardından kolaylık verir.", "Talâk, 7"),
-        ("وَمَا كَانَ رَبُّكَ نَسِيًّا", "Senin Rabbin asla unutkan değildir.", "Meryem, 64"),
         ("وَرَحْمَتِى وَسِعَتْ كُلَّ شَىْءٍ", "Rahmetim her şeyi kuşatmıştır.", "A'râf, 156"),
         ("ٱللَّهُ لَطِيفٌۢ بِعِبَادِهِۦ", "Allah kullarına çok lütufkârdır.", "Şûrâ, 19"),
-        ("إِنَّا لِلَّهِ وَإِنَّآ إِلَيْهِ رَٰجِعُونَ", "Biz Allah'a aidiz ve O'na döneceğiz.", "Bakara, 156"),
-        ("وَٱصْبِرْ وَمَا صَبْرُكَ إِلَّا بِٱللَّهِ", "Sabret! Sabrın ancak Allah'ın yardımıyladır.", "Nahl, 127"),
-        ("إِنَّ رَبِّى قَرِيبٌ مُّجِيبٌ", "Rabbim yakındır, dualara icabet edendir.", "Hûd, 61"),
         ("وَكَفَىٰ بِٱللَّهِ وَكِيلًا", "Vekil olarak Allah yeter.", "Ahzâb, 3"),
         ("رَّبِّ زِدْنِى عِلْمًا", "Rabbim! İlmimi artır.", "Tâhâ, 114"),
         ("إِنَّ ٱللَّهَ غَفُورٌ رَّحِيمٌ", "Şüphesiz Allah çok bağışlayandır.", "Bakara, 173"),
         ("فَٱللَّهُ خَيْرٌ حَـٰفِظًا", "Allah en hayırlı koruyucudur.", "Yûsuf, 64"),
-        ("سَلَـٰمٌ قَوْلًا مِّن رَّبٍّ رَّحِيمٍ", "Merhametli Rab'den Selâm! vardır.", "Yâsîn, 58"),
-        ("وَٱسْتَعِينُوا۟ بِٱلصَّبْرِ وَٱلصَّلَوٰةِ", "Sabır ve namazla yardım dileyin.", "Bakara, 45"),
         ("وَلَا تَهِنُوا۟ وَلَا تَحْزَنُوا۟", "Gevşemeyin, asla hüzünlenmeyin.", "Âl-i İmrân, 139"),
         ("وَمَا تَوْفِيقِىٓ إِلَّا بِٱللَّهِ", "Başarım ancak Allah'ın yardımıyladır.", "Hûd, 88"),
-        ("وَلَا تَا۟يْـَٔسُوا۟ مِن رَّوْحِ ٱللَّهِ", "Allah'ın rahmetinden ümit kesmeyin.", "Yûsuf, 87"),
-        ("إِنَّ ٱللَّهَ يَأْمُرُ بِٱلْعَدْلِ وَٱلْإِحْسَـٰنِ", "Allah adaleti ve iyiliği emreder.", "Nahl, 90"),
-        ("رَبِّ ٱشْرَحْ لِى صَدْرِى", "Rabbim! Göğsümü aç, işimi kolaylaştır.", "Tâhâ, 25"),
-        ("لَّآ إِلَـٰهَ إِلَّآ أَنتَ سُبْحَـٰنَكَ", "Senden başka ilah yoktur.", "Enbiyâ, 87"),
-        ("وَإِذَا مَرِضْتُ فَهُوَ يَشْفِينِ", "Bana şifa veren ancak O'dur.", "Şuarâ, 80"),
-        ("رَبِّ إِنِّى لِمَآ أَنزَلْتَ إِلَىَّ مِنْ خَيْرٍ فَقِيرٌ", "Rabbim! İndireceğin her hayra muhtacım.", "Kasas, 24"),
+        ("إِنَّا نَحْنُ نَزَّلْنَا ٱلذِّكْرَ", "Zikri biz indirdik.", "Hicr, 9"),
         ("وَإِنَّ ٱللَّهَ لَمَعَ ٱلْمُحْسِنِينَ", "Allah iyilik yapanlarla beraberdir.", "Ankebût, 69"),
-        ("مَّا يَفْتَحِ ٱللَّهُ لِلنَّاسِ مِن رَّحْمَةٍ", "Allah'ın rahmet kapısını kimse kapatamaz.", "Fâtır, 2"),
+        ("وَٱصْبِرْ عَلَىٰ مَآ أَصَابَكَ", "Başına gelene güzelce sabret.", "Lokmân, 17"),
         ("إِنَّمَا يُوَفَّى ٱلصَّـٰبِرُونَ أَجْرَهُم", "Sabredenlerin mükâfatı hesapsız verilir.", "Zümer, 10"),
-        ("وَأُفَوِّضُ أَمْرِىٓ إِلَى ٱللَّهِ", "Ben işimi Allah'a havale ediyorum.", "Mü'min, 44"),
-        ("ٱدْفَعْ بِٱلَّتِى هِىَ أَحْسَنُ", "Kötülüğü en güzel olan iyilikle sav.", "Fussilet, 34"),
-        ("هَلْ جَزَآءُ ٱلْإِحْسَـٰنِ إِلَّا ٱلْإِحْسَـٰنُ", "İyiliğin karşılığı iyilikten başka mıdır?", "Rahmân, 60"),
-        ("وَمَن يُؤْمِنۢ بِٱللَّهِ يَهْدِ قَلْبَهُۥ", "Allah inananın kalbini doğruya iletir.", "Teğâbün, 11"),
+        ("إِنَّمَا ٱلْمُؤْمِنُونَ إِخْوَةٌ", "Müminler ancak birbirinin kardeşidir.", "Hucurât, 10"),
         ("قَدْ أَفْلَحَ مَن تَزَكَّىٰ", "Arınan kimse kurtuluşa ermiştir.", "A'lâ, 14")
     ]
 
-    func placeholder(in context: Context) -> HuzurVerseEntry {
-        HuzurVerseEntry(
-            date: Date(),
-            arabic: "مَا وَدَّعَكَ رَبُّكَ",
-            turkish: "Rabbin seni terk etmedi.",
-            reference: "Duhâ, 3"
+    private func entry(for date: Date, manualOffset: Int) -> HuzurVerseEntry {
+        let hourSlot = Int(date.timeIntervalSince1970 / 3600.0)
+        let rawIndex = (hourSlot + manualOffset) % verses.count
+        let index = rawIndex < 0 ? rawIndex + verses.count : rawIndex
+        let verse = verses[index]
+        return HuzurVerseEntry(
+            date: date,
+            arabic: verse.ar,
+            turkish: verse.tr,
+            reference: verse.ref
         )
     }
 
-    func getSnapshot(in context: Context, completion: @escaping (HuzurVerseEntry) -> Void) {
-        completion(placeholder(in: context))
+    func placeholder(in context: Context) -> HuzurVerseEntry {
+        let verse = verses[0]
+        return HuzurVerseEntry(
+            date: Date(),
+            arabic: verse.ar,
+            turkish: verse.tr,
+            reference: verse.ref
+        )
     }
 
-    private func fetchRandomVerse(
-        completion: @escaping (HuzurVerseEntry?) -> Void
+    func getSnapshot(
+        in context: Context,
+        completion: @escaping (HuzurVerseEntry) -> Void
     ) {
-        let endpoint =
-            "https://api.alquran.cloud/v1/ayah/random/editions/quran-uthmani,tr.yazir"
-
-        guard let url = URL(string: endpoint) else {
-            completion(nil)
-            return
-        }
-
-        URLSession.shared.dataTask(with: url) { data, _, error in
-            guard error == nil, let data = data else {
-                completion(nil)
-                return
-            }
-
-            do {
-                let root = try JSONSerialization.jsonObject(with: data)
-                    as? [String: Any]
-                let editions = root?["data"] as? [[String: Any]]
-
-                guard let editions = editions,
-                      editions.count >= 2,
-                      let arabic = editions[0]["text"] as? String,
-                      let turkish = editions[1]["text"] as? String,
-                      let surah = editions[1]["surah"] as? [String: Any],
-                      let surahNumber = surah["number"],
-                      let ayahNumber = editions[1]["numberInSurah"],
-                      !arabic.isEmpty,
-                      !turkish.isEmpty else {
-                    completion(nil)
-                    return
-                }
-
-                completion(
-                    HuzurVerseEntry(
-                        date: Date(),
-                        arabic: compactText(arabic, maxWords: 6),
-                        turkish: compactText(turkish, maxWords: 8),
-                        reference: "Sure \(surahNumber) • Ayet \(ayahNumber)"
-                    )
-                )
-            } catch {
-                completion(nil)
-            }
-        }.resume()
+        let now = Date()
+        let offset = UserDefaults(suiteName: "group.com.ilahi.tefekkur")?
+            .integer(forKey: "hourly_manual_offset") ?? 0
+        completion(entry(for: now, manualOffset: offset))
     }
 
     func getTimeline(
@@ -150,46 +78,29 @@ struct HuzurTimelineProvider: TimelineProvider {
         completion: @escaping (Timeline<HuzurVerseEntry>) -> Void
     ) {
         let now = Date()
-        let nextReload = Calendar.current.date(
-            byAdding: .hour,
-            value: 1,
-            to: now
-        ) ?? now.addingTimeInterval(3600)
+        let calendar = Calendar.current
+        let currentHour = calendar.dateInterval(of: .hour, for: now)?.start ?? now
+        let offset = UserDefaults(suiteName: "group.com.ilahi.tefekkur")?
+            .integer(forKey: "hourly_manual_offset") ?? 0
 
-        let shared = UserDefaults(suiteName: "group.com.ilahi.tefekkur")
-        let isPinned = shared?.string(forKey: "hourly_source") == "pinned"
-        let customTr = shared?.string(forKey: "hourly_translation") ?? ""
-        let customAr = shared?.string(forKey: "hourly_arabic") ?? ""
-        let customRef = shared?.string(forKey: "hourly_reference") ?? ""
+        var entries: [HuzurVerseEntry] = []
+        entries.reserveCapacity(24)
 
-        if isPinned && !customTr.isEmpty {
-            let pinned = HuzurVerseEntry(
-                date: now,
-                arabic: compactText(customAr, maxWords: 6),
-                turkish: compactText(customTr, maxWords: 8),
-                reference: customRef
-            )
-            completion(
-                Timeline(entries: [pinned], policy: .after(nextReload))
-            )
-            return
+        for step in 0..<24 {
+            let date: Date
+            if step == 0 {
+                date = now
+            } else {
+                date = calendar.date(
+                    byAdding: .hour,
+                    value: step,
+                    to: currentHour
+                ) ?? now.addingTimeInterval(Double(step) * 3600)
+            }
+            entries.append(entry(for: date, manualOffset: offset))
         }
 
-        let hourSeed = Int(now.timeIntervalSince1970 / 3600)
-        let fallback = verses[abs(hourSeed) % verses.count]
-        let fallbackEntry = HuzurVerseEntry(
-            date: now,
-            arabic: fallback.ar,
-            turkish: fallback.tr,
-            reference: fallback.ref
-        )
-
-        fetchRandomVerse { remoteEntry in
-            let entry = remoteEntry ?? fallbackEntry
-            completion(
-                Timeline(entries: [entry], policy: .after(nextReload))
-            )
-        }
+        completion(Timeline(entries: entries, policy: .atEnd))
     }
 }
 
@@ -340,7 +251,7 @@ struct HuzurKisaAyetWidget: Widget {
             HuzurKisaAyetWidgetView(entry: entry)
         }
         .configurationDisplayName("Huzur • Saatlik Ayet")
-        .description("Kilit ekranında ve ana ekranda kesilmeyen saatlik kısa ayet kartı.")
+        .description("Özenle seçilmiş kısa ayetler; her saat otomatik değişir.")
         .supportedFamilies([.accessoryRectangular, .accessoryInline, .accessoryCircular, .systemSmall])
     }
 }
@@ -352,7 +263,7 @@ struct HuzurGenisAyetWidget: Widget {
             HuzurGenisAyetWidgetView(entry: entry)
         }
         .configurationDisplayName("Huzur • Geniş İlham Kartı")
-        .description("Arapça hat ve Türkçe meal içeren geniş kilit ekranı ve ana ekran kartı.")
+        .description("Arapça metin ve kısa Türkçe meal içeren geniş saatlik ayet kartı.")
         .supportedFamilies([.systemMedium, .systemLarge, .systemSmall, .accessoryRectangular])
     }
 }

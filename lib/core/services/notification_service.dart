@@ -1,7 +1,5 @@
-import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
@@ -18,8 +16,6 @@ class NotificationAndWidgetService {
   static const MethodChannel _nativeChannel =
       MethodChannel('com.ilahi.tefekkur/native_bridge');
   bool _initialized = false;
-  HourlyShortVerse? _cachedLiveSplitVerse;
-  int _lastFetchedHourSeed = -1;
 
   Future<void> initialize() async {
     if (_initialized) return;
@@ -108,87 +104,44 @@ class NotificationAndWidgetService {
     return '${words.take(6).join(' ')} …';
   }
 
-  HourlyShortVerse getActiveHourlyVerse({int offset = 0}) {
-    final now = DateTime.now();
-    final hourSeed =
-        now.year * 8760 + now.month * 720 + now.day * 24 + now.hour + offset;
-    if (_cachedLiveSplitVerse != null && _lastFetchedHourSeed == hourSeed)
-      return _cachedLiveSplitVerse!;
-    const list = OfflineSacredRepository.kHourlyShortVerses;
-    return list[hourSeed.abs() % list.length];
+
+  static final List<HourlyShortVerse> _widgetVerses =
+      List<HourlyShortVerse>.unmodifiable(
+    OfflineSacredRepository.kHourlyShortVerses.where((verse) {
+      if (verse.ayahKey == '25:63') return false;
+      final arabicWords =
+          verse.arabicShort.trim().split(RegExp(r'\s+')).length;
+      final turkishWords =
+          verse.turkishShort.trim().split(RegExp(r'\s+')).length;
+      return arabicWords <= 4 && turkishWords <= 4;
+    }),
+  );
+
+  static int _hourSeed(DateTime value) {
+    final hourStart = DateTime(
+      value.year, value.month, value.day, value.hour,
+    );
+    return hourStart.millisecondsSinceEpoch ~/ 3600000;
   }
 
-  Future<HourlyShortVerse> fetchLiveSplitVerseFromApi({int offset = 0}) async {
-    final now = DateTime.now();
-    final hourSeed =
-        now.year * 8760 + now.month * 720 + now.day * 24 + now.hour + offset;
+  HourlyShortVerse getActiveHourlyVerse({int offset = 0}) {
+    final verses = _widgetVerses;
+    final rawIndex = (_hourSeed(DateTime.now()) + offset) % verses.length;
+    final index = rawIndex < 0 ? rawIndex + verses.length : rawIndex;
+    return verses[index];
+  }
 
-    if (_cachedLiveSplitVerse != null && _lastFetchedHourSeed == hourSeed) {
-      return _cachedLiveSplitVerse!;
-    }
-
-    final fallback = getActiveHourlyVerse(offset: offset);
-
-    try {
-      final response = await http
-          .get(
-            Uri.parse(
-              'https://api.alquran.cloud/v1/ayah/random/editions/quran-uthmani,tr.yazir',
-            ),
-          )
-          .timeout(const Duration(seconds: 12));
-
-      if (response.statusCode == 200) {
-        final decoded = jsonDecode(response.body) as Map<String, dynamic>;
-        final data = decoded['data'] as List<dynamic>;
-
-        if (data.length >= 2) {
-          final arabic = data[0] as Map<String, dynamic>;
-          final turkish = data[1] as Map<String, dynamic>;
-          final surah = turkish['surah'] as Map<String, dynamic>;
-
-          final surahNumber = int.tryParse(surah['number'].toString()) ?? 0;
-          final ayahNumber =
-              int.tryParse(turkish['numberInSurah'].toString()) ?? 0;
-
-          final arabicText = (arabic['text'] ?? '').toString().trim();
-          final turkishText = (turkish['text'] ?? '').toString().trim();
-
-          if (surahNumber >= 1 &&
-              surahNumber <= 114 &&
-              ayahNumber > 0 &&
-              arabicText.isNotEmpty &&
-              turkishText.isNotEmpty) {
-            final surahName =
-                OfflineSacredRepository.kSurahNamesTr[surahNumber - 1];
-
-            final verse = HourlyShortVerse(
-              index: offset,
-              ayahKey: '$surahNumber:$ayahNumber',
-              arabicShort: smartSplitArabic(arabicText),
-              turkishShort: smartSplitTurkishSentence(turkishText),
-              reference: '$surahName, $ayahNumber',
-            );
-
-            _cachedLiveSplitVerse = verse;
-            _lastFetchedHourSeed = hourSeed;
-            return verse;
-          }
-        }
-      }
-    } catch (_) {
-      // Ağ yoksa mevcut çevrimdışı ayet kullanılır.
-    }
-
-    _cachedLiveSplitVerse = fallback;
-    _lastFetchedHourSeed = hourSeed;
-    return fallback;
+  Future<HourlyShortVerse> fetchLiveSplitVerseFromApi(
+      {int offset = 0}) async {
+    // Eski çağrılarla uyumluluk; artık internet isteği yapılmaz.
+    return getActiveHourlyVerse(offset: offset);
   }
 
   Future<void> syncHourlyVerseToWidget({int manualOffset = 0}) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('hourly_verse_offset', manualOffset);
-    final verse = await fetchLiveSplitVerseFromApi(offset: manualOffset);
+
+    final verse = getActiveHourlyVerse(offset: manualOffset);
     try {
       await _nativeChannel.invokeMethod('enableHourlyLockScreenVerse', {
         'arabic': verse.arabicShort,
@@ -196,6 +149,7 @@ class NotificationAndWidgetService {
         'reference': verse.reference,
         'badge': 'Günün İlhamı',
         'source': 'auto',
+        'offset': manualOffset,
       });
     } catch (_) {}
   }
@@ -216,7 +170,8 @@ class NotificationAndWidgetService {
         'translation': shortTr,
         'reference': reference,
         'badge': 'Seçili Ayet',
-        'source': 'pinned',
+        'source': 'auto',
+        'offset': prefs.getInt('hourly_verse_offset') ?? 0,
       });
       return true;
     } catch (_) {

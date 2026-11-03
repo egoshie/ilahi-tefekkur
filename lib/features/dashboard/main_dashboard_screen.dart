@@ -35,6 +35,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
   int _manualVerseOffset = 0;
   bool _alarmConfirmed = false;
   bool _widgetPinnedFeedback = false;
+  int _lastWidgetHourSeed = -1;
 
   static const Map<int, String> _trHijriMonths = {
     1: 'Muharrem',
@@ -58,10 +59,14 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
       vsync: this,
       duration: const Duration(seconds: 5),
     )..repeat();
+    _lastWidgetHourSeed = _currentHourSeed();
     _initSilentWidgetSync();
     _hourlyChecker = Timer.periodic(const Duration(minutes: 1), (_) {
-      if (mounted) {
-        setState(() {});
+      if (!mounted) return;
+      setState(() {});
+      final hourSeed = _currentHourSeed();
+      if (hourSeed != _lastWidgetHourSeed) {
+        _lastWidgetHourSeed = hourSeed;
         NotificationAndWidgetService.instance.syncHourlyVerseToWidget(
           manualOffset: _manualVerseOffset,
         );
@@ -75,6 +80,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
     if (mounted) {
       setState(() => _manualVerseOffset = offset);
     }
+    _lastWidgetHourSeed = _currentHourSeed();
     await NotificationAndWidgetService.instance.syncHourlyVerseToWidget(
       manualOffset: offset,
     );
@@ -85,6 +91,12 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
     _waveController.dispose();
     _hourlyChecker?.cancel();
     super.dispose();
+  }
+
+  int _currentHourSeed() {
+    final now = DateTime.now();
+    final hourStart = DateTime(now.year, now.month, now.day, now.hour);
+    return hourStart.millisecondsSinceEpoch ~/ 3600000;
   }
 
   String _formatDuration(Duration d) {
