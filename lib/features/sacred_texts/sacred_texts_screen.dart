@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/models/v42_models.dart';
 import '../../core/services/database_seeder.dart';
+import '../../core/services/global_sacred_search_service.dart';
 import '../../core/services/notification_service.dart';
 import '../../core/services/offline_sacred_repository.dart';
 import '../../core/services/pricing_and_premium_service.dart';
@@ -13,6 +14,7 @@ import '../../core/theme/glass_container.dart';
 import '../../core/theme/liquid_glass_theme.dart';
 import '../../core/theme/story_share_sheet.dart';
 import '../paywall/liquid_glass_paywall.dart';
+import 'global_sacred_search_view.dart';
 
 class SacredTextsScreen extends ConsumerStatefulWidget {
   const SacredTextsScreen({super.key});
@@ -211,8 +213,10 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                       border: InputBorder.none,
                     ),
                     onChanged: (val) => setState(() => _searchQuery = val),
-                    onSubmitted: (_) =>
-                        FocusManager.instance.primaryFocus?.unfocus(),
+                    onSubmitted: (_) {
+                      setState(() => _selectedTab = 'global_search');
+                      FocusManager.instance.primaryFocus?.unfocus();
+                    },
                   ),
                 ),
                 if (_searchQuery.isNotEmpty)
@@ -264,7 +268,7 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
           Expanded(
             child: Stack(
               children: [
-                _buildActiveTabView(),
+                _buildActiveTabView(includeBible: premium.isPremium),
                 if (isLockedTab) _buildBlurredPremiumLockOverlay(context),
               ],
             ),
@@ -274,8 +278,14 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
     );
   }
 
-  Widget _buildActiveTabView() {
+  Widget _buildActiveTabView({required bool includeBible}) {
     switch (_selectedTab) {
+      case 'global_search':
+        return GlobalSacredSearchView(
+          query: _searchQuery,
+          includeBible: includeBible,
+          onOpen: _openGlobalSearchResult,
+        );
       case 'quran':
         return _buildQuranLiveReader();
       case 'saved':
@@ -289,6 +299,48 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
       default:
         return _buildQuranLiveReader();
     }
+  }
+
+  void _openGlobalSearchResult(GlobalSacredSearchResult result) {
+    FocusManager.instance.primaryFocus?.unfocus();
+
+    if (result.surahNumber != null) {
+      final matches =
+          _surahs.where((item) => item.number == result.surahNumber).toList();
+      if (matches.isEmpty) return;
+
+      setState(() {
+        _selectedTab = 'quran';
+        _selectedSurah = matches.first;
+        _searchQuery = '';
+        _searchController.clear();
+      });
+      _loadSurahAyahs(matches.first.number);
+      return;
+    }
+
+    final verse = result.bibleVerse;
+    if (verse == null) return;
+
+    final books = DatabaseService.kAllBibleBooks
+        .where((book) => book.bookId == verse.bookId)
+        .toList();
+    if (books.isEmpty) return;
+
+    final book = books.first;
+    setState(() {
+      _selectedTab = book.testament;
+      _searchQuery = '';
+      _searchController.clear();
+      if (book.testament == 'torah') {
+        _selectedTorahBook = book;
+        _selectedTorahChapter = verse.chapter;
+      } else {
+        _selectedGospelBook = book;
+        _selectedGospelChapter = verse.chapter;
+      }
+    });
+    _loadBibleChapter(book.testament);
   }
 
   Widget _buildTraditionTab(String id, String title, bool showLock) {

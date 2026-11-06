@@ -2,7 +2,7 @@ name: Huzur iOS App Store Build
 
 on:
   push:
-    branches: [main]
+    branches: [main, feature/huzur-14.5]
   workflow_dispatch:
 
 permissions:
@@ -50,6 +50,8 @@ jobs:
           flutter --version
           AUDIO_SESSION_MICROPHONE=0 flutter clean
           AUDIO_SESSION_MICROPHONE=0 flutter pub get
+          AUDIO_SESSION_MICROPHONE=0 flutter analyze
+          AUDIO_SESSION_MICROPHONE=0 flutter test
           AUDIO_SESSION_MICROPHONE=0 flutter build ios --config-only --release --no-codesign
           test -f ios/Flutter/Generated.xcconfig
           test -d ios/Flutter/ephemeral/Packages/FlutterGeneratedPluginSwiftPackage
@@ -59,6 +61,35 @@ jobs:
           set -euo pipefail
           sudo gem install xcodeproj --no-document
           ruby ios/fix_and_add_widget.rb
+          ruby - <<'RUBY'
+          require 'xcodeproj'
+
+          project = Xcodeproj::Project.open('ios/Runner.xcodeproj')
+          runner = project.targets.find { |target| target.name == 'Runner' }
+          widget = project.targets.find { |target| target.name == 'HuzurWidgetExtension' }
+
+          abort 'Runner target eksik' unless runner
+          abort 'WidgetKit extension target eksik' unless widget
+          abort 'Runner -> WidgetKit bagimliligi eksik' unless
+            runner.dependencies.any? { |dependency| dependency.target == widget }
+
+          embed = runner.copy_files_build_phases.find do |phase|
+            phase.dst_subfolder_spec.to_s == '13'
+          end
+          abort 'WidgetKit Embed App Extensions fazi eksik' unless embed
+          abort 'WidgetKit .appex embed edilmemis' unless
+            embed.files_references.any? { |ref| ref.path.to_s.include?('HuzurWidgetExtension') }
+
+          widget.build_configurations.each do |config|
+            settings = config.build_settings
+            abort 'Widget bundle ID hatali' unless
+              settings['PRODUCT_BUNDLE_IDENTIFIER'] == 'com.ilahi.tefekkur.ilahiTefekkur.HuzurWidget'
+            abort 'Widget entitlements yolu hatali' unless
+              settings['CODE_SIGN_ENTITLEMENTS'] == 'HuzurWidget/HuzurWidget.entitlements'
+          end
+
+          puts 'Runner + WidgetKit target, bundle ID, dependency ve embed dogrulandi.'
+          RUBY
           ruby - <<'RUBY'
           require 'xcodeproj'
 
@@ -99,6 +130,9 @@ jobs:
           plutil -lint ios/Runner/Runner.entitlements
           plutil -lint ios/HuzurWidget/HuzurWidget.entitlements
           plutil -lint ios/HuzurWidget/Info.plist
+          grep -Fq 'group.com.ilahi.tefekkur' ios/Runner/Runner.entitlements
+          grep -Fq 'group.com.ilahi.tefekkur' ios/HuzurWidget/HuzurWidget.entitlements
+          echo 'Widget App Group entitlement dogrulandi.'
 
       - name: Install signing certificate and profiles
         env:
@@ -200,7 +234,7 @@ jobs:
             archive \
             DART_OBFUSCATION=true \
             EXTRA_GEN_SNAPSHOT_OPTIONS=--strip \
-            SPLIT_DEBUG_INFO="$GITHUB_WORKSPACE/build/huzur-symbols/14.4" \
+            SPLIT_DEBUG_INFO="$GITHUB_WORKSPACE/build/huzur-symbols/14.5" \
             DEVELOPMENT_TEAM="$TEAM_ID"
 
           APP_PATH="$ARCHIVE_PATH/Products/Applications/Runner.app"
@@ -222,7 +256,7 @@ jobs:
           WIDGET_BUILD=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$WIDGET_PATH/Info.plist")
 
           test "$APP_VERSION" = "1.0.0"
-          test "$APP_BUILD" = "14.4"
+          test "$APP_BUILD" = "14.5"
           test "$WIDGET_VERSION" = "$APP_VERSION"
           test "$WIDGET_BUILD" = "$APP_BUILD"
 
@@ -276,10 +310,10 @@ jobs:
           IPA_SOURCE="$(find "$EXPORT_PATH" -maxdepth 1 -name '*.ipa' -print -quit)"
           test -n "$IPA_SOURCE"
 
-          cp "$IPA_SOURCE" output/Huzur-1.0.0-14.4.ipa
-          unzip -t output/Huzur-1.0.0-14.4.ipa >/dev/null
-          shasum -a 256 output/Huzur-1.0.0-14.4.ipa
-          ls -lh output/Huzur-1.0.0-14.4.ipa
+          cp "$IPA_SOURCE" output/Huzur-1.0.0-14.5.ipa
+          unzip -t output/Huzur-1.0.0-14.5.ipa >/dev/null
+          shasum -a 256 output/Huzur-1.0.0-14.5.ipa
+          ls -lh output/Huzur-1.0.0-14.5.ipa
 
       - name: Encrypt signed IPA for public artifact storage
         env:
@@ -287,8 +321,8 @@ jobs:
         run: |
           set -euo pipefail
 
-          IPA_SOURCE="output/Huzur-1.0.0-14.4.ipa"
-          IPA_ENCRYPTED="$RUNNER_TEMP/Huzur-1.0.0-14.4.ipa.enc"
+          IPA_SOURCE="output/Huzur-1.0.0-14.5.ipa"
+          IPA_ENCRYPTED="$RUNNER_TEMP/Huzur-1.0.0-14.5.ipa.enc"
 
           test -s "$IPA_SOURCE"
           test -n "$HUZUR_IPA_ENCRYPTION_KEY"
@@ -305,7 +339,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: Huzur-AppStore-IPA-Encrypted
-          path: ${{ runner.temp }}/Huzur-1.0.0-14.4.ipa.enc
+          path: ${{ runner.temp }}/Huzur-1.0.0-14.5.ipa.enc
           if-no-files-found: error
           retention-days: 7
 
@@ -316,12 +350,12 @@ jobs:
         run: |
           set -euo pipefail
 
-          SYMBOL_DIR="$GITHUB_WORKSPACE/build/huzur-symbols/14.4"
+          SYMBOL_DIR="$GITHUB_WORKSPACE/build/huzur-symbols/14.5"
           test -s "$SYMBOL_DIR/app.ios-arm64.symbols"
           test -n "$HUZUR_SYMBOLS_ENCRYPTION_KEY"
 
-          SYMBOL_ARCHIVE="$RUNNER_TEMP/Huzur-14.4-Dart-Symbols.tar.gz"
-          ENCRYPTED_ARCHIVE="$RUNNER_TEMP/Huzur-14.4-Dart-Symbols.tar.gz.enc"
+          SYMBOL_ARCHIVE="$RUNNER_TEMP/Huzur-14.5-Dart-Symbols.tar.gz"
+          ENCRYPTED_ARCHIVE="$RUNNER_TEMP/Huzur-14.5-Dart-Symbols.tar.gz.enc"
 
           tar -czf "$SYMBOL_ARCHIVE" -C "$SYMBOL_DIR" .
           openssl enc -aes-256-cbc -salt -pbkdf2 -iter 600000 \
@@ -336,13 +370,13 @@ jobs:
       - name: Upload encrypted Dart symbols
         uses: actions/upload-artifact@v7
         with:
-          name: Huzur-14.4-Dart-Symbols-Encrypted
-          path: ${{ runner.temp }}/Huzur-14.4-Dart-Symbols.tar.gz.enc
+          name: Huzur-14.5-Dart-Symbols-Encrypted
+          path: ${{ runner.temp }}/Huzur-14.5-Dart-Symbols.tar.gz.enc
           if-no-files-found: error
           retention-days: 90
 
       - name: Upload IPA to App Store Connect
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/huzur-14.5')
         env:
           APPSTORE_API_KEY_ID: ${{ secrets.APPSTORE_API_KEY_ID }}
           APPSTORE_API_ISSUER_ID: ${{ secrets.APPSTORE_API_ISSUER_ID }}
@@ -367,7 +401,7 @@ jobs:
 
           openssl pkey -in "$KEY_FILE" -noout
 
-          IPA_PATH="output/Huzur-1.0.0-14.4.ipa"
+          IPA_PATH="output/Huzur-1.0.0-14.5.ipa"
           test -s "$IPA_PATH"
 
           echo "Uploading Huzur IPA to App Store Connect..."

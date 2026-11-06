@@ -14,6 +14,7 @@ import 'features/paywall/liquid_glass_paywall.dart';
 import 'features/planner/daily_planner_screen.dart';
 import 'features/qibla_and_extras/qibla_and_tools_screen.dart';
 import 'features/sacred_texts/sacred_texts_screen.dart';
+import 'features/sacred_texts/quran_audio_player_sheet.dart';
 import 'features/tasbih/fluid_tasbih_screen.dart';
 
 void main() async {
@@ -123,7 +124,9 @@ class _LiquidRootShellState extends ConsumerState<LiquidRootShell> {
                       horizontal: 14,
                       vertical: 10,
                     ),
-                    onTap: () => setState(() => _currentIndex = 1),
+                    onTap: () {
+                      showQuranAudioPlayerSheet(context);
+                    },
                     child: Row(
                       children: [
                         LiveSvgAudioVisualizer(

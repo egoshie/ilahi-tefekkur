@@ -7,6 +7,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/v42_models.dart';
 import 'pricing_and_premium_service.dart';
 
+enum QuranRepeatMode { off, ayah, surah }
+
 class QuranAudioPlaybackState {
   final List<LiveAyahItem> playlist;
   final int currentIndex;
@@ -16,6 +18,9 @@ class QuranAudioPlaybackState {
   final Duration duration;
   final String? errorMessage;
   final int completedSurahCount;
+  final QuranRepeatMode repeatMode;
+  final double playbackSpeed;
+  final int? sleepTimerMinutes;
 
   const QuranAudioPlaybackState({
     this.playlist = const [],
@@ -26,6 +31,9 @@ class QuranAudioPlaybackState {
     this.duration = Duration.zero,
     this.errorMessage,
     this.completedSurahCount = 0,
+    this.repeatMode = QuranRepeatMode.off,
+    this.playbackSpeed = 1.0,
+    this.sleepTimerMinutes,
   });
 
   LiveAyahItem? get activeAyah {
@@ -44,6 +52,10 @@ class QuranAudioPlaybackState {
     Duration? duration,
     String? errorMessage,
     int? completedSurahCount,
+    QuranRepeatMode? repeatMode,
+    double? playbackSpeed,
+    int? sleepTimerMinutes,
+    bool clearSleepTimer = false,
   }) {
     return QuranAudioPlaybackState(
       playlist: playlist ?? this.playlist,
@@ -54,6 +66,11 @@ class QuranAudioPlaybackState {
       duration: duration ?? this.duration,
       errorMessage: errorMessage,
       completedSurahCount: completedSurahCount ?? this.completedSurahCount,
+      repeatMode: repeatMode ?? this.repeatMode,
+      playbackSpeed: playbackSpeed ?? this.playbackSpeed,
+      sleepTimerMinutes: clearSleepTimer
+          ? null
+          : (sleepTimerMinutes ?? this.sleepTimerMinutes),
     );
   }
 }
@@ -82,6 +99,7 @@ class QuranBackgroundAudioNotifier
 
   final Future<bool> Function() _isPremium;
   final AudioPlayer _player = AudioPlayer();
+  Timer? _sleepTimer;
   StreamSubscription<PlayerState>? _playerStateSub;
   StreamSubscription<int?>? _indexSub;
   StreamSubscription<Duration>? _posSub;
@@ -149,11 +167,7 @@ class QuranBackgroundAudioNotifier
       final proc = pState.processingState;
 
       if (proc == ProcessingState.completed) {
-        if (state.currentIndex + 1 < state.playlist.length) {
-          playAyahAtIndex(state.currentIndex + 1);
-        } else {
-          _recordCompletedSurah().whenComplete(stop);
-        }
+        _handlePlaybackCompleted();
         return;
       }
 
@@ -184,6 +198,27 @@ class QuranBackgroundAudioNotifier
         _syncIosNowPlayingCenter();
       }
     });
+  }
+
+  Future<void> _handlePlaybackCompleted() async {
+    if (state.repeatMode == QuranRepeatMode.ayah) {
+      await _player.seek(Duration.zero);
+      await _player.play();
+      return;
+    }
+
+    if (state.currentIndex + 1 < state.playlist.length) {
+      await playAyahAtIndex(state.currentIndex + 1);
+      return;
+    }
+
+    if (state.repeatMode == QuranRepeatMode.surah) {
+      await playAyahAtIndex(0);
+      return;
+    }
+
+    await _recordCompletedSurah();
+    await stop();
   }
 
   Future<void> _ensureBackgroundSession() async {
@@ -246,6 +281,7 @@ class QuranBackgroundAudioNotifier
 
     try {
       await _player.setUrl(primaryUrl);
+      await _player.setSpeed(state.playbackSpeed);
       await _player.play();
       await _syncIosNowPlayingCenter();
     } catch (_) {
@@ -253,6 +289,7 @@ class QuranBackgroundAudioNotifier
         final fallbackUrl =
             'https://cdn.islamic.network/quran/audio/64/ar.alafasy/${ayah.globalNumber}.mp3';
         await _player.setUrl(fallbackUrl);
+        await _player.setSpeed(state.playbackSpeed);
         await _player.play();
         await _syncIosNowPlayingCenter();
       } catch (_) {
@@ -312,7 +349,47 @@ class QuranBackgroundAudioNotifier
     }
   }
 
+  Future<void> seekTo(Duration position) async {
+    if (state.duration <= Duration.zero) return;
+    final target = position < Duration.zero
+        ? Duration.zero
+        : (position > state.duration ? state.duration : position);
+    await _player.seek(target);
+  }
+
+  Future<void> setPlaybackSpeed(double speed) async {
+    final safeSpeed = speed.clamp(0.75, 1.5).toDouble();
+    await _player.setSpeed(safeSpeed);
+    state = state.copyWith(playbackSpeed: safeSpeed);
+  }
+
+  void cycleRepeatMode() {
+    final next = switch (state.repeatMode) {
+      QuranRepeatMode.off => QuranRepeatMode.ayah,
+      QuranRepeatMode.ayah => QuranRepeatMode.surah,
+      QuranRepeatMode.surah => QuranRepeatMode.off,
+    };
+    state = state.copyWith(repeatMode: next);
+  }
+
+  void setSleepTimer(int? minutes) {
+    _sleepTimer?.cancel();
+    _sleepTimer = null;
+
+    if (minutes == null || minutes <= 0) {
+      state = state.copyWith(clearSleepTimer: true);
+      return;
+    }
+
+    state = state.copyWith(sleepTimerMinutes: minutes);
+    _sleepTimer = Timer(Duration(minutes: minutes), () {
+      stop();
+    });
+  }
+
   Future<void> stop() async {
+    _sleepTimer?.cancel();
+    _sleepTimer = null;
     await _player.stop();
     state = QuranAudioPlaybackState(
       completedSurahCount: state.completedSurahCount,
@@ -343,6 +420,7 @@ class QuranBackgroundAudioNotifier
 
   @override
   void dispose() {
+    _sleepTimer?.cancel();
     _playerStateSub?.cancel();
     _indexSub?.cancel();
     _posSub?.cancel();
