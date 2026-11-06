@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:adhan/adhan.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../theme/liquid_glass_theme.dart';
 
 class CityPreset {
@@ -14,17 +15,89 @@ class CityPreset {
   const CityPreset(this.name, this.country, this.latitude, this.longitude);
 }
 
-const List< CityPreset > kGlobalCityPresets = [
-  CityPreset("Kadirli, Osmaniye", "Türkiye", 37.3739, 36.0961),
-  CityPreset("Osmaniye", "Türkiye", 37.0742, 36.2478),
-  CityPreset("İstanbul", "Türkiye", 41.0082, 28.9784),
-  CityPreset("Ankara", "Türkiye", 39.9334, 32.8597),
-  CityPreset("İzmir", "Türkiye", 38.4237, 27.1428),
+const List<CityPreset> kGlobalCityPresets = [
   CityPreset("Adana", "Türkiye", 37.0000, 35.3213),
-  CityPreset("Bursa", "Türkiye", 40.1885, 29.0610),
-  CityPreset("Konya", "Türkiye", 37.8746, 32.4932),
-  CityPreset("Gaziantep", "Türkiye", 37.0662, 37.3833),
+  CityPreset("Adıyaman", "Türkiye", 37.7648, 38.2786),
+  CityPreset("Afyonkarahisar", "Türkiye", 38.7507, 30.5567),
+  CityPreset("Ağrı", "Türkiye", 39.7191, 43.0506),
+  CityPreset("Aksaray", "Türkiye", 38.3687, 34.0370),
+  CityPreset("Amasya", "Türkiye", 40.6499, 35.8353),
+  CityPreset("Ankara", "Türkiye", 39.9334, 32.8597),
   CityPreset("Antalya", "Türkiye", 36.8969, 30.7133),
+  CityPreset("Ardahan", "Türkiye", 41.1105, 42.7022),
+  CityPreset("Artvin", "Türkiye", 41.1828, 41.8183),
+  CityPreset("Aydın", "Türkiye", 37.8560, 27.8416),
+  CityPreset("Balıkesir", "Türkiye", 39.6484, 27.8826),
+  CityPreset("Bartın", "Türkiye", 41.6344, 32.3375),
+  CityPreset("Batman", "Türkiye", 37.8812, 41.1351),
+  CityPreset("Bayburt", "Türkiye", 40.2552, 40.2249),
+  CityPreset("Bilecik", "Türkiye", 40.0567, 30.0665),
+  CityPreset("Bingöl", "Türkiye", 38.8854, 40.4966),
+  CityPreset("Bitlis", "Türkiye", 38.4006, 42.1095),
+  CityPreset("Bolu", "Türkiye", 40.7395, 31.6116),
+  CityPreset("Burdur", "Türkiye", 37.7203, 30.2908),
+  CityPreset("Bursa", "Türkiye", 40.1885, 29.0610),
+  CityPreset("Çanakkale", "Türkiye", 40.1553, 26.4142),
+  CityPreset("Çankırı", "Türkiye", 40.6013, 33.6134),
+  CityPreset("Çorum", "Türkiye", 40.5506, 34.9556),
+  CityPreset("Denizli", "Türkiye", 37.7765, 29.0864),
+  CityPreset("Diyarbakır", "Türkiye", 37.9144, 40.2306),
+  CityPreset("Düzce", "Türkiye", 40.8438, 31.1565),
+  CityPreset("Edirne", "Türkiye", 41.6818, 26.5623),
+  CityPreset("Elazığ", "Türkiye", 38.6748, 39.2225),
+  CityPreset("Erzincan", "Türkiye", 39.7500, 39.5000),
+  CityPreset("Erzurum", "Türkiye", 39.9055, 41.2658),
+  CityPreset("Eskişehir", "Türkiye", 39.7667, 30.5256),
+  CityPreset("Gaziantep", "Türkiye", 37.0662, 37.3833),
+  CityPreset("Giresun", "Türkiye", 40.9128, 38.3895),
+  CityPreset("Gümüşhane", "Türkiye", 40.4603, 39.4814),
+  CityPreset("Hakkari", "Türkiye", 37.5744, 43.7408),
+  CityPreset("Hatay", "Türkiye", 36.2021, 36.1600),
+  CityPreset("Iğdır", "Türkiye", 39.9237, 44.0450),
+  CityPreset("Isparta", "Türkiye", 37.7648, 30.5566),
+  CityPreset("İstanbul", "Türkiye", 41.0082, 28.9784),
+  CityPreset("İzmir", "Türkiye", 38.4237, 27.1428),
+  CityPreset("Kahramanmaraş", "Türkiye", 37.5858, 36.9371),
+  CityPreset("Karabük", "Türkiye", 41.2000, 32.6333),
+  CityPreset("Karaman", "Türkiye", 37.1759, 33.2287),
+  CityPreset("Kars", "Türkiye", 40.6167, 43.1000),
+  CityPreset("Kastamonu", "Türkiye", 41.3887, 33.7827),
+  CityPreset("Kayseri", "Türkiye", 38.7312, 35.4787),
+  CityPreset("Kırıkkale", "Türkiye", 39.8468, 33.5153),
+  CityPreset("Kırklareli", "Türkiye", 41.7351, 27.2252),
+  CityPreset("Kırşehir", "Türkiye", 39.1458, 34.1639),
+  CityPreset("Kilis", "Türkiye", 36.7184, 37.1212),
+  CityPreset("Kocaeli", "Türkiye", 40.7654, 29.9408),
+  CityPreset("Konya", "Türkiye", 37.8746, 32.4932),
+  CityPreset("Kütahya", "Türkiye", 39.4167, 29.9833),
+  CityPreset("Malatya", "Türkiye", 38.3552, 38.3095),
+  CityPreset("Manisa", "Türkiye", 38.6191, 27.4289),
+  CityPreset("Mardin", "Türkiye", 37.3212, 40.7245),
+  CityPreset("Mersin", "Türkiye", 36.8121, 34.6415),
+  CityPreset("Muğla", "Türkiye", 37.2153, 28.3636),
+  CityPreset("Muş", "Türkiye", 38.9462, 41.7539),
+  CityPreset("Nevşehir", "Türkiye", 38.6244, 34.7239),
+  CityPreset("Niğde", "Türkiye", 37.9698, 34.6766),
+  CityPreset("Ordu", "Türkiye", 40.9839, 37.8764),
+  CityPreset("Osmaniye", "Türkiye", 37.0742, 36.2478),
+  CityPreset("Rize", "Türkiye", 41.0201, 40.5234),
+  CityPreset("Sakarya", "Türkiye", 40.7569, 30.3781),
+  CityPreset("Samsun", "Türkiye", 41.2867, 36.3300),
+  CityPreset("Siirt", "Türkiye", 37.9333, 41.9500),
+  CityPreset("Sinop", "Türkiye", 42.0231, 35.1531),
+  CityPreset("Sivas", "Türkiye", 39.7477, 37.0179),
+  CityPreset("Şanlıurfa", "Türkiye", 37.1674, 38.7955),
+  CityPreset("Şırnak", "Türkiye", 37.5164, 42.4611),
+  CityPreset("Tekirdağ", "Türkiye", 40.9780, 27.5110),
+  CityPreset("Tokat", "Türkiye", 40.3167, 36.5500),
+  CityPreset("Trabzon", "Türkiye", 41.0015, 39.7178),
+  CityPreset("Tunceli", "Türkiye", 39.1079, 39.5401),
+  CityPreset("Uşak", "Türkiye", 38.6823, 29.4082),
+  CityPreset("Van", "Türkiye", 38.4891, 43.4089),
+  CityPreset("Yalova", "Türkiye", 40.6500, 29.2667),
+  CityPreset("Yozgat", "Türkiye", 39.8181, 34.8147),
+  CityPreset("Zonguldak", "Türkiye", 41.4564, 31.7987),
+  CityPreset("Kadirli, Osmaniye", "Türkiye", 37.3739, 36.0961),
   CityPreset("Mekke-i Mükerreme", "Suudi Arabistan", 21.4225, 39.8262),
   CityPreset("Medine-i Münevvere", "Suudi Arabistan", 24.4672, 39.6112),
   CityPreset("Kudüs", "Filistin", 31.7683, 35.2137),
@@ -69,17 +142,18 @@ class PrayerEngineState {
 }
 
 final prayerEngineProvider =
-    StateNotifierProvider< PrayerEngineNotifier, PrayerEngineState >((ref) {
+    StateNotifierProvider<PrayerEngineNotifier, PrayerEngineState>((ref) {
   return PrayerEngineNotifier();
 });
 
-class PrayerEngineNotifier extends StateNotifier< PrayerEngineState > {
+class PrayerEngineNotifier extends StateNotifier<PrayerEngineState> {
   Timer? _ticker;
   CityPreset _city = kGlobalCityPresets.first;
   CalculationMethodChoice _method = CalculationMethodChoice.diyanet;
   String _maqam = "Hicaz Makamı";
   int _preReminder = 30;
   PrayerPeriod? _manualPreviewPeriod;
+  bool _cityWasExplicitlyChanged = false;
 
   PrayerEngineNotifier()
       : super(_compute(
@@ -90,15 +164,50 @@ class PrayerEngineNotifier extends StateNotifier< PrayerEngineState > {
           null,
         )) {
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) => _refresh());
+    _restoreSavedCity();
+  }
+
+  Future<void> _restoreSavedCity() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (_cityWasExplicitlyChanged) return;
+
+      final name = prefs.getString('huzur_selected_city_name');
+      final country = prefs.getString('huzur_selected_city_country');
+      final latitude = prefs.getDouble('huzur_selected_city_latitude');
+      final longitude = prefs.getDouble('huzur_selected_city_longitude');
+
+      if (name == null ||
+          country == null ||
+          latitude == null ||
+          longitude == null ||
+          _cityWasExplicitlyChanged) {
+        return;
+      }
+
+      _city = CityPreset(name, country, latitude, longitude);
+      _refresh();
+    } catch (_) {}
+  }
+
+  Future<void> _persistCity(CityPreset city) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('huzur_selected_city_name', city.name);
+    await prefs.setString('huzur_selected_city_country', city.country);
+    await prefs.setDouble('huzur_selected_city_latitude', city.latitude);
+    await prefs.setDouble('huzur_selected_city_longitude', city.longitude);
   }
 
   void _refresh() {
-    state = _compute(_city, _method, _maqam, _preReminder, _manualPreviewPeriod);
+    state =
+        _compute(_city, _method, _maqam, _preReminder, _manualPreviewPeriod);
   }
 
-  void setCity(CityPreset city) {
+  Future<void> setCity(CityPreset city) async {
+    _cityWasExplicitlyChanged = true;
     _city = city;
     _refresh();
+    await _persistCity(city);
   }
 
   void setMethod(CalculationMethodChoice method) {
@@ -141,7 +250,7 @@ class PrayerEngineNotifier extends StateNotifier< PrayerEngineState > {
     return "Türkiye";
   }
 
-  Future< void > detectGpsLocation() async {
+  Future<void> detectGpsLocation() async {
     try {
       LocationPermission perm = await Geolocator.checkPermission();
       if (perm == LocationPermission.denied) {
@@ -152,12 +261,14 @@ class PrayerEngineNotifier extends StateNotifier< PrayerEngineState > {
         final pos = await Geolocator.getCurrentPosition();
         final resolvedName =
             _resolveCityNameFromCoords(pos.latitude, pos.longitude);
+        _cityWasExplicitlyChanged = true;
         _city = CityPreset(
           resolvedName,
           "Türkiye",
           pos.latitude,
           pos.longitude,
         );
+        await _persistCity(_city);
         _refresh();
       }
     } catch (_) {}

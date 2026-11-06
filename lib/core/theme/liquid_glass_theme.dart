@@ -17,6 +17,7 @@ class LiquidGlassPalette {
   final Color specularHighlight;
   final String periodTitle;
   final String spiritualSubtitle;
+  final Brightness brightness;
 
   const LiquidGlassPalette({
     required this.deepCosmicStart,
@@ -28,9 +29,10 @@ class LiquidGlassPalette {
     required this.specularHighlight,
     required this.periodTitle,
     required this.spiritualSubtitle,
+    this.brightness = Brightness.dark,
   });
 
-  static LiquidGlassPalette forPeriod(PrayerPeriod period) {
+  static LiquidGlassPalette _darkForPeriod(PrayerPeriod period) {
     switch (period) {
       case PrayerPeriod.imsak:
         return const LiquidGlassPalette(
@@ -107,23 +109,49 @@ class LiquidGlassPalette {
     }
   }
 
-  static ThemeData buildTheme(LiquidGlassPalette palette) {
-    final baseText = GoogleFonts.plusJakartaSansTextTheme(
-      ThemeData.dark().textTheme,
+  static LiquidGlassPalette forPeriod(
+    PrayerPeriod period, {
+    Brightness brightness = Brightness.dark,
+  }) {
+    final dark = _darkForPeriod(period);
+    if (brightness == Brightness.dark) return dark;
+
+    return LiquidGlassPalette(
+      deepCosmicStart: const Color(0xFFF4F8F5),
+      deepCosmicMid: const Color(0xFFE9F2EC),
+      deepCosmicEnd: const Color(0xFFDCEAE1),
+      auroraPrimary: const Color(0xFF00796B),
+      auroraSecondary: const Color(0xFF1565C0),
+      crystalAccent: const Color(0xFF00695C),
+      specularHighlight: Colors.white,
+      periodTitle: dark.periodTitle,
+      spiritualSubtitle: dark.spiritualSubtitle,
+      brightness: Brightness.light,
     );
+  }
+
+  static ThemeData buildTheme(LiquidGlassPalette palette) {
+    final isDark = palette.brightness == Brightness.dark;
+    final foreground = isDark ? Colors.white : const Color(0xFF18372C);
+
     return ThemeData(
       useMaterial3: true,
-      brightness: Brightness.dark,
+      brightness: palette.brightness,
       scaffoldBackgroundColor: palette.deepCosmicStart,
-      colorScheme: ColorScheme.dark(
-        primary: palette.crystalAccent,
-        secondary: palette.auroraPrimary,
-        surface: palette.deepCosmicMid,
-      ),
-      textTheme: baseText.apply(
-        bodyColor: Colors.white,
-        displayColor: Colors.white,
-      ),
+      colorScheme: isDark
+          ? ColorScheme.dark(
+              primary: palette.crystalAccent,
+              secondary: palette.auroraPrimary,
+              surface: palette.deepCosmicMid,
+            )
+          : ColorScheme.light(
+              primary: palette.crystalAccent,
+              secondary: palette.auroraPrimary,
+              surface: palette.deepCosmicMid,
+            ),
+      textTheme: GoogleFonts.plusJakartaSansTextTheme(
+        ThemeData(brightness: palette.brightness).textTheme,
+      ).apply(bodyColor: foreground, displayColor: foreground),
     );
   }
 }

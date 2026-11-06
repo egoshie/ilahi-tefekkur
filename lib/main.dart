@@ -3,12 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/services/notification_service.dart';
+import 'core/services/app_theme_service.dart';
 import 'core/services/prayer_service.dart';
 import 'core/services/quran_background_audio_service.dart';
 import 'core/theme/glass_container.dart';
 import 'core/theme/liquid_glass_theme.dart';
 import 'features/dashboard/main_dashboard_screen.dart';
+import 'features/hifz/hifz_academy_screen.dart';
 import 'features/paywall/liquid_glass_paywall.dart';
+import 'features/planner/daily_planner_screen.dart';
 import 'features/qibla_and_extras/qibla_and_tools_screen.dart';
 import 'features/sacred_texts/sacred_texts_screen.dart';
 import 'features/tasbih/fluid_tasbih_screen.dart';
@@ -30,14 +33,35 @@ class HuzurApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final prayerState = ref.watch(prayerEngineProvider);
-    final palette = LiquidGlassPalette.forPeriod(prayerState.activePeriod);
+    final prayer = ref.watch(prayerEngineProvider);
+    final mode = ref.watch(huzurThemeModeProvider);
+    final darkPalette = LiquidGlassPalette.forPeriod(prayer.activePeriod);
+    final lightPalette = LiquidGlassPalette.forPeriod(
+      prayer.activePeriod,
+      brightness: Brightness.light,
+    );
 
     return MaterialApp(
       title: 'Huzur',
       debugShowCheckedModeBanner: false,
-      theme: LiquidGlassPalette.buildTheme(palette),
-      home: LiquidRootShell(palette: palette),
+      theme: LiquidGlassPalette.buildTheme(lightPalette),
+      darkTheme: LiquidGlassPalette.buildTheme(darkPalette),
+      themeMode: mode,
+      home: Builder(
+        builder: (context) {
+          final dark = Theme.of(context).brightness == Brightness.dark;
+          final palette = dark ? darkPalette : lightPalette;
+          return AnnotatedRegion<SystemUiOverlayStyle>(
+            value: SystemUiOverlayStyle(
+              statusBarColor: Colors.transparent,
+              statusBarIconBrightness:
+                  dark ? Brightness.light : Brightness.dark,
+              statusBarBrightness: dark ? Brightness.dark : Brightness.light,
+            ),
+            child: LiquidRootShell(palette: palette),
+          );
+        },
+      ),
     );
   }
 }
@@ -65,6 +89,8 @@ class _LiquidRootShellState extends ConsumerState<LiquidRootShell> {
       const SacredTextsScreen(),
       const FluidTasbihScreen(),
       const QiblaAndToolsScreen(),
+      const HifzAcademyScreen(),
+      const DailyPlannerScreen(),
     ];
 
     return Scaffold(
@@ -223,17 +249,29 @@ class _LiquidRootShellState extends ConsumerState<LiquidRootShell> {
                             ),
                             Expanded(
                               child: _buildNavItem(
-                                  1, "Kitaplar", BespokeIconType.sacredScroll),
-                            ),
-                            Expanded(
-                              child: _buildNavItem(2, "Zikirmatik",
-                                  BespokeIconType.tasbihRipple),
+                                  1, "Kur'an", BespokeIconType.sacredScroll),
                             ),
                             Expanded(
                               child: _buildNavItem(
-                                  3, "Kıble & Ses", BespokeIconType.qiblaStar),
+                                  4, "Hıfz", BespokeIconType.checkBadge),
                             ),
-                            const SizedBox(width: 6),
+                            Expanded(
+                              child: _buildNavItem(
+                                5,
+                                "Plan",
+                                BespokeIconType.checkBadge,
+                                materialIcon: Icons.event_note_outlined,
+                              ),
+                            ),
+                            Expanded(
+                              child: _buildNavItem(
+                                  2, "Zikir", BespokeIconType.tasbihRipple),
+                            ),
+                            Expanded(
+                              child: _buildNavItem(
+                                  3, "Araçlar", BespokeIconType.qiblaStar),
+                            ),
+                            const SizedBox(width: 4),
                             GestureDetector(
                               onTap: () =>
                                   LiquidGlassPaywallSheet.show(context),
@@ -285,7 +323,8 @@ class _LiquidRootShellState extends ConsumerState<LiquidRootShell> {
     );
   }
 
-  Widget _buildNavItem(int index, String label, BespokeIconType iconType) {
+  Widget _buildNavItem(int index, String label, BespokeIconType iconType,
+      {IconData? materialIcon}) {
     final selected = _currentIndex == index;
     final color = selected ? widget.palette.crystalAccent : Colors.white70;
 
@@ -307,7 +346,10 @@ class _LiquidRootShellState extends ConsumerState<LiquidRootShell> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            BespokeVectorIcon(type: iconType, color: color, size: 20),
+            if (materialIcon != null)
+              Icon(materialIcon, color: color, size: 20)
+            else
+              BespokeVectorIcon(type: iconType, color: color, size: 20),
             const SizedBox(height: 4),
             FittedBox(
               fit: BoxFit.scaleDown,

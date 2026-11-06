@@ -7,6 +7,7 @@ import 'package:hijri/hijri_calendar.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/services/notification_service.dart';
+import '../../core/services/app_theme_service.dart';
 import '../../core/services/prayer_service.dart';
 import '../../core/services/user_progress_service.dart';
 import '../../core/theme/glass_container.dart';
@@ -153,7 +154,31 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                 ],
               ),
             ),
-            const SizedBox(width: 8),
+            PopupMenuButton<ThemeMode>(
+              tooltip: 'Görünüm',
+              icon: const Icon(
+                Icons.palette_outlined,
+                color: Color(0xFF64FFDA),
+              ),
+              onSelected: (mode) {
+                ref.read(huzurThemeModeProvider.notifier).setMode(mode);
+              },
+              itemBuilder: (context) => const [
+                PopupMenuItem(
+                  value: ThemeMode.system,
+                  child: Text('Sistem'),
+                ),
+                PopupMenuItem(
+                  value: ThemeMode.dark,
+                  child: Text('Koyu mod'),
+                ),
+                PopupMenuItem(
+                  value: ThemeMode.light,
+                  child: Text('Aydınlık mod'),
+                ),
+              ],
+            ),
+            const SizedBox(width: 4),
             GlassContainer(
               padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
               borderRadius: 18,
@@ -791,123 +816,320 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
     PrayerEngineState state,
     PrayerEngineNotifier notifier,
   ) {
-    showModalBottomSheet(
+    final searchController = TextEditingController();
+
+    showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
-      builder: (_) {
-        return GlassContainer(
-          borderRadius: 30,
-          enableBlur: true,
-          padding: const EdgeInsets.all(20),
-          child: ListView(
-            shrinkWrap: true,
-            children: [
-              const Text(
-                'Şehir ve Ezan Makamı Seçimi',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            final query = searchController.text.trim().toLowerCase();
+            final filteredCities = kGlobalCityPresets.where((city) {
+              return city.name.toLowerCase().contains(query) ||
+                  city.country.toLowerCase().contains(query);
+            }).toList();
+
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.viewInsetsOf(context).bottom,
               ),
-              const SizedBox(height: 12),
-              GlassContainer(
-                borderRadius: 16,
-                emeraldGlow: true,
-                padding: const EdgeInsets.symmetric(vertical: 11),
-                onTap: () {
-                  notifier.detectGpsLocation();
-                  Navigator.pop(context);
-                },
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+              child: GlassContainer(
+                borderRadius: 30,
+                enableBlur: true,
+                padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    BespokeVectorIcon(
-                      type: BespokeIconType.gpsTarget,
-                      color: Color(0xFF64FFDA),
-                      size: 18,
-                    ),
-                    SizedBox(width: 8),
-                    Text(
-                      'Bulunduğum Şehri Otomatik Algıla',
-                      style: TextStyle(
-                        color: Color(0xFF64FFDA),
-                        fontWeight: FontWeight.bold,
+                    Center(
+                      child: Container(
+                        width: 38,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.white38,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
+                    ),
+                    const SizedBox(height: 15),
+                    const Row(
+                      children: [
+                        Icon(
+                          Icons.location_on_rounded,
+                          color: Color(0xFF64FFDA),
+                          size: 21,
+                        ),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Şehir ve Namaz Vakitleri',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      'Seçtiğin şehre göre namaz vakitleri ve kıble yönü hesaplanır.',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        color: Colors.white.withValues(alpha: 0.68),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    TextField(
+                      controller: searchController,
+                      autofocus: false,
+                      onChanged: (_) => setSheetState(() {}),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'Şehir veya ülke ara...',
+                        hintStyle: const TextStyle(color: Colors.white54),
+                        prefixIcon: const Icon(
+                          Icons.search_rounded,
+                          color: Color(0xFF64FFDA),
+                        ),
+                        suffixIcon: searchController.text.isEmpty
+                            ? null
+                            : IconButton(
+                                onPressed: () {
+                                  searchController.clear();
+                                  setSheetState(() {});
+                                },
+                                icon: const Icon(
+                                  Icons.close_rounded,
+                                  color: Colors.white70,
+                                ),
+                              ),
+                        filled: true,
+                        fillColor: Colors.white.withValues(alpha: 0.07),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 13,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(
+                            color: Colors.white.withValues(alpha: 0.12),
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(
+                            color: Colors.white.withValues(alpha: 0.12),
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: const BorderSide(
+                            color: Color(0xFF64FFDA),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    GlassContainer(
+                      borderRadius: 15,
+                      emeraldGlow: true,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      onTap: () {
+                        notifier.detectGpsLocation();
+                        Navigator.of(sheetContext).pop();
+                      },
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.my_location_rounded,
+                            color: Color(0xFF64FFDA),
+                            size: 17,
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            'Konumumu otomatik algıla',
+                            style: TextStyle(
+                              color: Color(0xFF64FFDA),
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Şehirler',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        Text(
+                          '${filteredCities.length} sonuç',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Colors.white60,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    SizedBox(
+                      height: 230,
+                      child: filteredCities.isEmpty
+                          ? const Center(
+                              child: Text(
+                                'Bu isimle eşleşen şehir bulunamadı.',
+                                style: TextStyle(color: Colors.white70),
+                              ),
+                            )
+                          : ListView.builder(
+                              keyboardDismissBehavior:
+                                  ScrollViewKeyboardDismissBehavior.onDrag,
+                              itemCount: filteredCities.length,
+                              itemBuilder: (context, index) {
+                                final city = filteredCities[index];
+                                final selected = city.name ==
+                                        state.selectedCity.name &&
+                                    city.country == state.selectedCity.country;
+
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 5),
+                                  child: Material(
+                                    color: selected
+                                        ? const Color(0xFF64FFDA)
+                                            .withValues(alpha: 0.13)
+                                        : Colors.white.withValues(alpha: 0.045),
+                                    borderRadius: BorderRadius.circular(13),
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.circular(13),
+                                      onTap: () {
+                                        notifier.setCity(city);
+                                        Navigator.of(sheetContext).pop();
+                                      },
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 13,
+                                          vertical: 10,
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.location_city_rounded,
+                                              size: 17,
+                                              color: selected
+                                                  ? const Color(0xFF64FFDA)
+                                                  : Colors.white60,
+                                            ),
+                                            const SizedBox(width: 10),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    city.name,
+                                                    style: TextStyle(
+                                                      fontSize: 12.5,
+                                                      fontWeight: selected
+                                                          ? FontWeight.w800
+                                                          : FontWeight.w600,
+                                                      color: selected
+                                                          ? const Color(
+                                                              0xFF64FFDA)
+                                                          : Colors.white,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    city.country,
+                                                    style: const TextStyle(
+                                                      fontSize: 10,
+                                                      color: Colors.white54,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            if (selected)
+                                              const Icon(
+                                                Icons.check_circle_rounded,
+                                                color: Color(0xFF64FFDA),
+                                                size: 19,
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Ezan Makamı',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 7,
+                      runSpacing: 7,
+                      children: [
+                        'Saba Makamı',
+                        'Hicaz Makamı',
+                        'Rast Makamı',
+                        'Uşşak Makamı',
+                        'Nahavend Makamı',
+                      ].map((maqam) {
+                        final selected = maqam == state.selectedMaqam;
+                        return ChoiceChip(
+                          label: Text(
+                            maqam,
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              color: selected
+                                  ? const Color(0xFF06251E)
+                                  : Colors.white,
+                            ),
+                          ),
+                          selected: selected,
+                          selectedColor: const Color(0xFF64FFDA),
+                          backgroundColor: Colors.white.withValues(alpha: 0.08),
+                          side: BorderSide(
+                            color: selected
+                                ? const Color(0xFF64FFDA)
+                                : Colors.white24,
+                          ),
+                          onSelected: (_) {
+                            notifier.setMaqam(maqam);
+                            Navigator.of(sheetContext).pop();
+                          },
+                        );
+                      }).toList(),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 14),
-              const Text(
-                'Şehirler:',
-                style: TextStyle(fontSize: 12, color: Colors.white70),
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: kGlobalCityPresets.map((city) {
-                  return GestureDetector(
-                    onTap: () {
-                      notifier.setCity(city);
-                      Navigator.pop(context);
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 11,
-                        vertical: 7,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.white12),
-                      ),
-                      child: Text(
-                        city.name,
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 14),
-              const Text(
-                'Ezan Makamı:',
-                style: TextStyle(fontSize: 12, color: Colors.white70),
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  'Saba Makamı',
-                  'Hicaz Makamı',
-                  'Rast Makamı',
-                  'Uşşak Makamı',
-                  'Nahavend Makamı'
-                ].map((m) {
-                  return GestureDetector(
-                    onTap: () {
-                      notifier.setMaqam(m);
-                      Navigator.pop(context);
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 11,
-                        vertical: 7,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.white12),
-                      ),
-                      child: Text(m, style: const TextStyle(fontSize: 12)),
-                    ),
-                  );
-                }).toList(),
-              ),
-            ],
-          ),
+            );
+          },
         );
       },
-    );
+    ).whenComplete(searchController.dispose);
   }
 }
 
