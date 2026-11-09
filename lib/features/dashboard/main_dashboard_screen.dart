@@ -14,6 +14,7 @@ import '../../core/theme/glass_container.dart';
 import '../../core/theme/liquid_glass_theme.dart';
 import '../../core/theme/story_share_sheet.dart';
 import '../esma/esmaul_husna_sheet.dart';
+import '../ai_huzur/ai_huzur_screen.dart';
 import '../paywall/liquid_glass_paywall.dart';
 
 class MainDashboardScreen extends ConsumerStatefulWidget {
@@ -698,6 +699,51 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
               ),
             ),
           ],
+        ),
+        GlassContainer(
+          borderRadius: 24,
+          emeraldGlow: true,
+          goldAccentBorder: true,
+          padding: const EdgeInsets.all(16),
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const AiHuzurScreen()),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(13),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF64FFDA).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(17),
+                  border: Border.all(
+                    color: const Color(0xFF64FFDA).withValues(alpha: 0.24),
+                  ),
+                ),
+                child: const Icon(
+                  Icons.auto_awesome_rounded,
+                  color: Color(0xFF64FFDA),
+                  size: 25,
+                ),
+              ),
+              const SizedBox(width: 14),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("AI Huzur",
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w800)),
+                    SizedBox(height: 4),
+                    Text("Dini sorularını yapay zekâ ile keşfet",
+                        style:
+                            TextStyle(fontSize: 11.5, color: Colors.white70)),
+                  ],
+                ),
+              ),
+              const Icon(Icons.arrow_forward_ios_rounded,
+                  color: Color(0xFFFFE082), size: 16),
+            ],
+          ),
         ),
         const SizedBox(height: 16),
         GlassContainer(

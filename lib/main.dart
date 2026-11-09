@@ -2,6 +2,9 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
+import 'firebase_options.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/app_theme_service.dart';
 import 'core/services/prayer_service.dart';
@@ -10,7 +13,6 @@ import 'core/theme/glass_container.dart';
 import 'core/theme/liquid_glass_theme.dart';
 import 'features/dashboard/main_dashboard_screen.dart';
 import 'features/hifz/hifz_academy_screen.dart';
-import 'features/paywall/liquid_glass_paywall.dart';
 import 'features/planner/daily_planner_screen.dart';
 import 'features/qibla_and_extras/qibla_and_tools_screen.dart';
 import 'features/sacred_texts/sacred_texts_screen.dart';
@@ -24,6 +26,12 @@ void main() async {
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.light,
     ),
+  );
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  await FirebaseAppCheck.instance.activate(
+    providerApple: const AppleDeviceCheckProvider(),
   );
   await NotificationAndWidgetService.instance.initialize();
   runApp(const ProviderScope(child: HuzurApp()));
@@ -273,44 +281,6 @@ class _LiquidRootShellState extends ConsumerState<LiquidRootShell> {
                             Expanded(
                               child: _buildNavItem(
                                   3, "Araçlar", BespokeIconType.qiblaStar),
-                            ),
-                            const SizedBox(width: 4),
-                            GestureDetector(
-                              onTap: () =>
-                                  LiquidGlassPaywallSheet.show(context),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 11, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFFFE082)
-                                      .withValues(alpha: 0.14),
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(
-                                    color: const Color(0xFFFFE082)
-                                        .withValues(alpha: 0.65),
-                                    width: 1.0,
-                                  ),
-                                ),
-                                child: const Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    BespokeVectorIcon(
-                                      type: BespokeIconType.crownGem,
-                                      color: Color(0xFFFFE082),
-                                      size: 17,
-                                    ),
-                                    SizedBox(height: 2),
-                                    Text(
-                                      "Özel",
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFFFFE082),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
                             ),
                           ],
                         ),
