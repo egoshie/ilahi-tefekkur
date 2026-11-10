@@ -376,7 +376,7 @@ jobs:
           retention-days: 90
 
       - name: Upload IPA to App Store Connect
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/huzur-14.5')
+        if: (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/feature/ai-huzur') || (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/huzur-14.5'))
         env:
           APPSTORE_API_KEY_ID: ${{ secrets.APPSTORE_API_KEY_ID }}
           APPSTORE_API_ISSUER_ID: ${{ secrets.APPSTORE_API_ISSUER_ID }}
