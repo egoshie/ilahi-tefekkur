@@ -14,7 +14,7 @@ import '../../core/theme/glass_container.dart';
 import '../../core/theme/liquid_glass_theme.dart';
 import '../../core/theme/story_share_sheet.dart';
 import '../esma/esmaul_husna_sheet.dart';
-import '../ai_huzur/ai_huzur_screen.dart';
+import '../ai_huzur/ai_huzur_entry_screen.dart';
 import '../paywall/liquid_glass_paywall.dart';
 
 class MainDashboardScreen extends ConsumerStatefulWidget {
@@ -268,75 +268,124 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
     IconData icon,
   ) {
     final selected = mode == selectedMode;
-    const amber = Color(0xFFFFA21A);
+    const amber = Color(0xFFFFB52E);
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: GlassContainer(
-        borderRadius: 18,
-        goldAccentBorder: selected,
-        borderColor: selected ? amber : Colors.white30,
-        gradientColors: selected
-            ? [
-                amber.withValues(alpha: 0.22),
-                const Color(0xFF211D19).withValues(alpha: 0.94),
-              ]
-            : [
-                const Color(0xFF30251D).withValues(alpha: 0.55),
-                const Color(0xFF171513).withValues(alpha: 0.94),
+      padding: const EdgeInsets.only(bottom: 11),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          splashColor: amber.withValues(alpha: 0.16),
+          onTap: () async {
+            await ref.read(huzurThemeModeProvider.notifier).setMode(mode);
+            if (sheetContext.mounted) {
+              Navigator.pop(sheetContext);
+            }
+          },
+          child: Ink(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: selected
+                    ? const [
+                        Color(0xFF493516),
+                        Color(0xFF241B10),
+                      ]
+                    : const [
+                        Color(0xFF30261D),
+                        Color(0xFF171411),
+                      ],
+              ),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: selected ? amber : const Color(0xFF9D8870),
+                width: selected ? 1.7 : 1.1,
+              ),
+              boxShadow: [
+                if (selected)
+                  BoxShadow(
+                    color: amber.withValues(alpha: 0.16),
+                    blurRadius: 16,
+                    spreadRadius: 1,
+                  ),
               ],
-        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
-        onTap: () async {
-          await ref.read(huzurThemeModeProvider.notifier).setMode(mode);
-          if (sheetContext.mounted) {
-            Navigator.pop(sheetContext);
-          }
-        },
-        child: Row(
-          children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: amber.withValues(alpha: 0.16),
-                borderRadius: BorderRadius.circular(13),
-                border: Border.all(color: amber.withValues(alpha: 0.45)),
-              ),
-              child: Icon(icon, color: amber, size: 22),
             ),
-            const SizedBox(width: 13),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 88),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 46,
+                      height: 46,
+                      decoration: BoxDecoration(
+                        color: amber.withValues(alpha: 0.16),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: amber.withValues(alpha: 0.65),
+                        ),
+                      ),
+                      child: Icon(
+                        icon,
+                        color: amber,
+                        size: 24,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: DefaultTextStyle(
+                        style: const TextStyle(color: Colors.white),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w800,
+                                height: 1.3,
+                              ),
+                            ),
+                            const SizedBox(height: 5),
+                            Text(
+                              subtitle,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Color(0xFFE6DCCF),
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w500,
+                                height: 1.35,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 10),
+                    Icon(
+                      selected
+                          ? Icons.check_circle_rounded
+                          : Icons.circle_outlined,
+                      color: selected ? amber : Colors.white70,
+                      size: 22,
+                    ),
+                  ],
+                ),
               ),
             ),
-            Icon(
-              selected
-                  ? Icons.check_circle_rounded
-                  : Icons.circle_outlined,
-              color: selected ? amber : Colors.white38,
-              size: 20,
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -939,7 +988,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
           onTap: () => Navigator.of(context).push(
             MaterialPageRoute(
                 builder: (_) =>
-                    AiHuzurScreen(onNavigateToTab: widget.onSwitchTab)),
+                    AiHuzurEntryScreen(onNavigateToTab: widget.onSwitchTab)),
           ),
           child: Row(
             children: [
