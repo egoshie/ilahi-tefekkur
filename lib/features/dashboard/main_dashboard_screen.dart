@@ -31,13 +31,14 @@ class MainDashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late final AnimationController _waveController;
   Timer? _hourlyChecker;
   int _manualVerseOffset = 0;
   bool _alarmConfirmed = false;
   bool _widgetPinnedFeedback = false;
   int _lastWidgetHourSeed = -1;
+  ProviderSubscription<PrayerEngineState>? _prayerScheduleSubscription;
 
   static const Map<int, String> _trHijriMonths = {
     1: 'Muharrem',
@@ -57,12 +58,26 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _waveController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 5),
     )..repeat();
     _lastWidgetHourSeed = _currentHourSeed();
     _initSilentWidgetSync();
+    _restorePrayerNotificationState();
+
+    _prayerScheduleSubscription = ref.listenManual<PrayerEngineState>(
+      prayerEngineProvider,
+      (previous, next) {
+        if (!_alarmConfirmed || previous == null) return;
+        if (_prayerNotificationSettingsKey(previous) !=
+            _prayerNotificationSettingsKey(next)) {
+          unawaited(_refreshPrayerNotifications());
+        }
+      },
+    );
+
     _hourlyChecker = Timer.periodic(const Duration(minutes: 1), (_) {
       if (!mounted) return;
       setState(() {});
@@ -88,8 +103,70 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
     );
   }
 
+  Future<void> _restorePrayerNotificationState() async {
+    final enabled = await NotificationAndWidgetService.instance
+        .arePrayerNotificationsEnabled();
+
+    if (!mounted || !enabled) return;
+
+    setState(() => _alarmConfirmed = true);
+    await _refreshPrayerNotifications();
+  }
+
+  String _prayerNotificationSettingsKey(PrayerEngineState state) {
+    return [
+      state.selectedCity.latitude,
+      state.selectedCity.longitude,
+      state.methodChoice.index,
+      state.preReminderMinutes,
+    ].join('|');
+  }
+
+  Future<bool> _applyPrayerNotifications({
+    required bool requestPermission,
+  }) async {
+    final prayerState = ref.read(prayerEngineProvider);
+    final upcoming = ref
+        .read(prayerEngineProvider.notifier)
+        .upcomingPrayerNotificationTimes(days: 5);
+
+    final service = NotificationAndWidgetService.instance;
+
+    try {
+      if (requestPermission) {
+        return await service.enablePrayerNotifications(
+          prayerTimes: upcoming,
+          maqam: prayerState.selectedMaqam,
+          preReminderMinutes: prayerState.preReminderMinutes,
+        );
+      }
+
+      return await service.refreshPrayerNotifications(
+        prayerTimes: upcoming,
+        maqam: prayerState.selectedMaqam,
+        preReminderMinutes: prayerState.preReminderMinutes,
+      );
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<void> _refreshPrayerNotifications() async {
+    if (!_alarmConfirmed) return;
+    await _applyPrayerNotifications(requestPermission: false);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && _alarmConfirmed) {
+      unawaited(_refreshPrayerNotifications());
+    }
+  }
+
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _prayerScheduleSubscription?.close();
     _waveController.dispose();
     _hourlyChecker?.cancel();
     super.dispose();
@@ -194,21 +271,21 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
     const amber = Color(0xFFFFA21A);
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 9),
+      padding: const EdgeInsets.only(bottom: 10),
       child: GlassContainer(
         borderRadius: 18,
         goldAccentBorder: selected,
-        borderColor: selected ? amber : Colors.white24,
+        borderColor: selected ? amber : Colors.white30,
         gradientColors: selected
             ? [
-                amber.withValues(alpha: 0.20),
-                const Color(0xFF211D19).withValues(alpha: 0.88),
+                amber.withValues(alpha: 0.22),
+                const Color(0xFF211D19).withValues(alpha: 0.94),
               ]
             : [
-                const Color(0xFF30251D).withValues(alpha: 0.42),
-                const Color(0xFF171513).withValues(alpha: 0.86),
+                const Color(0xFF30251D).withValues(alpha: 0.55),
+                const Color(0xFF171513).withValues(alpha: 0.94),
               ],
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
         onTap: () async {
           await ref.read(huzurThemeModeProvider.notifier).setMode(mode);
           if (sheetContext.mounted) {
@@ -217,8 +294,17 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
         },
         child: Row(
           children: [
-            Icon(icon, color: amber, size: 22),
-            const SizedBox(width: 12),
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: amber.withValues(alpha: 0.16),
+                borderRadius: BorderRadius.circular(13),
+                border: Border.all(color: amber.withValues(alpha: 0.45)),
+              ),
+              child: Icon(icon, color: amber, size: 22),
+            ),
+            const SizedBox(width: 13),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -226,23 +312,30 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                   Text(
                     title,
                     style: const TextStyle(
-                      fontSize: 13,
+                      color: Colors.white,
+                      fontSize: 14,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
-                  const SizedBox(height: 3),
+                  const SizedBox(height: 4),
                   Text(
                     subtitle,
                     style: const TextStyle(
-                      fontSize: 10.5,
-                      color: Colors.white60,
+                      color: Colors.white70,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ],
               ),
             ),
-            if (selected)
-              const Icon(Icons.check_circle_rounded, color: amber, size: 19),
+            Icon(
+              selected
+                  ? Icons.check_circle_rounded
+                  : Icons.circle_outlined,
+              color: selected ? amber : Colors.white38,
+              size: 20,
+            ),
           ],
         ),
       ),
@@ -470,27 +563,37 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                       borderRadius: 16,
                       onTap: () async {
                         final messenger = ScaffoldMessenger.of(context);
-                        final scheduled = await NotificationAndWidgetService
-                            .instance
-                            .scheduleExactPrayerAlarm(
-                          id: 101,
-                          prayerName: prayerState.nextPrayerName,
-                          prayerTime:
-                              DateTime.now().add(prayerState.timeUntilNext),
-                          maqam: prayerState.selectedMaqam,
-                          preReminderMinutes: prayerState.preReminderMinutes,
-                        );
-                        if (!mounted) return;
-                        setState(() => _alarmConfirmed = scheduled);
-                        if (!scheduled) {
+
+                        if (_alarmConfirmed) {
+                          await NotificationAndWidgetService.instance
+                              .disablePrayerNotifications();
+                          if (!mounted) return;
+                          setState(() => _alarmConfirmed = false);
                           messenger.showSnackBar(
                             const SnackBar(
                               content: Text(
-                                'Bildirim izni verilmedi. iPhone Ayarları üzerinden Huzur bildirimlerini açıp yeniden deneyin.',
+                                'Namaz vakti bildirimleri kapatıldı.',
                               ),
                             ),
                           );
+                          return;
                         }
+
+                        final scheduled = await _applyPrayerNotifications(
+                          requestPermission: true,
+                        );
+                        if (!mounted) return;
+                        setState(() => _alarmConfirmed = scheduled);
+
+                        messenger.showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              scheduled
+                                  ? '5 günlük namaz vakti ve yaklaşma bildirimleri açıldı.'
+                                  : 'Bildirim izni alınamadı. iPhone Ayarları > Bildirimler > Huzur bölümünden ses ve bildirimleri açın.',
+                            ),
+                          ),
+                        );
                       },
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -506,8 +609,8 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                           Flexible(
                             child: Text(
                               _alarmConfirmed
-                                  ? 'Hatırlatıcı Açık'
-                                  : 'Vakit Hatırlatıcı',
+                                  ? 'Bildirimler Açık'
+                                  : 'Vakit Bildirimleri',
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 fontSize: 12,

@@ -15,6 +15,20 @@ class CityPreset {
   const CityPreset(this.name, this.country, this.latitude, this.longitude);
 }
 
+class PrayerNotificationTime {
+  final String prayerName;
+  final DateTime time;
+  final int dayOffset;
+  final int prayerIndex;
+
+  const PrayerNotificationTime({
+    required this.prayerName,
+    required this.time,
+    required this.dayOffset,
+    required this.prayerIndex,
+  });
+}
+
 const List<CityPreset> kGlobalCityPresets = [
   CityPreset("Adana", "Türkiye", 37.0000, 35.3213),
   CityPreset("Adıyaman", "Türkiye", 37.7648, 38.2786),
@@ -228,6 +242,72 @@ class PrayerEngineNotifier extends StateNotifier<PrayerEngineState> {
   void setManualPeriodPreview(PrayerPeriod? period) {
     _manualPreviewPeriod = period;
     _refresh();
+  }
+
+  List<PrayerNotificationTime> upcomingPrayerNotificationTimes({
+    int days = 5,
+  }) {
+    final currentState = state;
+    final coordinates = Coordinates(
+      currentState.selectedCity.latitude,
+      currentState.selectedCity.longitude,
+    );
+    final parameters = _paramsFor(currentState.methodChoice)
+      ..madhab = Madhab.shafi;
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final result = <PrayerNotificationTime>[];
+
+    for (var dayOffset = 0; dayOffset < days; dayOffset++) {
+      final date = today.add(Duration(days: dayOffset));
+      final times = PrayerTimes(
+        coordinates,
+        DateComponents.from(date),
+        parameters,
+      );
+
+      final dayTimes = <PrayerNotificationTime>[
+        PrayerNotificationTime(
+          prayerName: 'İmsak',
+          time: times.fajr,
+          dayOffset: dayOffset,
+          prayerIndex: 0,
+        ),
+        PrayerNotificationTime(
+          prayerName: 'Öğle',
+          time: times.dhuhr,
+          dayOffset: dayOffset,
+          prayerIndex: 1,
+        ),
+        PrayerNotificationTime(
+          prayerName: 'İkindi',
+          time: times.asr,
+          dayOffset: dayOffset,
+          prayerIndex: 2,
+        ),
+        PrayerNotificationTime(
+          prayerName: 'Akşam',
+          time: times.maghrib,
+          dayOffset: dayOffset,
+          prayerIndex: 3,
+        ),
+        PrayerNotificationTime(
+          prayerName: 'Yatsı',
+          time: times.isha,
+          dayOffset: dayOffset,
+          prayerIndex: 4,
+        ),
+      ];
+
+      for (final entry in dayTimes) {
+        if (entry.time.isAfter(now)) {
+          result.add(entry);
+        }
+      }
+    }
+
+    return result;
   }
 
   static String _resolveCityNameFromCoords(double lat, double lon) {

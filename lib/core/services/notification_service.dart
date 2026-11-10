@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import '../models/v42_models.dart';
+import '../services/prayer_service.dart';
 import '../data/hourly_verses.g.dart';
 
 class NotificationAndWidgetService {
@@ -16,6 +17,185 @@ class NotificationAndWidgetService {
   static const MethodChannel _nativeChannel =
       MethodChannel('com.ilahi.tefekkur/native_bridge');
   bool _initialized = false;
+
+  static const int _prayerNotificationIdBase = 260000;
+  static const int _prayerReminderIdBase = 261000;
+  static const String _prayerNotificationsEnabledKey =
+      'huzur_prayer_notifications_enabled';
+
+  Future<bool> arePrayerNotificationsEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_prayerNotificationsEnabledKey) ?? false;
+  }
+
+  Future<bool> enablePrayerNotifications({
+    required List<PrayerNotificationTime> prayerTimes,
+    required String maqam,
+    required int preReminderMinutes,
+  }) async {
+    final scheduled = await _schedulePrayerNotifications(
+      prayerTimes: prayerTimes,
+      maqam: maqam,
+      preReminderMinutes: preReminderMinutes,
+      requestPermission: true,
+    );
+
+    if (scheduled) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_prayerNotificationsEnabledKey, true);
+    }
+
+    return scheduled;
+  }
+
+  Future<bool> refreshPrayerNotifications({
+    required List<PrayerNotificationTime> prayerTimes,
+    required String maqam,
+    required int preReminderMinutes,
+  }) async {
+    if (!await arePrayerNotificationsEnabled()) return false;
+
+    return _schedulePrayerNotifications(
+      prayerTimes: prayerTimes,
+      maqam: maqam,
+      preReminderMinutes: preReminderMinutes,
+      requestPermission: false,
+    );
+  }
+
+  Future<void> disablePrayerNotifications() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_prayerNotificationsEnabledKey, false);
+    await _cancelManagedPrayerNotifications();
+  }
+
+  Future<void> _cancelManagedPrayerNotifications() async {
+    // Önceki tek-vakitli hatırlatıcının kayıtlarını da temizle.
+    await _notifications.cancel(id: 101);
+    await _notifications.cancel(id: 10101);
+
+    final pending = await _notifications.pendingNotificationRequests();
+    for (final request in pending) {
+      final isPrayerNotification =
+          request.id >= _prayerNotificationIdBase &&
+              request.id < _prayerNotificationIdBase + 100;
+      final isPrayerReminder =
+          request.id >= _prayerReminderIdBase &&
+              request.id < _prayerReminderIdBase + 100;
+
+      if (isPrayerNotification || isPrayerReminder) {
+        await _notifications.cancel(id: request.id);
+      }
+    }
+  }
+
+  Future<bool> _schedulePrayerNotifications({
+    required List<PrayerNotificationTime> prayerTimes,
+    required String maqam,
+    required int preReminderMinutes,
+    required bool requestPermission,
+  }) async {
+    await initialize();
+
+    if (requestPermission) {
+      final iosPlugin = _notifications
+          .resolvePlatformSpecificImplementation<
+              IOSFlutterLocalNotificationsPlugin>();
+
+      if (iosPlugin != null) {
+        final granted = await iosPlugin.requestPermissions(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+        if (granted != true) return false;
+      } else {
+        final androidPlugin = _notifications
+            .resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin>();
+        if (androidPlugin != null) {
+          final granted =
+              await androidPlugin.requestNotificationsPermission();
+          if (granted == false) return false;
+        }
+      }
+    }
+
+    final now = DateTime.now();
+    final upcoming = prayerTimes
+        .where((entry) => entry.time.isAfter(now))
+        .toList()
+      ..sort((a, b) => a.time.compareTo(b.time));
+
+    if (upcoming.isEmpty) return false;
+
+    await _cancelManagedPrayerNotifications();
+
+    const androidDetails = AndroidNotificationDetails(
+      'huzur_prayer_alerts_v2',
+      'Namaz Vakti Bildirimleri',
+      channelDescription:
+          'Yaklaşan namaz vakitleri için sesli hatırlatmalar.',
+      importance: Importance.max,
+      priority: Priority.max,
+      playSound: true,
+      enableVibration: true,
+    );
+
+    const iosDetails = DarwinNotificationDetails(
+      presentBanner: true,
+      presentList: true,
+      presentSound: true,
+      interruptionLevel: InterruptionLevel.timeSensitive,
+    );
+
+    const details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    final safeMinutes = preReminderMinutes.clamp(0, 180).toInt();
+    var scheduledCount = 0;
+
+    for (final entry in upcoming) {
+      final slot = entry.dayOffset * 5 + entry.prayerIndex;
+      final prayerId = _prayerNotificationIdBase + slot;
+      final reminderId = _prayerReminderIdBase + slot;
+
+      if (safeMinutes > 0) {
+        final reminderTime =
+            entry.time.subtract(Duration(minutes: safeMinutes));
+
+        if (reminderTime.isAfter(now)) {
+          await _notifications.zonedSchedule(
+            id: reminderId,
+            title: '${entry.prayerName} Vaktine Az Kaldı',
+            body:
+                '${entry.prayerName} vaktine $safeMinutes dakika kaldı. Hazırlığınızı yapabilirsiniz.',
+            scheduledDate: tz.TZDateTime.from(reminderTime, tz.local),
+            notificationDetails: details,
+            androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+            payload: 'prayer_reminder:${entry.prayerName}',
+          );
+          scheduledCount++;
+        }
+      }
+
+      await _notifications.zonedSchedule(
+        id: prayerId,
+        title: '${entry.prayerName} Vakti',
+        body:
+            '${entry.prayerName} vakti geldi. Huzurla ibadetinize vakit ayırın.',
+        scheduledDate: tz.TZDateTime.from(entry.time, tz.local),
+        notificationDetails: details,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        payload: 'prayer_time:${entry.prayerName}',
+      );
+      scheduledCount++;
+    }
+
+    return scheduledCount > 0;
+  }
 
   Future<void> initialize() async {
     if (_initialized) return;

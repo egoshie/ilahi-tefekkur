@@ -44,6 +44,7 @@ class _QiblaAndToolsScreenState extends ConsumerState<QiblaAndToolsScreen> {
   double? _sensorAccuracy;
   bool _sensorActive = false;
   bool _sensorUnavailable = false;
+  bool _isQiblaAligned = false;
   String? _declinationCityKey;
 
   @override
@@ -66,15 +67,50 @@ class _QiblaAndToolsScreenState extends ConsumerState<QiblaAndToolsScreen> {
           setState(() {
             _sensorActive = false;
             _sensorUnavailable = true;
+            _isQiblaAligned = false;
           });
           return;
         }
 
+        final currentPrayerState = ref.read(prayerEngineProvider);
+        final city = currentPrayerState.selectedCity;
+        final cityKey = '${city.latitude}_${city.longitude}';
+
+        if (_declinationCityKey != cityKey) {
+          _declinationCityKey = cityKey;
+          try {
+            _magneticDeclination = GeoMag()
+                .calculate(city.latitude, city.longitude, 0, DateTime.now())
+                .dec;
+          } catch (_) {
+            _magneticDeclination = 0.0;
+          }
+        }
+
+        final normalizedHeading = (heading + 360.0) % 360.0;
+        final correctedHeading =
+            (normalizedHeading + _magneticDeclination + 360.0) % 360.0;
+        final signedError = ((currentPrayerState.qiblaDirection -
+                    correctedHeading +
+                    540.0) %
+                360.0) -
+            180.0;
+        final absoluteError = signedError.abs();
+
+        // Histerezis: hizalanma 6° içinde başlar, 10° dışına çıkınca biter.
+        final nextAligned =
+            _isQiblaAligned ? absoluteError <= 10.0 : absoluteError <= 6.0;
+
+        if (!_isQiblaAligned && nextAligned) {
+          HapticFeedback.mediumImpact();
+        }
+
         setState(() {
-          _magneticHeading = (heading + 360.0) % 360.0;
+          _magneticHeading = normalizedHeading;
           _sensorAccuracy = event.accuracy;
           _sensorActive = true;
           _sensorUnavailable = false;
+          _isQiblaAligned = nextAligned;
         });
       },
       onError: (_) {
@@ -82,6 +118,7 @@ class _QiblaAndToolsScreenState extends ConsumerState<QiblaAndToolsScreen> {
         setState(() {
           _sensorActive = false;
           _sensorUnavailable = true;
+          _isQiblaAligned = false;
         });
       },
     );
@@ -122,6 +159,9 @@ class _QiblaAndToolsScreenState extends ConsumerState<QiblaAndToolsScreen> {
         (_magneticHeading + _magneticDeclination + 360.0) % 360.0;
     final qiblaAngle = prayerState.qiblaDirection;
     final relativeAngle = (qiblaAngle - trueHeading) * (math.pi / 180.0);
+    final alignmentColor = _isQiblaAligned
+        ? const Color(0xFF35D982)
+        : const Color(0xFFFFA21A);
 
     final completedRatio = progress.initialPrayers == 0
         ? 1.0
@@ -204,6 +244,7 @@ class _QiblaAndToolsScreenState extends ConsumerState<QiblaAndToolsScreen> {
                         painter: _QiblaCompassPainter(
                           headingDegrees: trueHeading,
                           relativeRadians: relativeAngle,
+                          isAligned: _isQiblaAligned,
                         ),
                       ),
                       Positioned(
@@ -213,17 +254,18 @@ class _QiblaAndToolsScreenState extends ConsumerState<QiblaAndToolsScreen> {
                           width: 34,
                           height: 34,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFFF3DF),
+                            color: _isQiblaAligned
+                                ? const Color(0xFFE8FFF1)
+                                : const Color(0xFFFFF3DF),
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: const Color(0xFFFFA21A),
-                              width: 1.5,
+                              color: alignmentColor,
+                              width: 1.8,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFFFFA21A)
-                                    .withValues(alpha: 0.35),
-                                blurRadius: 15,
+                                color: alignmentColor.withValues(alpha: 0.42),
+                                blurRadius: 18,
                               ),
                             ],
                           ),
@@ -242,17 +284,21 @@ class _QiblaAndToolsScreenState extends ConsumerState<QiblaAndToolsScreen> {
               const SizedBox(height: 10),
               Text(
                 _sensorActive
-                    ? (_sensorAccuracy != null
-                        ? 'Pusula aktif • Sensör doğruluğu ±${_sensorAccuracy!.toStringAsFixed(0)}°'
-                        : 'Pusula aktif • Telefonun üst kenarını Kâbe yönüne çevirin.')
+                    ? (_isQiblaAligned
+                        ? 'Kıble yönü hizalandı • Titreşimle onaylandı'
+                        : (_sensorAccuracy != null
+                            ? 'Pusula aktif • Sensör doğruluğu ±${_sensorAccuracy!.toStringAsFixed(0)}°'
+                            : 'Telefonun üst kenarını Kâbe yönüne çevirin.'))
                     : (_sensorUnavailable
                         ? 'Pusula sensörü okunamıyor. Cihaz sensörünü ve konum ayarlarını kontrol edin.'
                         : 'Pusula sensöründen yön bilgisi bekleniyor...'),
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
                   height: 1.4,
-                  color: Colors.white70,
+                  fontWeight:
+                      _isQiblaAligned ? FontWeight.w800 : FontWeight.w500,
+                  color: _isQiblaAligned ? alignmentColor : Colors.white70,
                 ),
               ),
             ],
@@ -712,10 +758,12 @@ class _QiblaAndToolsScreenState extends ConsumerState<QiblaAndToolsScreen> {
 class _QiblaCompassPainter extends CustomPainter {
   final double headingDegrees;
   final double relativeRadians;
+  final bool isAligned;
 
   const _QiblaCompassPainter({
     required this.headingDegrees,
     required this.relativeRadians,
+    required this.isAligned,
   });
 
   @override
@@ -779,8 +827,12 @@ class _QiblaCompassPainter extends CustomPainter {
     canvas.translate(center.dx, center.dy);
     canvas.rotate(relativeRadians);
 
+    final guidanceColor = isAligned
+        ? const Color(0xFF35D982)
+        : const Color(0xFFFFA21A);
+
     final shaft = Paint()
-      ..color = const Color(0xFFFFA21A)
+      ..color = guidanceColor
       ..strokeWidth = 3.0
       ..strokeCap = StrokeCap.round;
 
@@ -798,13 +850,18 @@ class _QiblaCompassPainter extends CustomPainter {
       ..close();
 
     final arrowPaint = Paint()
-      ..shader = const LinearGradient(
+      ..shader = LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: [
-          Color(0xFFFFE3A3),
-          Color(0xFFFF8F00),
-        ],
+        colors: isAligned
+            ? const [
+                Color(0xFFB8FFD2),
+                Color(0xFF20B968),
+              ]
+            : const [
+                Color(0xFFFFE3A3),
+                Color(0xFFFF8F00),
+              ],
       ).createShader(
         Rect.fromCircle(center: Offset.zero, radius: radius),
       );
@@ -813,12 +870,18 @@ class _QiblaCompassPainter extends CustomPainter {
     canvas.restore();
 
     final centerPaint = Paint()
-      ..shader = const RadialGradient(
-        colors: [
-          Color(0xFFFFD17B),
-          Color(0xFFFF8F00),
-          Color(0xFF7A3B08),
-        ],
+      ..shader = RadialGradient(
+        colors: isAligned
+            ? const [
+                Color(0xFFB8FFD2),
+                Color(0xFF20B968),
+                Color(0xFF075B32),
+              ]
+            : const [
+                Color(0xFFFFD17B),
+                Color(0xFFFF8F00),
+                Color(0xFF7A3B08),
+              ],
       ).createShader(Rect.fromCircle(center: center, radius: 9));
 
     canvas.drawCircle(center, 8, centerPaint);
@@ -858,6 +921,7 @@ class _QiblaCompassPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _QiblaCompassPainter oldDelegate) {
     return oldDelegate.headingDegrees != headingDegrees ||
-        oldDelegate.relativeRadians != relativeRadians;
+        oldDelegate.relativeRadians != relativeRadians ||
+        oldDelegate.isAligned != isAligned;
   }
 }
