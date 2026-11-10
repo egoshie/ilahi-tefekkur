@@ -36,23 +36,23 @@ class LiquidGlassPalette {
     switch (period) {
       case PrayerPeriod.imsak:
         return const LiquidGlassPalette(
-          deepCosmicStart: Color(0xFF040C1C),
-          deepCosmicMid: Color(0xFF0A243C),
-          deepCosmicEnd: Color(0xFF0F364C),
-          auroraPrimary: Color(0xFF64FFDA),
-          auroraSecondary: Color(0xFF40C4FF),
-          crystalAccent: Color(0xFF80FFE5),
+          deepCosmicStart: Color(0xFF121212),
+          deepCosmicMid: Color(0xFF211D19),
+          deepCosmicEnd: Color(0xFF30251D),
+          auroraPrimary: Color(0xFFFFA21A),
+          auroraSecondary: Color(0xFFFFC15A),
+          crystalAccent: Color(0xFFFFC15A),
           specularHighlight: Color(0xFFE0F7FA),
           periodTitle: "Seher Vakti",
           spiritualSubtitle: "Dingin seher serinliği",
         );
       case PrayerPeriod.gunes:
         return const LiquidGlassPalette(
-          deepCosmicStart: Color(0xFF061022),
-          deepCosmicMid: Color(0xFF0D2C3E),
-          deepCosmicEnd: Color(0xFF14404A),
+          deepCosmicStart: Color(0xFF121212),
+          deepCosmicMid: Color(0xFF211D19),
+          deepCosmicEnd: Color(0xFF30251D),
           auroraPrimary: Color(0xFFFFD54F),
-          auroraSecondary: Color(0xFF64FFDA),
+          auroraSecondary: Color(0xFFFFA21A),
           crystalAccent: Color(0xFFFFE082),
           specularHighlight: Color(0xFFFFF8E1),
           periodTitle: "İşrak Vakti",
@@ -60,23 +60,23 @@ class LiquidGlassPalette {
         );
       case PrayerPeriod.ogle:
         return const LiquidGlassPalette(
-          deepCosmicStart: Color(0xFF04101E),
-          deepCosmicMid: Color(0xFF0A2C38),
-          deepCosmicEnd: Color(0xFF10424C),
-          auroraPrimary: Color(0xFF64FFDA),
-          auroraSecondary: Color(0xFF18FFFF),
-          crystalAccent: Color(0xFF64FFDA),
+          deepCosmicStart: Color(0xFF121212),
+          deepCosmicMid: Color(0xFF211D19),
+          deepCosmicEnd: Color(0xFF30251D),
+          auroraPrimary: Color(0xFFFFA21A),
+          auroraSecondary: Color(0xFFFF8F00),
+          crystalAccent: Color(0xFFFFA21A),
           specularHighlight: Color(0xFFE0F2F1),
           periodTitle: "Gün Ortası",
           spiritualSubtitle: "Berrak su kristali dinginliği",
         );
       case PrayerPeriod.ikindi:
         return const LiquidGlassPalette(
-          deepCosmicStart: Color(0xFF060E1E),
-          deepCosmicMid: Color(0xFF0D2634),
-          deepCosmicEnd: Color(0xFF143844),
+          deepCosmicStart: Color(0xFF121212),
+          deepCosmicMid: Color(0xFF211D19),
+          deepCosmicEnd: Color(0xFF30251D),
           auroraPrimary: Color(0xFFFFD54F),
-          auroraSecondary: Color(0xFF64FFDA),
+          auroraSecondary: Color(0xFFFFA21A),
           crystalAccent: Color(0xFFFFE082),
           specularHighlight: Color(0xFFFFECB3),
           periodTitle: "İkindi Vakti",
@@ -84,11 +84,11 @@ class LiquidGlassPalette {
         );
       case PrayerPeriod.aksam:
         return const LiquidGlassPalette(
-          deepCosmicStart: Color(0xFF070B1C),
-          deepCosmicMid: Color(0xFF112336),
-          deepCosmicEnd: Color(0xFF183644),
+          deepCosmicStart: Color(0xFF121212),
+          deepCosmicMid: Color(0xFF211D19),
+          deepCosmicEnd: Color(0xFF30251D),
           auroraPrimary: Color(0xFFFFAB40),
-          auroraSecondary: Color(0xFF64FFDA),
+          auroraSecondary: Color(0xFFFFA21A),
           crystalAccent: Color(0xFFFFD180),
           specularHighlight: Color(0xFFFFE0B2),
           periodTitle: "Grup Vakti",
@@ -96,12 +96,12 @@ class LiquidGlassPalette {
         );
       case PrayerPeriod.yatsi:
         return const LiquidGlassPalette(
-          deepCosmicStart: Color(0xFF030B18),
-          deepCosmicMid: Color(0xFF092430),
-          deepCosmicEnd: Color(0xFF0E3842),
-          auroraPrimary: Color(0xFF64FFDA),
-          auroraSecondary: Color(0xFF00E5FF),
-          crystalAccent: Color(0xFF64FFDA),
+          deepCosmicStart: Color(0xFF121212),
+          deepCosmicMid: Color(0xFF211D19),
+          deepCosmicEnd: Color(0xFF30251D),
+          auroraPrimary: Color(0xFFFFA21A),
+          auroraSecondary: Color(0xFFFFB74D),
+          crystalAccent: Color(0xFFFFA21A),
           specularHighlight: Color(0xFFB2DFDB),
           periodTitle: "Gece Vakti",
           spiritualSubtitle: "Derin gece ve kalp sükûneti",
@@ -117,12 +117,12 @@ class LiquidGlassPalette {
     if (brightness == Brightness.dark) return dark;
 
     return LiquidGlassPalette(
-      deepCosmicStart: const Color(0xFFF4F8F5),
-      deepCosmicMid: const Color(0xFFE9F2EC),
-      deepCosmicEnd: const Color(0xFFDCEAE1),
-      auroraPrimary: const Color(0xFF00796B),
-      auroraSecondary: const Color(0xFF1565C0),
-      crystalAccent: const Color(0xFF00695C),
+      deepCosmicStart: const Color(0xFFFFF8EF),
+      deepCosmicMid: const Color(0xFFF6EADC),
+      deepCosmicEnd: const Color(0xFFF0DDC5),
+      auroraPrimary: const Color(0xFFB76B00),
+      auroraSecondary: const Color(0xFFD98C22),
+      crystalAccent: const Color(0xFF9C5700),
       specularHighlight: Colors.white,
       periodTitle: dark.periodTitle,
       spiritualSubtitle: dark.spiritualSubtitle,
@@ -324,7 +324,7 @@ class LiveSvgAudioVisualizer extends StatefulWidget {
   const LiveSvgAudioVisualizer({
     super.key,
     required this.isPlaying,
-    this.color = const Color(0xFF64FFDA),
+    this.color = const Color(0xFFFFA21A),
   });
 
   @override

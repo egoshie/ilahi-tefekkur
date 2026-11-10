@@ -177,7 +177,7 @@ class _StoryShareSheetState extends State<StoryShareSheet> {
   }
 
   Widget _buildStoryCard() {
-    const accent = Color(0xFF64FFDA);
+    const accent = Color(0xFFFFA21A);
     const gold = Color(0xFFFFE082);
 
     return RepaintBoundary(
@@ -572,7 +572,7 @@ class _StoryShareSheetState extends State<StoryShareSheet> {
                   Text(
                     '9:16',
                     style: TextStyle(
-                      color: Color(0xFF64FFDA),
+                      color: Color(0xFFFFA21A),
                       fontWeight: FontWeight.bold,
                       fontSize: 11,
                     ),
@@ -607,7 +607,7 @@ class _StoryShareSheetState extends State<StoryShareSheet> {
                   _feedbackMessage!,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                    color: Color(0xFF64FFDA),
+                    color: Color(0xFFFFA21A),
                     fontSize: 11,
                   ),
                 ),
@@ -631,7 +631,7 @@ class _StoryShareSheetState extends State<StoryShareSheet> {
                             child: Text(
                               'Instagram Story',
                               style: TextStyle(
-                                color: Color(0xFF64FFDA),
+                                color: Color(0xFFFFA21A),
                                 fontWeight: FontWeight.w800,
                                 fontSize: 12,
                               ),
@@ -674,7 +674,7 @@ class _StoryShareSheetState extends State<StoryShareSheet> {
                               height: 17,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: Color(0xFF64FFDA),
+                                color: Color(0xFFFFA21A),
                               ),
                             )
                           : const Text(
@@ -801,7 +801,7 @@ class _StoryWavePainter extends CustomPainter {
       16,
     ];
     final paint = Paint()
-      ..color = const Color(0xFF64FFDA).withValues(alpha: 0.8)
+      ..color = const Color(0xFFFFA21A).withValues(alpha: 0.8)
       ..strokeCap = StrokeCap.round;
 
     const gap = 2.0;

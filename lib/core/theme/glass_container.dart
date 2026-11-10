@@ -93,23 +93,23 @@ class _GlassContainerState extends State<GlassContainer>
     final List<Color> effectiveGradient = widget.gradientColors ??
         (widget.emeraldGlow
             ? [
-                const Color(0xFF154233)
+                const Color(0xFF49311F)
                     .withValues(alpha: _isPressed ? 0.62 : 0.50),
-                const Color(0xFF0A241B).withValues(alpha: 0.68),
-                const Color(0xFF05110D).withValues(alpha: 0.82),
+                const Color(0xFF2C2118).withValues(alpha: 0.68),
+                const Color(0xFF171310).withValues(alpha: 0.82),
               ]
             : [
-                (widget.tintColor ?? const Color(0xFF103126))
+                (widget.tintColor ?? const Color(0xFF2A2017))
                     .withValues(alpha: _isPressed ? 0.54 : 0.42),
-                const Color(0xFF081C15).withValues(alpha: 0.66),
-                const Color(0xFF040D0A).withValues(alpha: 0.80),
+                const Color(0xFF1D1813).withValues(alpha: 0.66),
+                const Color(0xFF100E0C).withValues(alpha: 0.80),
               ]);
 
     final Color outerBorderColor = widget.borderColor ??
         (widget.goldAccentBorder
             ? const Color(0xFFFFE082)
                 .withValues(alpha: _isPressed ? 0.62 : 0.42)
-            : const Color(0xFF9CE5C9)
+            : const Color(0xFFFFC77D)
                 .withValues(alpha: _isPressed ? 0.36 : 0.22));
 
     final surfaceContent = CustomPaint(
@@ -148,7 +148,7 @@ class _GlassContainerState extends State<GlassContainer>
           ),
           if (widget.emeraldGlow)
             BoxShadow(
-              color: const Color(0xFF3F9D7B).withValues(alpha: 0.14),
+              color: const Color(0xFFFF9D2E).withValues(alpha: 0.14),
               blurRadius: 20,
               offset: const Offset(0, 4),
             ),
@@ -234,13 +234,13 @@ class _LiquidGlassRimPainter extends CustomPainter {
           goldAccent
               ? const Color(0xFFFFF3C4)
                   .withValues(alpha: isPressed ? 0.85 : 0.68)
-              : const Color(0xFFE2FFF3)
+              : const Color(0xFFFFE5C2)
                   .withValues(alpha: isPressed ? 0.62 : 0.45),
           outerBorderColor,
-          const Color(0xFF0A261D).withValues(alpha: 0.35),
+          const Color(0xFF342619).withValues(alpha: 0.35),
           goldAccent
               ? const Color(0xFFD4AF37).withValues(alpha: 0.42)
-              : const Color(0xFF9CE5C9).withValues(alpha: 0.28),
+              : const Color(0xFFFFC77D).withValues(alpha: 0.28),
         ],
       ).createShader(rect);
 
@@ -260,7 +260,7 @@ class _LiquidGlassRimPainter extends CustomPainter {
           colors: [
             Colors.white.withValues(alpha: isPressed ? 0.22 : 0.14),
             Colors.transparent,
-            const Color(0xFF9CE5C9).withValues(alpha: 0.06),
+            const Color(0xFFFFC77D).withValues(alpha: 0.06),
           ],
         ).createShader(rect);
       canvas.drawRRect(innerRRect, innerPaint);

@@ -75,7 +75,7 @@ class _GlobalSacredSearchViewState extends State<GlobalSacredSearchView> {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
-            child: CircularProgressIndicator(color: Color(0xFF64FFDA)),
+            child: CircularProgressIndicator(color: Color(0xFFFFA21A)),
           );
         }
         if (snapshot.hasError) {
@@ -120,7 +120,7 @@ class _GlobalSacredSearchViewState extends State<GlobalSacredSearchView> {
                           Text(
                             item.tradition,
                             style: const TextStyle(
-                              color: Color(0xFF64FFDA),
+                              color: Color(0xFFFFA21A),
                               fontSize: 10,
                               fontWeight: FontWeight.w800,
                               letterSpacing: 1,

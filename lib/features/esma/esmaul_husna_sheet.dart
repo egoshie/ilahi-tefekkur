@@ -16,7 +16,7 @@ class EsmaulHusnaSheet extends ConsumerStatefulWidget {
     this.onNavigateToTasbih,
   });
 
-  static Future< void > show(
+  static Future<void> show(
     BuildContext context, {
     VoidCallback? onNavigateToTasbih,
   }) {
@@ -31,15 +31,14 @@ class EsmaulHusnaSheet extends ConsumerStatefulWidget {
   }
 
   @override
-  ConsumerState< EsmaulHusnaSheet > createState() => _EsmaulHusnaSheetState();
+  ConsumerState<EsmaulHusnaSheet> createState() => _EsmaulHusnaSheetState();
 }
 
-class _EsmaulHusnaSheetState extends ConsumerState< EsmaulHusnaSheet > {
+class _EsmaulHusnaSheetState extends ConsumerState<EsmaulHusnaSheet> {
   String _searchQuery = '';
 
-  List< EsmaulHusnaItem > get _filteredEsmas {
-    const List< EsmaulHusnaItem > all =
-        OfflineSacredRepository.kAll99EsmaulHusna;
+  List<EsmaulHusnaItem> get _filteredEsmas {
+    const List<EsmaulHusnaItem> all = OfflineSacredRepository.kAll99EsmaulHusna;
     if (_searchQuery.trim().isEmpty) return all;
 
     return all.where((item) {
@@ -104,7 +103,7 @@ class _EsmaulHusnaSheetState extends ConsumerState< EsmaulHusnaSheet > {
                       vertical: 5,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF64FFDA).withValues(alpha: 0.15),
+                      color: const Color(0xFFFFA21A).withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -112,22 +111,22 @@ class _EsmaulHusnaSheetState extends ConsumerState< EsmaulHusnaSheet > {
                       style: const TextStyle(
                         fontSize: 11.5,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF64FFDA),
+                        color: Color(0xFFFFA21A),
                       ),
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 12),
-
               GlassContainer(
                 borderRadius: 16,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
                 child: Row(
                   children: [
                     const BespokeVectorIcon(
                       type: BespokeIconType.searchLens,
-                      color: Color(0xFF64FFDA),
+                      color: Color(0xFFFFA21A),
                       size: 18,
                     ),
                     const SizedBox(width: 10),
@@ -135,7 +134,8 @@ class _EsmaulHusnaSheetState extends ConsumerState< EsmaulHusnaSheet > {
                       child: TextField(
                         style: const TextStyle(fontSize: 13.5),
                         textInputAction: TextInputAction.search,
-                        onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
+                        onTapOutside: (_) =>
+                            FocusManager.instance.primaryFocus?.unfocus(),
                         decoration: const InputDecoration(
                           hintText: "Esma adı, anlamı veya numara ara...",
                           hintStyle: TextStyle(
@@ -145,18 +145,19 @@ class _EsmaulHusnaSheetState extends ConsumerState< EsmaulHusnaSheet > {
                           border: InputBorder.none,
                         ),
                         onChanged: (val) => setState(() => _searchQuery = val),
-                          onSubmitted: (_) => FocusManager.instance.primaryFocus?.unfocus(),
+                        onSubmitted: (_) =>
+                            FocusManager.instance.primaryFocus?.unfocus(),
                       ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 12),
-
               Expanded(
                 child: ListView.separated(
                   controller: scrollController,
-                  keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
                   physics: const BouncingScrollPhysics(),
                   itemCount: list.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 10),
@@ -186,7 +187,7 @@ class _EsmaulHusnaSheetState extends ConsumerState< EsmaulHusnaSheet > {
                                 style: const TextStyle(
                                   fontSize: 25,
                                   fontWeight: FontWeight.w700,
-                                  color: Color(0xFF64FFDA),
+                                  color: Color(0xFFFFA21A),
                                 ),
                               ),
                             ],
@@ -216,7 +217,8 @@ class _EsmaulHusnaSheetState extends ConsumerState< EsmaulHusnaSheet > {
                                 child: GlassContainer(
                                   borderRadius: 14,
                                   emeraldGlow: true,
-                                  padding: const EdgeInsets.symmetric(vertical: 9),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 9),
                                   onTap: () async {
                                     HapticFeedback.mediumImpact();
                                     await ref
@@ -232,7 +234,7 @@ class _EsmaulHusnaSheetState extends ConsumerState< EsmaulHusnaSheet > {
                                     children: [
                                       BespokeVectorIcon(
                                         type: BespokeIconType.tasbihRipple,
-                                        color: Color(0xFF64FFDA),
+                                        color: Color(0xFFFFA21A),
                                         size: 15,
                                       ),
                                       SizedBox(width: 6),
@@ -241,7 +243,7 @@ class _EsmaulHusnaSheetState extends ConsumerState< EsmaulHusnaSheet > {
                                         style: TextStyle(
                                           fontSize: 12,
                                           fontWeight: FontWeight.w700,
-                                          color: Color(0xFF64FFDA),
+                                          color: Color(0xFFFFA21A),
                                         ),
                                       ),
                                     ],
@@ -253,7 +255,8 @@ class _EsmaulHusnaSheetState extends ConsumerState< EsmaulHusnaSheet > {
                                 child: GlassContainer(
                                   borderRadius: 14,
                                   goldAccentBorder: true,
-                                  padding: const EdgeInsets.symmetric(vertical: 9),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 9),
                                   onTap: () {
                                     StoryShareSheet.show(
                                       context,
@@ -262,7 +265,6 @@ class _EsmaulHusnaSheetState extends ConsumerState< EsmaulHusnaSheet > {
                                           "${esma.transliteration}: ${esma.turkishMeaning}",
                                       reference:
                                           "Esmaül Hüsna #${esma.id} (${esma.reference})",
-                                      
                                     );
                                   },
                                   child: const Row(

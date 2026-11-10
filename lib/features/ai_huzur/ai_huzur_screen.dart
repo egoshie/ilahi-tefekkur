@@ -306,6 +306,165 @@ class _AiHuzurScreenState extends ConsumerState<AiHuzurScreen> {
     }
   }
 
+  Future<void> _sendSuggestedQuestion(String prompt) async {
+    if (_sending) return;
+    _input.text = prompt;
+    await _send();
+  }
+
+  Widget _buildSuggestionCard({
+    required String title,
+    required String prompt,
+    required IconData icon,
+  }) {
+    final cardWidth = (MediaQuery.sizeOf(context).width - 48) / 2;
+
+    return SizedBox(
+      width: cardWidth,
+      height: 88,
+      child: GlassContainer(
+        borderRadius: 23,
+        enableBlur: true,
+        blurSigma: 16,
+        goldAccentBorder: true,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+        onTap: () => _sendSuggestedQuestion(prompt),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              color: const Color(0xFFFFA21A),
+              size: 23,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 12.5,
+                  height: 1.25,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWelcomeScreen() {
+    return ListView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
+      children: [
+        const SizedBox(height: 12),
+        Center(
+          child: Container(
+            width: 112,
+            height: 112,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFFFFA21A).withValues(alpha: 0.10),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFFFA21A).withValues(alpha: 0.20),
+                  blurRadius: 42,
+                  spreadRadius: 8,
+                ),
+              ],
+            ),
+            child: const Center(
+              child: Icon(
+                Icons.auto_awesome_rounded,
+                color: Color(0xFFFFA21A),
+                size: 67,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 25),
+        const Text(
+          'Gönül Dünyana Hoş Geldin',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 21,
+            fontWeight: FontWeight.w900,
+            letterSpacing: -0.4,
+          ),
+        ),
+        const SizedBox(height: 9),
+        const Text(
+          'Senin için nasıl bir manevi rehberlik yapabilirim?',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Colors.white70,
+            fontSize: 14,
+            height: 1.45,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 27),
+        Wrap(
+          spacing: 10,
+          runSpacing: 12,
+          alignment: WrapAlignment.center,
+          children: [
+            _buildSuggestionCard(
+              title: 'Namaz nasıl kılınır?',
+              prompt:
+                  'Namaz nasıl kılınır? Abdestten başlayarak namazın temel adımlarını anlaşılır biçimde anlatır mısın?',
+              icon: Icons.accessibility_new_rounded,
+            ),
+            _buildSuggestionCard(
+              title: 'Dua adabı nedir?',
+              prompt:
+                  'Dua adabı nedir? Dua ederken nelere dikkat edilir? Kaynaklarıyla açıklar mısın?',
+              icon: Icons.waving_hand_rounded,
+            ),
+            _buildSuggestionCard(
+              title: 'Kur’an okuma rehberi',
+              prompt:
+                  'Kur’an okumaya nasıl başlayabilirim? Başlangıç için anlaşılır bir rehber hazırlar mısın?',
+              icon: Icons.menu_book_rounded,
+            ),
+            _buildSuggestionCard(
+              title: 'Zikir nasıl çekilir?',
+              prompt:
+                  'Zikir nasıl çekilir? Sık kullanılan zikirleri, anlamlarını ve kaynaklarını açıklar mısın?',
+              icon: Icons.grain_rounded,
+            ),
+            _buildSuggestionCard(
+              title: 'İslam’da sabır',
+              prompt:
+                  'İslam’da sabır ne anlama gelir? Kur’an’dan örneklerle ve güvenilir kaynaklarla anlatır mısın?',
+              icon: Icons.hourglass_bottom_rounded,
+            ),
+            _buildSuggestionCard(
+              title: 'Şükrün önemi',
+              prompt:
+                  'İslam’da şükrün önemi nedir? Günlük hayatta şükretmeyi nasıl yaşayabileceğimizi anlatır mısın?',
+              icon: Icons.favorite_rounded,
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+        const Text(
+          'Yapay zekâ hatalı bilgi verebilir. Dini konularda kaynakları kontrol etmeyi unutma.',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Colors.white54,
+            fontSize: 10.5,
+            height: 1.4,
+          ),
+        ),
+      ],
+    );
+  }
+
   Future<void> _openAssistantAction(String action) async {
     HapticFeedback.selectionClick();
 
@@ -395,7 +554,7 @@ class _AiHuzurScreenState extends ConsumerState<AiHuzurScreen> {
                   ),
                   const Icon(
                     Icons.circle,
-                    color: Color(0xFF64FFDA),
+                    color: Color(0xFFFFA21A),
                     size: 8,
                   ),
                   const SizedBox(width: 5),
@@ -408,29 +567,32 @@ class _AiHuzurScreenState extends ConsumerState<AiHuzurScreen> {
               child: Text(
                 quotaLabel,
                 style: const TextStyle(
-                  color: Color(0xFF64FFDA),
+                  color: Color(0xFFFFA21A),
                   fontSize: 10.5,
                 ),
               ),
             ),
             Expanded(
-              child: ListView.builder(
-                controller: _scroll,
-                padding: const EdgeInsets.fromLTRB(14, 8, 14, 14),
-                itemCount: _messages.length,
-                itemBuilder: (context, index) {
-                  final message = _messages[index];
-                  final action = _actionFromText(message.text);
+              child: _messages.length == 1
+                  ? _buildWelcomeScreen()
+                  : ListView.builder(
+                      controller: _scroll,
+                      padding: const EdgeInsets.fromLTRB(14, 8, 14, 14),
+                      itemCount: _messages.length,
+                      itemBuilder: (context, index) {
+                        final message = _messages[index];
+                        final action = _actionFromText(message.text);
 
-                  return _MessageBubble(
-                    message: message,
-                    actionLabel: action == null ? null : _actionLabel(action),
-                    onAction: action == null
-                        ? null
-                        : () => _openAssistantAction(action),
-                  );
-                },
-              ),
+                        return _MessageBubble(
+                          message: message,
+                          actionLabel:
+                              action == null ? null : _actionLabel(action),
+                          onAction: action == null
+                              ? null
+                              : () => _openAssistantAction(action),
+                        );
+                      },
+                    ),
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 6, 12, 10),
@@ -493,8 +655,8 @@ class _AiHuzurScreenState extends ConsumerState<AiHuzurScreen> {
                           tooltip: 'Galeriden görsel ekle',
                           onPressed: _sending ? null : _pickImage,
                           icon: const Icon(
-                            Icons.add_photo_alternate_outlined,
-                            color: Color(0xFF64FFDA),
+                            Icons.add_rounded,
+                            color: Color(0xFFFFA21A),
                             size: 22,
                           ),
                         ),
@@ -527,7 +689,7 @@ class _AiHuzurScreenState extends ConsumerState<AiHuzurScreen> {
                               );
                             },
                             decoration: const InputDecoration(
-                              hintText: 'Dini bir soru sor...',
+                              hintText: 'Aklına takılanı sor...',
                               hintStyle: TextStyle(color: Colors.white54),
                               border: InputBorder.none,
                               isDense: true,
@@ -651,7 +813,7 @@ class _MessageBubble extends StatelessWidget {
                         Icon(
                           Icons.auto_awesome_rounded,
                           size: 14,
-                          color: Color(0xFF64FFDA),
+                          color: Color(0xFFFFA21A),
                         ),
                         SizedBox(width: 6),
                         Text(
@@ -660,7 +822,7 @@ class _MessageBubble extends StatelessWidget {
                             fontSize: 9.5,
                             letterSpacing: 0.8,
                             fontWeight: FontWeight.w800,
-                            color: Color(0xFF64FFDA),
+                            color: Color(0xFFFFA21A),
                           ),
                         ),
                       ],
@@ -708,7 +870,7 @@ class _MessageBubble extends StatelessWidget {
                             child: Text(
                               actionLabel!,
                               style: const TextStyle(
-                                color: Color(0xFF64FFDA),
+                                color: Color(0xFFFFA21A),
                                 fontWeight: FontWeight.w700,
                                 fontSize: 11.5,
                               ),
@@ -796,7 +958,7 @@ class _TypingIndicatorState extends State<_TypingIndicator>
               width: 5,
               height: 5,
               decoration: const BoxDecoration(
-                color: Color(0xFF64FFDA),
+                color: Color(0xFFFFA21A),
                 shape: BoxShape.circle,
               ),
             ),

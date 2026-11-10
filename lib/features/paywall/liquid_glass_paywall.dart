@@ -181,7 +181,7 @@ class _LiquidGlassPaywallSheetState
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF64FFDA),
+                      color: Color(0xFFFFA21A),
                     ),
                   ),
                 ),
@@ -193,7 +193,7 @@ class _LiquidGlassPaywallSheetState
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       fontSize: 12,
-                      color: Color(0xFF64FFDA),
+                      color: Color(0xFFFFA21A),
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -223,7 +223,7 @@ class _LiquidGlassPaywallSheetState
                           children: [
                             const BespokeVectorIcon(
                               type: BespokeIconType.checkBadge,
-                              color: Color(0xFF64FFDA),
+                              color: Color(0xFFFFA21A),
                               size: 20,
                             ),
                             const SizedBox(width: 8),
@@ -282,7 +282,7 @@ class _LiquidGlassPaywallSheetState
                         children: [
                           BespokeVectorIcon(
                             type: BespokeIconType.lockShield,
-                            color: Color(0xFF64FFDA),
+                            color: Color(0xFFFFA21A),
                             size: 16,
                           ),
                           SizedBox(width: 7),
@@ -293,7 +293,7 @@ class _LiquidGlassPaywallSheetState
                               style: TextStyle(
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.w700,
-                                color: Color(0xFF64FFDA),
+                                color: Color(0xFFFFA21A),
                               ),
                             ),
                           ),
@@ -363,7 +363,7 @@ class _LiquidGlassPaywallSheetState
         children: [
           const BespokeVectorIcon(
             type: BespokeIconType.checkBadge,
-            color: Color(0xFF64FFDA),
+            color: Color(0xFFFFA21A),
             size: 16,
           ),
           const SizedBox(width: 10),
@@ -441,7 +441,7 @@ class _LiquidGlassPaywallSheetState
                 style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF64FFDA),
+                  color: Color(0xFFFFA21A),
                 ),
               ),
             ],
@@ -493,7 +493,7 @@ class _LiquidGlassPaywallSheetState
                       ? BespokeIconType.lockShield
                       : BespokeIconType.sacredScroll,
                   color: isPrivacy
-                      ? const Color(0xFF64FFDA)
+                      ? const Color(0xFFFFA21A)
                       : const Color(0xFFFFE082),
                   size: 20,
                 ),
@@ -531,7 +531,7 @@ class _LiquidGlassPaywallSheetState
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 12.5,
-                    color: Color(0xFF64FFDA),
+                    color: Color(0xFFFFA21A),
                   ),
                 ),
               ),
@@ -613,7 +613,7 @@ class _GlowingStarSvgPainter extends CustomPainter {
       ).createShader(Rect.fromCircle(center: center, radius: outerRadius));
 
     final borderPaint = Paint()
-      ..color = const Color(0xFF64FFDA).withValues(alpha: 0.85)
+      ..color = const Color(0xFFFFA21A).withValues(alpha: 0.85)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.9;
 
@@ -659,7 +659,7 @@ class _CrescentEmblemPainter extends CustomPainter {
     final r = size.width * 0.42;
 
     final glowPaint = Paint()
-      ..color = const Color(0xFF64FFDA).withValues(alpha: 0.25)
+      ..color = const Color(0xFFFFA21A).withValues(alpha: 0.25)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
     canvas.drawCircle(center, r, glowPaint);
 
@@ -678,7 +678,7 @@ class _CrescentEmblemPainter extends CustomPainter {
 
     final paint = Paint()
       ..shader = const LinearGradient(
-        colors: [Color(0xFFFFE082), Color(0xFF64FFDA)],
+        colors: [Color(0xFFFFE082), Color(0xFFFFA21A)],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       ).createShader(Rect.fromCircle(center: center, radius: r));
@@ -743,7 +743,7 @@ class HuzurDeveloperStoryButton extends StatelessWidget {
         children: [
           Icon(
             Icons.auto_stories_rounded,
-            color: Color(0xFF64FFDA),
+            color: Color(0xFFFFA21A),
             size: 23,
           ),
           SizedBox(width: 12),
@@ -754,7 +754,7 @@ class HuzurDeveloperStoryButton extends StatelessWidget {
                 Text(
                   'Huzur’un Hikâyesi & Vizyonu',
                   style: TextStyle(
-                    color: Color(0xFF64FFDA),
+                    color: Color(0xFFFFA21A),
                     fontSize: 13.5,
                     fontWeight: FontWeight.w800,
                   ),
@@ -774,7 +774,7 @@ class HuzurDeveloperStoryButton extends StatelessWidget {
           SizedBox(width: 8),
           Icon(
             Icons.arrow_forward_ios_rounded,
-            color: Color(0xFF64FFDA),
+            color: Color(0xFFFFA21A),
             size: 15,
           ),
         ],
@@ -890,7 +890,7 @@ Future<void> showHuzurDeveloperStoryModal(
                             child: Text(
                               'Kapat',
                               style: TextStyle(
-                                color: Color(0xFF64FFDA),
+                                color: Color(0xFFFFA21A),
                                 fontSize: 13,
                                 fontWeight: FontWeight.w800,
                               ),
@@ -923,7 +923,7 @@ TextSpan _huzurDeveloperStoryText() {
   );
 
   const emerald = TextStyle(
-    color: Color(0xFF64FFDA),
+    color: Color(0xFFFFA21A),
     fontWeight: FontWeight.w700,
   );
 

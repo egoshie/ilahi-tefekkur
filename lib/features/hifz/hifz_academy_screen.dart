@@ -120,7 +120,7 @@ class _HifzAcademyScreenState extends ConsumerState<HifzAcademyScreen> {
       case HifzVerseStatus.learning:
         return const Color(0xFF80D8FF);
       case HifzVerseStatus.memorized:
-        return const Color(0xFF64FFDA);
+        return const Color(0xFFFFA21A);
       case HifzVerseStatus.needsReview:
         return const Color(0xFFFFD180);
       case null:
@@ -241,7 +241,7 @@ class _HifzAcademyScreenState extends ConsumerState<HifzAcademyScreen> {
                             value: '${progress.totalMemorized}',
                             label: 'Ezberlenen',
                             icon: Icons.verified_rounded,
-                            color: const Color(0xFF64FFDA),
+                            color: const Color(0xFFFFA21A),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -289,7 +289,7 @@ class _HifzAcademyScreenState extends ConsumerState<HifzAcademyScreen> {
                         Text(
                           '${progress.dailyRevisionCount}/${progress.dailyTarget}',
                           style: const TextStyle(
-                            color: Color(0xFF64FFDA),
+                            color: Color(0xFFFFA21A),
                             fontWeight: FontWeight.w800,
                             fontSize: 13,
                           ),
@@ -304,7 +304,7 @@ class _HifzAcademyScreenState extends ConsumerState<HifzAcademyScreen> {
                         minHeight: 8,
                         backgroundColor: Colors.white12,
                         valueColor: const AlwaysStoppedAnimation<Color>(
-                          Color(0xFF64FFDA),
+                          Color(0xFFFFA21A),
                         ),
                       ),
                     ),
@@ -350,7 +350,7 @@ class _HifzAcademyScreenState extends ConsumerState<HifzAcademyScreen> {
                               : null,
                           icon: const Icon(
                             Icons.add_circle_outline,
-                            color: Color(0xFF64FFDA),
+                            color: Color(0xFFFFA21A),
                           ),
                         ),
                       ],
@@ -364,7 +364,7 @@ class _HifzAcademyScreenState extends ConsumerState<HifzAcademyScreen> {
                         icon: const Icon(Icons.check_rounded, size: 17),
                         label: const Text('Tekrar oturumunu tamamla'),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF64FFDA),
+                          foregroundColor: const Color(0xFFFFA21A),
                           side: const BorderSide(
                             color: Color(0x5564FFDA),
                           ),
@@ -394,7 +394,7 @@ class _HifzAcademyScreenState extends ConsumerState<HifzAcademyScreen> {
                     icon: const Icon(Icons.search_rounded, size: 17),
                     label: const Text('Ara'),
                     style: TextButton.styleFrom(
-                      foregroundColor: const Color(0xFF64FFDA),
+                      foregroundColor: const Color(0xFFFFA21A),
                     ),
                   ),
                 ],
@@ -409,12 +409,12 @@ class _HifzAcademyScreenState extends ConsumerState<HifzAcademyScreen> {
                       width: 42,
                       height: 42,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF64FFDA).withValues(alpha: 0.12),
+                        color: const Color(0xFFFFA21A).withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(13),
                       ),
                       child: const Icon(
                         Icons.auto_stories_rounded,
-                        color: Color(0xFF64FFDA),
+                        color: Color(0xFFFFA21A),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -458,7 +458,7 @@ class _HifzAcademyScreenState extends ConsumerState<HifzAcademyScreen> {
                       child: Text(
                         '$memorizedInSurah / ${_ayahs.length} ayet ezberlendi',
                         style: const TextStyle(
-                          color: Color(0xFF64FFDA),
+                          color: Color(0xFFFFA21A),
                           fontSize: 11.5,
                           fontWeight: FontWeight.w700,
                         ),
@@ -489,7 +489,7 @@ class _HifzAcademyScreenState extends ConsumerState<HifzAcademyScreen> {
                     minHeight: 6,
                     backgroundColor: Colors.white12,
                     valueColor: const AlwaysStoppedAnimation<Color>(
-                      Color(0xFF64FFDA),
+                      Color(0xFFFFA21A),
                     ),
                   ),
                 ),
@@ -500,7 +500,7 @@ class _HifzAcademyScreenState extends ConsumerState<HifzAcademyScreen> {
                   padding: EdgeInsets.all(34),
                   child: Center(
                     child: CircularProgressIndicator(
-                      color: Color(0xFF64FFDA),
+                      color: Color(0xFFFFA21A),
                     ),
                   ),
                 )
@@ -765,7 +765,7 @@ class _SurahPickerDialogState extends State<_SurahPickerDialog> {
                   hintStyle: const TextStyle(color: Colors.white54),
                   prefixIcon: const Icon(
                     Icons.search_rounded,
-                    color: Color(0xFF64FFDA),
+                    color: Color(0xFFFFA21A),
                   ),
                   filled: true,
                   fillColor: Colors.white.withValues(alpha: 0.07),
@@ -786,11 +786,11 @@ class _SurahPickerDialogState extends State<_SurahPickerDialog> {
                       leading: CircleAvatar(
                         radius: 15,
                         backgroundColor:
-                            const Color(0xFF64FFDA).withValues(alpha: 0.12),
+                            const Color(0xFFFFA21A).withValues(alpha: 0.12),
                         child: Text(
                           '${surah.number}',
                           style: const TextStyle(
-                            color: Color(0xFF64FFDA),
+                            color: Color(0xFFFFA21A),
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                           ),

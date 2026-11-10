@@ -10,7 +10,7 @@ final huzurThemeModeProvider =
 class HuzurThemeModeNotifier extends StateNotifier<ThemeMode> {
   static const String _storageKey = 'huzur_theme_mode_v1';
 
-  HuzurThemeModeNotifier() : super(ThemeMode.system) {
+  HuzurThemeModeNotifier() : super(ThemeMode.dark) {
     _restore();
   }
 

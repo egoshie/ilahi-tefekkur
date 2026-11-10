@@ -195,7 +195,7 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
               children: [
                 const BespokeVectorIcon(
                   type: BespokeIconType.searchLens,
-                  color: Color(0xFF64FFDA),
+                  color: Color(0xFFFFA21A),
                   size: 18,
                 ),
                 const SizedBox(width: 10),
@@ -351,11 +351,11 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
         decoration: BoxDecoration(
           color: selected
-              ? const Color(0xFF64FFDA).withValues(alpha: 0.22)
+              ? const Color(0xFFFFA21A).withValues(alpha: 0.22)
               : Colors.white.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: selected ? const Color(0xFF64FFDA) : Colors.white24,
+            color: selected ? const Color(0xFFFFA21A) : Colors.white24,
             width: 1.0,
           ),
         ),
@@ -367,7 +367,7 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
               style: TextStyle(
                 fontSize: 12.5,
                 fontWeight: FontWeight.w700,
-                color: selected ? const Color(0xFF64FFDA) : Colors.white,
+                color: selected ? const Color(0xFFFFA21A) : Colors.white,
               ),
             ),
             if (showLock) ...[
@@ -471,7 +471,7 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                     children: [
                       const BespokeVectorIcon(
                         type: BespokeIconType.sacredScroll,
-                        color: Color(0xFF64FFDA),
+                        color: Color(0xFFFFA21A),
                         size: 18,
                       ),
                       const SizedBox(width: 8),
@@ -483,7 +483,7 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF64FFDA),
+                            color: Color(0xFFFFA21A),
                           ),
                         ),
                       ),
@@ -508,12 +508,12 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                   decoration: BoxDecoration(
                     color: isCurrentSurahPlaying && audioState.isPlaying
                         ? const Color(0xFFFFE082).withValues(alpha: 0.24)
-                        : const Color(0xFF64FFDA).withValues(alpha: 0.20),
+                        : const Color(0xFFFFA21A).withValues(alpha: 0.20),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: isCurrentSurahPlaying && audioState.isPlaying
                           ? const Color(0xFFFFE082)
-                          : const Color(0xFF64FFDA),
+                          : const Color(0xFFFFA21A),
                       width: 0.9,
                     ),
                   ),
@@ -525,7 +525,7 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                             : BespokeIconType.playTriangle,
                         color: isCurrentSurahPlaying && audioState.isPlaying
                             ? const Color(0xFFFFE082)
-                            : const Color(0xFF64FFDA),
+                            : const Color(0xFFFFA21A),
                         size: 13,
                       ),
                       const SizedBox(width: 6),
@@ -554,7 +554,7 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
         Expanded(
           child: _loadingQuran
               ? const Center(
-                  child: CircularProgressIndicator(color: Color(0xFF64FFDA)),
+                  child: CircularProgressIndicator(color: Color(0xFFFFA21A)),
                 )
               : ListView.separated(
                   keyboardDismissBehavior:
@@ -589,7 +589,7 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
                                     color: isPlaying
-                                        ? const Color(0xFF64FFDA)
+                                        ? const Color(0xFFFFA21A)
                                         : const Color(0xFFFFE082),
                                   ),
                                 ),
@@ -608,7 +608,7 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                                         ? BespokeIconType.pauseBars
                                         : BespokeIconType.playTriangle,
                                     color: isPlaying
-                                        ? const Color(0xFF64FFDA)
+                                        ? const Color(0xFFFFA21A)
                                         : Colors.white70,
                                     onTap: () {
                                       if (isPlaying) {
@@ -677,7 +677,7 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                                   const SizedBox(width: 6),
                                   _buildActionButton(
                                     icon: BespokeIconType.widgetSpark,
-                                    color: const Color(0xFF64FFDA),
+                                    color: const Color(0xFFFFA21A),
                                     onTap: () async {
                                       HapticFeedback.mediumImpact();
                                       await NotificationAndWidgetService
@@ -718,7 +718,7 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                                 height: 1.55,
                                 fontWeight: FontWeight.w600,
                                 color: isPlaying
-                                    ? const Color(0xFF64FFDA)
+                                    ? const Color(0xFFFFA21A)
                                     : const Color(0xFFFFF8E1),
                               ),
                             ),
@@ -795,7 +795,7 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                   ),
                   const BespokeVectorIcon(
                     type: BespokeIconType.instagramStory,
-                    color: Color(0xFF64FFDA),
+                    color: Color(0xFFFFA21A),
                     size: 16,
                   ),
                 ],
@@ -938,7 +938,7 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF64FFDA).withValues(alpha: 0.18),
+                        color: const Color(0xFFFFA21A).withValues(alpha: 0.18),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Text(
@@ -946,7 +946,7 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF64FFDA),
+                          color: Color(0xFFFFA21A),
                         ),
                       ),
                     ),
@@ -998,7 +998,7 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                                 children: [
                                   _buildActionButton(
                                     icon: BespokeIconType.widgetSpark,
-                                    color: const Color(0xFF64FFDA),
+                                    color: const Color(0xFFFFA21A),
                                     onTap: () {
                                       HapticFeedback.mediumImpact();
                                       NotificationAndWidgetService.instance
@@ -1095,7 +1095,7 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
               ),
               const SizedBox(height: 12),
               _buildComparisonCard("KUR'ÂN-I KERÎM (${cr.quranKey})",
-                  cr.quranText, const Color(0xFF64FFDA)),
+                  cr.quranText, const Color(0xFFFFA21A)),
               const SizedBox(height: 8),
               _buildComparisonCard("TEVRAT (${cr.torahRef})", cr.torahText,
                   const Color(0xFFFFE082)),
@@ -1347,7 +1347,7 @@ class _SacredTextsScreenState extends ConsumerState<SacredTextsScreen> {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF64FFDA),
+                      color: Color(0xFFFFA21A),
                     ),
                   ),
                 ),

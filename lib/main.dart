@@ -139,7 +139,7 @@ class _LiquidRootShellState extends ConsumerState<LiquidRootShell> {
                       children: [
                         LiveSvgAudioVisualizer(
                           isPlaying: audioState.isPlaying,
-                          color: const Color(0xFF64FFDA),
+                          color: const Color(0xFFFFA21A),
                         ),
                         const SizedBox(width: 10),
                         Expanded(
@@ -186,7 +186,7 @@ class _LiquidRootShellState extends ConsumerState<LiquidRootShell> {
                             padding: const EdgeInsets.all(8),
                             margin: const EdgeInsets.symmetric(horizontal: 4),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF64FFDA)
+                              color: const Color(0xFFFFA21A)
                                   .withValues(alpha: 0.22),
                               shape: BoxShape.circle,
                             ),
@@ -194,7 +194,7 @@ class _LiquidRootShellState extends ConsumerState<LiquidRootShell> {
                               type: audioState.isPlaying
                                   ? BespokeIconType.pauseBars
                                   : BespokeIconType.playTriangle,
-                              color: const Color(0xFF64FFDA),
+                              color: const Color(0xFFFFA21A),
                               size: 15,
                             ),
                           ),

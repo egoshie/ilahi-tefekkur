@@ -1,53 +1,95 @@
 import 'dart:async';
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:sensors_plus/sensors_plus.dart';
+import 'package:flutter_compass/flutter_compass.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:geomag/geomag.dart';
 import '../../core/services/ambiance_mixer_service.dart';
 import '../../core/services/prayer_service.dart';
 import '../../core/services/user_progress_service.dart';
 import '../../core/theme/glass_container.dart';
 import '../../core/theme/liquid_glass_theme.dart';
 
+const String _kaabaSvg = '''
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <path d="M7 17 32 5 57 17 32 29Z" fill="#302116"/>
+  <path d="M7 17 32 29 32 58 7 46Z" fill="#100D0B"/>
+  <path d="M32 29 57 17 57 46 32 58Z" fill="#211812"/>
+  <path d="M7 22 32 34 57 22 57 27 32 39 7 27Z" fill="#D99A36"/>
+  <path d="M7 29 32 41 32 44 7 32Z" fill="#A96B20"/>
+  <path d="M32 41 57 29 57 32 32 44Z" fill="#E8B957"/>
+  <path d="M12 35 27 42 27 54 12 47Z" fill="#1A1511"/>
+  <path d="M17 38 23 41 23 49 17 46Z" fill="#D5A34D"/>
+  <path d="M9 16 32 6 54 16 32 27Z"
+        fill="none" stroke="#F0C46B" stroke-width="1.2" opacity=".8"/>
+</svg>
+''';
+
 class QiblaAndToolsScreen extends ConsumerStatefulWidget {
   const QiblaAndToolsScreen({super.key});
 
   @override
-  ConsumerState< QiblaAndToolsScreen > createState() =>
+  ConsumerState<QiblaAndToolsScreen> createState() =>
       _QiblaAndToolsScreenState();
 }
 
-class _QiblaAndToolsScreenState extends ConsumerState< QiblaAndToolsScreen > {
-  StreamSubscription< MagnetometerEvent >? _magSub;
-  double _deviceHeading = 0.0;
+class _QiblaAndToolsScreenState extends ConsumerState<QiblaAndToolsScreen> {
+  StreamSubscription<CompassEvent>? _compassSub;
+  double _magneticHeading = 0.0;
+  double _magneticDeclination = 0.0;
+  double? _sensorAccuracy;
   bool _sensorActive = false;
+  bool _sensorUnavailable = false;
+  String? _declinationCityKey;
 
   @override
   void initState() {
     super.initState();
-    try {
-      _magSub = magnetometerEventStream().listen(
-        (event) {
-          final angle = math.atan2(event.y, event.x) * (180 / math.pi);
-          if (mounted) {
-            setState(() {
-              _deviceHeading = (angle + 360) % 360;
-              _sensorActive = true;
-            });
-          }
-        },
-        onError: (_) {
-          if (mounted) setState(() => _sensorActive = false);
-        },
-      );
-    } catch (_) {}
+
+    final events = FlutterCompass.events;
+    if (events == null) {
+      _sensorUnavailable = true;
+      return;
+    }
+
+    _compassSub = events.listen(
+      (event) {
+        final heading = event.heading;
+
+        if (!mounted) return;
+
+        if (heading == null || !heading.isFinite) {
+          setState(() {
+            _sensorActive = false;
+            _sensorUnavailable = true;
+          });
+          return;
+        }
+
+        setState(() {
+          _magneticHeading = (heading + 360.0) % 360.0;
+          _sensorAccuracy = event.accuracy;
+          _sensorActive = true;
+          _sensorUnavailable = false;
+        });
+      },
+      onError: (_) {
+        if (!mounted) return;
+        setState(() {
+          _sensorActive = false;
+          _sensorUnavailable = true;
+        });
+      },
+    );
   }
 
   @override
   void dispose() {
-    _magSub?.cancel();
+    _compassSub?.cancel();
     super.dispose();
   }
 
@@ -60,22 +102,39 @@ class _QiblaAndToolsScreenState extends ConsumerState< QiblaAndToolsScreen > {
     final progress = ref.watch(userProgressProvider);
     final progressNotifier = ref.read(userProgressProvider.notifier);
 
+    final city = prayerState.selectedCity;
+    final cityKey = '${city.latitude}_${city.longitude}';
+
+    if (_declinationCityKey != cityKey) {
+      _declinationCityKey = cityKey;
+      try {
+        _magneticDeclination = GeoMag()
+            .calculate(city.latitude, city.longitude, 0, DateTime.now())
+            .dec;
+      } catch (_) {
+        _magneticDeclination = 0.0;
+      }
+    }
+
+    // Pusula manyetik kuzeyi verir. Doğu yönlü sapma eklenerek
+    // coğrafi kuzeye göre gerçek cihaz başlığı hesaplanır.
+    final trueHeading =
+        (_magneticHeading + _magneticDeclination + 360.0) % 360.0;
     final qiblaAngle = prayerState.qiblaDirection;
-    final relativeAngle = ((qiblaAngle - _deviceHeading) * (math.pi / 180));
+    final relativeAngle = (qiblaAngle - trueHeading) * (math.pi / 180.0);
 
     final completedRatio = progress.initialPrayers == 0
         ? 1.0
         : ((progress.initialPrayers - progress.missedPrayers) /
                 progress.initialPrayers)
             .clamp(0.0, 1.0);
-    final daysLeft =
-        (progress.missedPrayers / progress.dailyPrayerPace).ceil();
+    final daysLeft = (progress.missedPrayers / progress.dailyPrayerPace).ceil();
     final finishDate = DateTime.now().add(Duration(days: daysLeft));
     final finishFormatted = DateFormat('dd.MM.yyyy').format(finishDate);
 
     return ListView(
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-                  physics: const BouncingScrollPhysics(),
+      physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(18, 12, 18, 32),
       children: [
         const Text(
@@ -83,7 +142,6 @@ class _QiblaAndToolsScreenState extends ConsumerState< QiblaAndToolsScreen > {
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 14),
-
         GlassContainer(
           borderRadius: 28,
           goldAccentBorder: true,
@@ -105,7 +163,7 @@ class _QiblaAndToolsScreenState extends ConsumerState< QiblaAndToolsScreen > {
                         "${prayerState.selectedCity.name} • Kâbe Açısı: ${qiblaAngle.toStringAsFixed(1)}°",
                         style: const TextStyle(
                           fontSize: 11.5,
-                          color: Color(0xFF64FFDA),
+                          color: Color(0xFFFFA21A),
                         ),
                       ),
                     ],
@@ -137,27 +195,70 @@ class _QiblaAndToolsScreenState extends ConsumerState< QiblaAndToolsScreen > {
               const SizedBox(height: 16),
               RepaintBoundary(
                 child: SizedBox(
-                  width: 172,
-                  height: 172,
-                  child: CustomPaint(
-                    painter:
-                        _QiblaBeamCompassPainter(relativeRadians: relativeAngle),
+                  width: 236,
+                  height: 236,
+                  child: Stack(
+                    children: [
+                      CustomPaint(
+                        size: const Size(236, 236),
+                        painter: _QiblaCompassPainter(
+                          headingDegrees: trueHeading,
+                          relativeRadians: relativeAngle,
+                        ),
+                      ),
+                      Positioned(
+                        left: 118 + math.sin(relativeAngle) * 83 - 17,
+                        top: 118 - math.cos(relativeAngle) * 83 - 17,
+                        child: Container(
+                          width: 34,
+                          height: 34,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFF3DF),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: const Color(0xFFFFA21A),
+                              width: 1.5,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFFFA21A)
+                                    .withValues(alpha: 0.35),
+                                blurRadius: 15,
+                              ),
+                            ],
+                          ),
+                          padding: const EdgeInsets.all(5),
+                          child: SvgPicture.string(
+                            _kaabaSvg,
+                            semanticsLabel: 'Kâbe',
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
               const SizedBox(height: 10),
               Text(
                 _sensorActive
-                    ? "Pusulayı kalibre etmek için telefonu 8 çizecek şekilde hareket ettirin."
-                    : "Manyetometre sensör verisi bekleniyor; Kâbe açısını (${qiblaAngle.toStringAsFixed(1)}°) referans alabilirsiniz.",
+                    ? (_sensorAccuracy != null
+                        ? 'Pusula aktif • Sensör doğruluğu ±${_sensorAccuracy!.toStringAsFixed(0)}°'
+                        : 'Pusula aktif • Telefonun üst kenarını Kâbe yönüne çevirin.')
+                    : (_sensorUnavailable
+                        ? 'Pusula sensörü okunamıyor. Cihaz sensörünü ve konum ayarlarını kontrol edin.'
+                        : 'Pusula sensöründen yön bilgisi bekleniyor...'),
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 11, color: Colors.white70),
+                style: const TextStyle(
+                  fontSize: 11,
+                  height: 1.4,
+                  color: Colors.white70,
+                ),
               ),
             ],
           ),
         ),
         const SizedBox(height: 16),
-
         GlassContainer(
           borderRadius: 28,
           emeraldGlow: true,
@@ -198,12 +299,12 @@ class _QiblaAndToolsScreenState extends ConsumerState< QiblaAndToolsScreen > {
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: ch.isPlaying
-                          ? const Color(0xFF64FFDA).withValues(alpha: 0.14)
+                          ? const Color(0xFFFFA21A).withValues(alpha: 0.14)
                           : Colors.white.withValues(alpha: 0.04),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                         color: ch.isPlaying
-                            ? const Color(0xFF64FFDA)
+                            ? const Color(0xFFFFA21A)
                             : Colors.white12,
                         width: 0.9,
                       ),
@@ -214,7 +315,7 @@ class _QiblaAndToolsScreenState extends ConsumerState< QiblaAndToolsScreen > {
                           children: [
                             LiveSvgAudioVisualizer(
                               isPlaying: ch.isPlaying,
-                              color: const Color(0xFF64FFDA),
+                              color: const Color(0xFFFFA21A),
                             ),
                             const SizedBox(width: 10),
                             Expanded(
@@ -245,7 +346,7 @@ class _QiblaAndToolsScreenState extends ConsumerState< QiblaAndToolsScreen > {
                                 decoration: BoxDecoration(
                                   color: ch.isPlaying
                                       ? const Color(0xFFFFE082)
-                                      : const Color(0xFF64FFDA),
+                                      : const Color(0xFFFFA21A),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Row(
@@ -275,7 +376,7 @@ class _QiblaAndToolsScreenState extends ConsumerState< QiblaAndToolsScreen > {
                         if (ch.isPlaying)
                           Slider(
                             value: ch.volume,
-                            activeColor: const Color(0xFF64FFDA),
+                            activeColor: const Color(0xFFFFA21A),
                             onChanged: (v) =>
                                 ambianceNotifier.setVolume(ch.id, v),
                           ),
@@ -288,7 +389,6 @@ class _QiblaAndToolsScreenState extends ConsumerState< QiblaAndToolsScreen > {
           ),
         ),
         const SizedBox(height: 16),
-
         GlassContainer(
           borderRadius: 28,
           goldAccentBorder: true,
@@ -306,7 +406,7 @@ class _QiblaAndToolsScreenState extends ConsumerState< QiblaAndToolsScreen > {
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF64FFDA),
+                  color: Color(0xFFFFA21A),
                 ),
               ),
               const SizedBox(height: 8),
@@ -317,7 +417,7 @@ class _QiblaAndToolsScreenState extends ConsumerState< QiblaAndToolsScreen > {
                   minHeight: 8,
                   backgroundColor: Colors.white12,
                   valueColor:
-                      const AlwaysStoppedAnimation< Color >(Color(0xFF64FFDA)),
+                      const AlwaysStoppedAnimation<Color>(Color(0xFFFFA21A)),
                 ),
               ),
               const SizedBox(height: 14),
@@ -371,7 +471,7 @@ class _QiblaAndToolsScreenState extends ConsumerState< QiblaAndToolsScreen > {
                             dailyPrayerPace: progress.dailyPrayerPace + 1),
                         child: const BespokeVectorIcon(
                           type: BespokeIconType.plusCircle,
-                          color: Color(0xFF64FFDA),
+                          color: Color(0xFFFFA21A),
                           size: 22,
                         ),
                       ),
@@ -383,7 +483,6 @@ class _QiblaAndToolsScreenState extends ConsumerState< QiblaAndToolsScreen > {
           ),
         ),
         const SizedBox(height: 16),
-
         GlassContainer(
           borderRadius: 28,
           padding: const EdgeInsets.all(18),
@@ -405,14 +504,15 @@ class _QiblaAndToolsScreenState extends ConsumerState< QiblaAndToolsScreen > {
                         "${progress.completedJuzs.length} / 30 Cüz Tamamlandı",
                         style: const TextStyle(
                           fontSize: 12,
-                          color: Color(0xFF64FFDA),
+                          color: Color(0xFFFFA21A),
                         ),
                       ),
                     ],
                   ),
                   if (progress.completedJuzs.isNotEmpty)
                     GestureDetector(
-                      onTap: () => _confirmResetHatim(context, progressNotifier),
+                      onTap: () =>
+                          _confirmResetHatim(context, progressNotifier),
                       child: const Text(
                         "Sıfırla",
                         style: TextStyle(
@@ -427,7 +527,7 @@ class _QiblaAndToolsScreenState extends ConsumerState< QiblaAndToolsScreen > {
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: List< Widget >.generate(30, (idx) {
+                children: List<Widget>.generate(30, (idx) {
                   final juz = idx + 1;
                   final done = progress.completedJuzs.contains(juz);
                   return GestureDetector(
@@ -440,13 +540,12 @@ class _QiblaAndToolsScreenState extends ConsumerState< QiblaAndToolsScreen > {
                       height: 38,
                       decoration: BoxDecoration(
                         color: done
-                            ? const Color(0xFF64FFDA).withValues(alpha: 0.24)
+                            ? const Color(0xFFFFA21A).withValues(alpha: 0.24)
                             : Colors.white.withValues(alpha: 0.06),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: done
-                              ? const Color(0xFF64FFDA)
-                              : Colors.white12,
+                          color:
+                              done ? const Color(0xFFFFA21A) : Colors.white12,
                         ),
                       ),
                       child: Center(
@@ -455,9 +554,8 @@ class _QiblaAndToolsScreenState extends ConsumerState< QiblaAndToolsScreen > {
                           style: TextStyle(
                             fontSize: 12.5,
                             fontWeight: FontWeight.bold,
-                            color: done
-                                ? const Color(0xFF64FFDA)
-                                : Colors.white70,
+                            color:
+                                done ? const Color(0xFFFFA21A) : Colors.white70,
                           ),
                         ),
                       ),
@@ -577,7 +675,7 @@ class _QiblaAndToolsScreenState extends ConsumerState< QiblaAndToolsScreen > {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF64FFDA).withValues(alpha: 0.20),
+                    color: const Color(0xFFFFA21A).withValues(alpha: 0.20),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Text(
@@ -585,7 +683,7 @@ class _QiblaAndToolsScreenState extends ConsumerState< QiblaAndToolsScreen > {
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF64FFDA),
+                      color: Color(0xFFFFA21A),
                     ),
                   ),
                 ),
@@ -611,46 +709,155 @@ class _QiblaAndToolsScreenState extends ConsumerState< QiblaAndToolsScreen > {
   }
 }
 
-class _QiblaBeamCompassPainter extends CustomPainter {
+class _QiblaCompassPainter extends CustomPainter {
+  final double headingDegrees;
   final double relativeRadians;
-  _QiblaBeamCompassPainter({required this.relativeRadians});
+
+  const _QiblaCompassPainter({
+    required this.headingDegrees,
+    required this.relativeRadians,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2;
+    final radius = math.min(size.width, size.height) / 2 - 8;
 
-    final ringPaint = Paint()
+    final outerRing = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.6
-      ..color = const Color(0xFF64FFDA).withValues(alpha: 0.45);
-    canvas.drawCircle(center, radius - 4, ringPaint);
-    canvas.drawCircle(center, radius * 0.65, ringPaint);
+      ..strokeWidth = 1.5
+      ..color = const Color(0xFFFFA21A).withValues(alpha: 0.65);
 
+    final innerRing = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1
+      ..color = Colors.white.withValues(alpha: 0.10);
+
+    canvas.drawCircle(center, radius, outerRing);
+    canvas.drawCircle(center, radius * 0.68, innerRing);
+
+    final headingRadians = headingDegrees * math.pi / 180.0;
+
+    // Kuzey, doğu, güney ve batı işaretleri gerçek cihaz yönüne göre döner.
+    for (int i = 0; i < 72; i++) {
+      final angle = (i * 2 * math.pi / 72) - math.pi / 2 - headingRadians;
+
+      final major = i % 6 == 0;
+      final medium = i % 3 == 0;
+      final length = major ? 12.0 : (medium ? 8.0 : 4.0);
+
+      final outer = Offset(
+        center.dx + math.cos(angle) * (radius - 5),
+        center.dy + math.sin(angle) * (radius - 5),
+      );
+      final inner = Offset(
+        center.dx + math.cos(angle) * (radius - 5 - length),
+        center.dy + math.sin(angle) * (radius - 5 - length),
+      );
+
+      final tickPaint = Paint()
+        ..color = major
+            ? const Color(0xFFFFC15A)
+            : Colors.white.withValues(alpha: medium ? 0.48 : 0.20)
+        ..strokeWidth = major ? 2.0 : 1.0
+        ..strokeCap = StrokeCap.round;
+
+      canvas.drawLine(outer, inner, tickPaint);
+    }
+
+    _drawCardinal(canvas, center, radius * 0.77, -math.pi / 2 - headingRadians,
+        'N', const Color(0xFFFFA21A));
+    _drawCardinal(
+        canvas, center, radius * 0.77, -headingRadians, 'E', Colors.white70);
+    _drawCardinal(canvas, center, radius * 0.77, math.pi / 2 - headingRadians,
+        'S', Colors.white70);
+    _drawCardinal(canvas, center, radius * 0.77, math.pi - headingRadians, 'W',
+        Colors.white70);
+
+    // Kıble oku telefonun gerçek yönüne göre konumlanır.
     canvas.save();
     canvas.translate(center.dx, center.dy);
     canvas.rotate(relativeRadians);
 
-    final beamPath = Path()
-      ..moveTo(0, -radius + 6)
-      ..lineTo(-18, 12)
-      ..lineTo(0, -4)
-      ..lineTo(18, 12)
+    final shaft = Paint()
+      ..color = const Color(0xFFFFA21A)
+      ..strokeWidth = 3.0
+      ..strokeCap = StrokeCap.round;
+
+    canvas.drawLine(
+      Offset.zero,
+      Offset(0, -radius * 0.54),
+      shaft,
+    );
+
+    final arrow = Path()
+      ..moveTo(0, -radius * 0.64)
+      ..lineTo(-8, -radius * 0.47)
+      ..lineTo(0, -radius * 0.52)
+      ..lineTo(8, -radius * 0.47)
       ..close();
 
-    final beamPaint = Paint()
+    final arrowPaint = Paint()
       ..shader = const LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: [Color(0xFFFFE082), Color(0xFF64FFDA)],
-      ).createShader(Rect.fromCircle(center: Offset.zero, radius: radius));
+        colors: [
+          Color(0xFFFFE3A3),
+          Color(0xFFFF8F00),
+        ],
+      ).createShader(
+        Rect.fromCircle(center: Offset.zero, radius: radius),
+      );
 
-    canvas.drawPath(beamPath, beamPaint);
+    canvas.drawPath(arrow, arrowPaint);
     canvas.restore();
+
+    final centerPaint = Paint()
+      ..shader = const RadialGradient(
+        colors: [
+          Color(0xFFFFD17B),
+          Color(0xFFFF8F00),
+          Color(0xFF7A3B08),
+        ],
+      ).createShader(Rect.fromCircle(center: center, radius: 9));
+
+    canvas.drawCircle(center, 8, centerPaint);
+  }
+
+  void _drawCardinal(
+    Canvas canvas,
+    Offset center,
+    double distance,
+    double angle,
+    String label,
+    Color color,
+  ) {
+    final point = Offset(
+      center.dx + math.cos(angle) * distance,
+      center.dy + math.sin(angle) * distance,
+    );
+
+    final painter = TextPainter(
+      text: TextSpan(
+        text: label,
+        style: TextStyle(
+          color: color,
+          fontSize: 10,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+      textDirection: ui.TextDirection.ltr,
+    )..layout();
+
+    painter.paint(
+      canvas,
+      point - Offset(painter.width / 2, painter.height / 2),
+    );
   }
 
   @override
-  bool shouldRepaint(covariant _QiblaBeamCompassPainter oldDelegate) {
-    return oldDelegate.relativeRadians != relativeRadians;
+  bool shouldRepaint(covariant _QiblaCompassPainter oldDelegate) {
+    return oldDelegate.headingDegrees != headingDegrees ||
+        oldDelegate.relativeRadians != relativeRadians;
   }
 }

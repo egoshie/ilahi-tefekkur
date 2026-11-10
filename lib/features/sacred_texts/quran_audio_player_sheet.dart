@@ -70,14 +70,14 @@ class QuranAudioPlayerSheet extends ConsumerWidget {
                 children: [
                   const Icon(
                     Icons.graphic_eq_rounded,
-                    color: Color(0xFF64FFDA),
+                    color: Color(0xFFFFA21A),
                   ),
                   const SizedBox(width: 9),
                   const Expanded(
                     child: Text(
                       'HUZUR • TİLAVET OYNATICISI',
                       style: TextStyle(
-                        color: Color(0xFF64FFDA),
+                        color: Color(0xFFFFA21A),
                         fontWeight: FontWeight.w900,
                         fontSize: 11,
                         letterSpacing: 1.2,
@@ -167,7 +167,7 @@ class QuranAudioPlayerSheet extends ConsumerWidget {
                           Duration(milliseconds: value.round()),
                         )
                     : null,
-                activeColor: const Color(0xFF64FFDA),
+                activeColor: const Color(0xFFFFA21A),
                 inactiveColor: Colors.white24,
               ),
               Row(
@@ -209,7 +209,7 @@ class QuranAudioPlayerSheet extends ConsumerWidget {
                       width: 66,
                       height: 66,
                       decoration: const BoxDecoration(
-                        color: Color(0xFF64FFDA),
+                        color: Color(0xFFFFA21A),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -241,7 +241,7 @@ class QuranAudioPlayerSheet extends ConsumerWidget {
                     icon: const Icon(Icons.repeat_rounded, size: 16),
                     label: Text(_repeatLabel(state.repeatMode)),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF64FFDA),
+                      foregroundColor: const Color(0xFFFFA21A),
                       side: const BorderSide(color: Color(0x5564FFDA)),
                     ),
                   ),

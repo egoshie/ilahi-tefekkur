@@ -7,7 +7,7 @@ import '../../core/theme/glass_container.dart';
 class DailyPlannerScreen extends ConsumerWidget {
   const DailyPlannerScreen({super.key});
 
-  static const Color _mint = Color(0xFF64FFDA);
+  static const Color _mint = Color(0xFFFFA21A);
 
   String _weekday(int weekday) {
     const days = [

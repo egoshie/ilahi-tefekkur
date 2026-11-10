@@ -1,10 +1,10 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/services/pricing_and_premium_service.dart';
 import '../../core/services/tasbih_session_service.dart';
 import '../../core/theme/glass_container.dart';
-import '../../core/theme/liquid_glass_theme.dart';
 import '../esma/esmaul_husna_sheet.dart';
 import '../paywall/liquid_glass_paywall.dart';
 
@@ -18,13 +18,13 @@ class FluidTasbihScreen extends ConsumerStatefulWidget {
   const FluidTasbihScreen({super.key});
 
   @override
-  ConsumerState< FluidTasbihScreen > createState() => _FluidTasbihScreenState();
+  ConsumerState<FluidTasbihScreen> createState() => _FluidTasbihScreenState();
 }
 
-class _FluidTasbihScreenState extends ConsumerState< FluidTasbihScreen >
+class _FluidTasbihScreenState extends ConsumerState<FluidTasbihScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _rippleTicker;
-  final List< _RippleWave > _ripples = [];
+  final List<_RippleWave> _ripples = [];
 
   @override
   void initState() {
@@ -35,7 +35,7 @@ class _FluidTasbihScreenState extends ConsumerState< FluidTasbihScreen >
     )..repeat();
   }
 
-  Future< void > _handleTouch(TapDownDetails details) async {
+  Future<void> _handleTouch(TapDownDetails details) async {
     final session = ref.read(tasbihSessionProvider);
     final notifier = ref.read(tasbihSessionProvider.notifier);
 
@@ -132,264 +132,401 @@ class _FluidTasbihScreenState extends ConsumerState< FluidTasbihScreen >
     super.dispose();
   }
 
+  Future<void> _moveRecord(int delta) async {
+    final session = ref.read(tasbihSessionProvider);
+    if (session.records.length < 2) return;
+    final next = (session.activeIndex + delta) % session.records.length;
+    await ref.read(tasbihSessionProvider.notifier).selectIndex(next);
+    await HapticFeedback.selectionClick();
+  }
+
+  String _meaningFor(String title) {
+    switch (title.toLowerCase()) {
+      case 'sübhanallah':
+        return 'Allah eksik sıfatlardan münezzehtir.';
+      case 'elhamdülillah':
+        return 'Hamd, âlemlerin Rabbi Allah’a mahsustur.';
+      case 'allahü ekber':
+      case 'allahu ekber':
+        return 'Allah en yücedir.';
+      case 'lâ ilâhe illallah':
+      case 'la ilahe illallah':
+        return 'Allah’tan başka ilah yoktur.';
+      default:
+        return 'Kalbini zikirle huzura yönelt.';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final session = ref.watch(tasbihSessionProvider);
-    final notifier = ref.read(tasbihSessionProvider.notifier);
     final premium = ref.watch(premiumServiceProvider);
+    final notifier = ref.read(tasbihSessionProvider.notifier);
     final activeTasbih = session.activeRecord;
 
-    final progressRatio = (activeTasbih == null || activeTasbih.target <= 0)
-        ? 0.0
-        : ((activeTasbih.count % activeTasbih.target) / activeTasbih.target)
-            .clamp(0.0, 1.0);
+    if (activeTasbih == null) {
+      return const Center(
+        child: Text(
+          'Zikir kayıtları yükleniyor...',
+          style: TextStyle(color: Colors.white70),
+        ),
+      );
+    }
+
+    final target = activeTasbih.target > 0 ? activeTasbih.target : 1;
+    final currentInRound = activeTasbih.count == 0
+        ? 0
+        : (activeTasbih.count % target == 0
+            ? target
+            : activeTasbih.count % target);
+    final completedRounds =
+        activeTasbih.count == 0 ? 1 : ((activeTasbih.count - 1) ~/ target) + 1;
+    final progressRatio = currentInRound / target;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(18, 12, 18, 20),
+      padding: const EdgeInsets.fromLTRB(18, 8, 18, 10),
       child: Column(
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "Akışkan Zikirmatik",
-                      style:
-                          TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
-                    ),
-                    Text(
-                      "Günlük Toplam: ${session.todayTotalCount} Zikir",
-                      style: const TextStyle(
-                          fontSize: 12, color: Color(0xFF64FFDA)),
-                    ),
-                  ],
+              const Expanded(
+                child: Text(
+                  'Zikirmatik',
+                  style: TextStyle(fontSize: 25, fontWeight: FontWeight.w900),
                 ),
               ),
-              GestureDetector(
-                onTap: () => notifier.toggleHaptic(!session.hapticEnabled),
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                  margin: const EdgeInsets.only(right: 8),
-                  decoration: BoxDecoration(
-                    color: session.hapticEnabled
-                        ? const Color(0xFF64FFDA).withValues(alpha: 0.16)
-                        : Colors.white.withValues(alpha: 0.06),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: session.hapticEnabled
-                          ? const Color(0xFF64FFDA)
-                          : Colors.white24,
-                    ),
-                  ),
-                  child: Text(
-                    session.hapticEnabled ? "Titreşim Açık" : "Sessiz",
-                    style: const TextStyle(
-                        fontSize: 11, fontWeight: FontWeight.w600),
+              PopupMenuButton<int>(
+                tooltip: 'Zikir listem',
+                onSelected: (index) => notifier.selectIndex(index),
+                itemBuilder: (context) => List<PopupMenuEntry<int>>.generate(
+                  session.records.length,
+                  (index) {
+                    final record = session.records[index];
+                    return PopupMenuItem<int>(
+                      value: index,
+                      child: Text(
+                          '${record.title}  ${record.count}/${record.target}'),
+                    );
+                  },
+                ),
+                child: const GlassContainer(
+                  width: 44,
+                  height: 44,
+                  borderRadius: 22,
+                  goldAccentBorder: true,
+                  padding: EdgeInsets.all(10),
+                  child: Icon(
+                    Icons.format_list_bulleted_rounded,
+                    color: Color(0xFFFFA21A),
+                    size: 21,
                   ),
                 ),
               ),
+              const SizedBox(width: 8),
               GlassContainer(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                borderRadius: 14,
-                goldAccentBorder: true,
-                onTap: () => EsmaulHusnaSheet.show(context),
-                child: const Text(
-                  "99 Esmaül Hüsna",
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFFFFE082),
-                  ),
+                width: 44,
+                height: 44,
+                borderRadius: 22,
+                padding: const EdgeInsets.all(10),
+                onTap: () => notifier.toggleHaptic(!session.hapticEnabled),
+                child: Icon(
+                  session.hapticEnabled
+                      ? Icons.vibration_rounded
+                      : Icons.phonelink_erase_rounded,
+                  color: session.hapticEnabled
+                      ? const Color(0xFFFFA21A)
+                      : Colors.white60,
+                  size: 21,
+                ),
+              ),
+              const SizedBox(width: 8),
+              GlassContainer(
+                width: 44,
+                height: 44,
+                borderRadius: 22,
+                padding: const EdgeInsets.all(10),
+                onTap: () => _handleAddCustomTasbih(context, premium.isPremium),
+                child: const Icon(
+                  Icons.add_rounded,
+                  color: Color(0xFFFFA21A),
+                  size: 22,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
+          const SizedBox(height: 13),
+          Column(
+            children: [
+              Text(
+                activeTasbih.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Color(0xFFFFA21A),
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                _meaningFor(activeTasbih.title),
+                maxLines: 2,
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          GlassContainer(
+            borderRadius: 24,
+            enableBlur: true,
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
             child: Row(
               children: [
-                ...List< Widget >.generate(session.records.length, (i) {
-                  final r = session.records[i];
-                  final sel = i == session.activeIndex;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: GestureDetector(
-                      onTap: () => notifier.selectIndex(i),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: sel
-                              ? const Color(0xFF64FFDA).withValues(alpha: 0.20)
-                              : Colors.white.withValues(alpha: 0.07),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: sel
-                                ? const Color(0xFF64FFDA)
-                                : Colors.white24,
-                            width: 0.9,
-                          ),
-                        ),
-                        child: Text(
-                          "${r.title} (${r.count}/${r.target})",
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color:
-                                sel ? const Color(0xFF64FFDA) : Colors.white,
-                          ),
+                Expanded(
+                  child: Column(
+                    children: [
+                      Text(
+                        '$completedRounds',
+                        style: const TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
                         ),
                       ),
-                    ),
-                  );
-                }),
-                GestureDetector(
-                  onTap: () =>
-                      _handleAddCustomTasbih(context, premium.isPremium),
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFFE082).withValues(alpha: 0.16),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                          color: const Color(0xFFFFE082), width: 0.9),
-                    ),
-                    child: const Row(
-                      children: [
-                        BespokeVectorIcon(
-                          type: BespokeIconType.plusCircle,
-                          color: Color(0xFFFFE082),
-                          size: 14,
+                      const Text(
+                        'TUR',
+                        style: TextStyle(
+                          color: Colors.white60,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 2,
                         ),
-                        SizedBox(width: 6),
-                        Text(
-                          "Özel Zikir Ekle",
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFFFFE082),
-                          ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(width: 1, height: 46, color: Colors.white12),
+                Expanded(
+                  child: Column(
+                    children: [
+                      Text(
+                        '$target',
+                        style: const TextStyle(
+                          color: Color(0xFFFFA21A),
+                          fontSize: 28,
+                          fontWeight: FontWeight.w900,
                         ),
-                      ],
-                    ),
+                      ),
+                      const Text(
+                        'HEDEF',
+                        style: TextStyle(
+                          color: Colors.white60,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 2,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 14),
-
+          const SizedBox(height: 8),
           Expanded(
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTapDown: _handleTouch,
-              child: GlassContainer(
-                borderRadius: 34,
-                emeraldGlow: true,
-                padding: const EdgeInsets.all(20),
-                child: AnimatedBuilder(
-                  animation: _rippleTicker,
-                  builder: (context, _) {
-                    final now = DateTime.now();
-                    _ripples.removeWhere((r) =>
-                        now.difference(r.createdAt).inMilliseconds > 1000);
-                    return CustomPaint(
-                      painter:
-                          _TasbihRipplePainter(ripples: List.of(_ripples)),
-                      child: Center(
-                        child: activeTasbih == null
-                            ? const SizedBox()
-                            : Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    activeTasbih.arabic,
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(
-                                      fontSize: 32,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFFFFF8E1),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    activeTasbih.title,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.white70,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 18),
-                                  Text(
-                                    "${activeTasbih.count}",
-                                    style: const TextStyle(
-                                      fontSize: 68,
-                                      fontWeight: FontWeight.w800,
-                                      color: Color(0xFF64FFDA),
-                                      letterSpacing: 2,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  SizedBox(
-                                    width: 180,
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: LinearProgressIndicator(
-                                        value: progressRatio,
-                                        minHeight: 6,
-                                        backgroundColor: Colors.white12,
-                                        valueColor:
-                                            const AlwaysStoppedAnimation< Color >(
-                                          Color(0xFF64FFDA),
-                                        ),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final diameter = math
+                    .min(
+                      constraints.maxWidth,
+                      constraints.maxHeight,
+                    )
+                    .clamp(210.0, 520.0)
+                    .toDouble();
+                return Center(
+                  child: SizedBox(
+                    width: diameter,
+                    height: diameter,
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTapDown: _handleTouch,
+                      child: AnimatedBuilder(
+                        animation: _rippleTicker,
+                        builder: (context, _) {
+                          final now = DateTime.now();
+                          _ripples.removeWhere(
+                            (r) =>
+                                now.difference(r.createdAt).inMilliseconds >
+                                1000,
+                          );
+                          return CustomPaint(
+                            painter: _DhikrBeadPainter(
+                              progress: progressRatio,
+                              totalBeads: 33,
+                            ),
+                            foregroundPainter: _TasbihRipplePainter(
+                              ripples: List.of(_ripples),
+                            ),
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                FractionallySizedBox(
+                                  widthFactor: 0.70,
+                                  heightFactor: 0.70,
+                                  child: GlassContainer(
+                                    borderRadius: diameter,
+                                    enableBlur: true,
+                                    blurSigma: 20,
+                                    borderColor: Colors.white24,
+                                    gradientColors: [
+                                      const Color(0xFF4A4037)
+                                          .withValues(alpha: 0.62),
+                                      const Color(0xFF28221D)
+                                          .withValues(alpha: 0.78),
+                                    ],
+                                    child: Center(
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          AnimatedSwitcher(
+                                            duration: const Duration(
+                                                milliseconds: 180),
+                                            child: Text(
+                                              '${activeTasbih.count}',
+                                              key: ValueKey(activeTasbih.count),
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: diameter * 0.19,
+                                                fontWeight: FontWeight.w900,
+                                                height: 1,
+                                                letterSpacing: -2,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 7),
+                                          const Text(
+                                            'ZİKİR',
+                                            style: TextStyle(
+                                              color: Colors.white60,
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w800,
+                                              letterSpacing: 3,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    "Hedef: ${activeTasbih.target} • Devir: ${(activeTasbih.count ~/ activeTasbih.target)}",
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFFFFE082),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 22),
-                                  GestureDetector(
-                                    onTap: () => _confirmResetDialog(context),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 16, vertical: 8),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withValues(alpha: 0.08),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: const Text(
-                                        "Sayacı Sıfırla",
-                                        style: TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.white70),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
                       ),
-                    );
-                  },
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: GlassContainer(
+                  borderRadius: 30,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  onTap: () => _moveRecord(-1),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.chevron_left_rounded, size: 25),
+                      SizedBox(width: 3),
+                      Text('Önceki',
+                          style: TextStyle(fontWeight: FontWeight.w800)),
+                    ],
+                  ),
                 ),
               ),
-            ),
+              const SizedBox(width: 10),
+              GlassContainer(
+                width: 54,
+                height: 54,
+                borderRadius: 27,
+                padding: const EdgeInsets.all(12),
+                onTap: () => _confirmResetDialog(context),
+                child: const Icon(
+                  Icons.restart_alt_rounded,
+                  color: Colors.white70,
+                  size: 25,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: GlassContainer(
+                  borderRadius: 30,
+                  goldAccentBorder: true,
+                  gradientColors: const [
+                    Color(0xFFFFA21A),
+                    Color(0xFFFF8F00),
+                  ],
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  onTap: () => _moveRecord(1),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Sonraki',
+                        style: TextStyle(
+                          color: Color(0xFF21160A),
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      SizedBox(width: 3),
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        color: Color(0xFF21160A),
+                        size: 25,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 5),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Bugün ${session.todayTotalCount} zikir',
+                style: const TextStyle(
+                  color: Colors.white54,
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(width: 14),
+              GestureDetector(
+                onTap: () => EsmaulHusnaSheet.show(context),
+                child: const Text(
+                  '99 Esmaül Hüsna',
+                  style: TextStyle(
+                    color: Color(0xFFFFC15A),
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -446,9 +583,7 @@ class _FluidTasbihScreenState extends ConsumerState< FluidTasbihScreen >
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 onTap: () async {
                   final target = int.tryParse(targetCtrl.text) ?? 33;
-                  await ref
-                      .read(tasbihSessionProvider.notifier)
-                      .addCustomDhikr(
+                  await ref.read(tasbihSessionProvider.notifier).addCustomDhikr(
                         title: titleCtrl.text.trim().isEmpty
                             ? "Özel Zikir"
                             : titleCtrl.text.trim(),
@@ -461,8 +596,7 @@ class _FluidTasbihScreenState extends ConsumerState< FluidTasbihScreen >
                   child: Text(
                     "Kaydet ve Başla",
                     style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF64FFDA)),
+                        fontWeight: FontWeight.bold, color: Color(0xFFFFA21A)),
                   ),
                 ),
               ),
@@ -475,7 +609,7 @@ class _FluidTasbihScreenState extends ConsumerState< FluidTasbihScreen >
 }
 
 class _TasbihRipplePainter extends CustomPainter {
-  final List< _RippleWave > ripples;
+  final List<_RippleWave> ripples;
   _TasbihRipplePainter({required this.ripples});
 
   @override
@@ -490,7 +624,7 @@ class _TasbihRipplePainter extends CustomPainter {
       final paint = Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2.4 * (1.0 - t * 0.5)
-        ..color = const Color(0xFF64FFDA).withValues(alpha: opacity);
+        ..color = const Color(0xFFFFA21A).withValues(alpha: opacity);
 
       canvas.drawCircle(r.center, radius, paint);
     }
@@ -498,4 +632,64 @@ class _TasbihRipplePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _TasbihRipplePainter oldDelegate) => true;
+}
+
+class _DhikrBeadPainter extends CustomPainter {
+  final double progress;
+  final int totalBeads;
+
+  const _DhikrBeadPainter({required this.progress, required this.totalBeads});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width * 0.405;
+    final beadRadius = size.width * 0.024;
+
+    final track = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2
+      ..color = Colors.white.withValues(alpha: 0.10);
+    canvas.drawCircle(center, radius, track);
+
+    final activeCount = (progress * totalBeads).round().clamp(0, totalBeads);
+    for (var index = 0; index < totalBeads; index++) {
+      final angle = -math.pi / 2 + (2 * math.pi * index / totalBeads);
+      final point = center +
+          Offset(
+            math.cos(angle) * radius,
+            math.sin(angle) * radius,
+          );
+      final isActive = index < activeCount;
+
+      if (isActive) {
+        final glow = Paint()
+          ..color = const Color(0xFFFFA21A).withValues(alpha: 0.35)
+          ..maskFilter = MaskFilter.blur(BlurStyle.normal, beadRadius * 1.4);
+        canvas.drawCircle(point, beadRadius * 1.35, glow);
+      }
+
+      final beadPaint = Paint()
+        ..shader = RadialGradient(
+          center: const Alignment(-0.35, -0.42),
+          colors: isActive
+              ? const [Color(0xFFFFE0A3), Color(0xFFFFA21A), Color(0xFF9A4D08)]
+              : const [Color(0xFF3D2A20), Color(0xFF160F0C), Color(0xFF080605)],
+          stops: const [0.0, 0.48, 1.0],
+        ).createShader(Rect.fromCircle(center: point, radius: beadRadius));
+      canvas.drawCircle(point, beadRadius, beadPaint);
+
+      final highlight = Paint()
+        ..color = Colors.white.withValues(alpha: isActive ? 0.50 : 0.13);
+      canvas.drawCircle(
+        point + Offset(-beadRadius * 0.28, -beadRadius * 0.30),
+        beadRadius * 0.20,
+        highlight,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DhikrBeadPainter oldDelegate) =>
+      oldDelegate.progress != progress || oldDelegate.totalBeads != totalBeads;
 }

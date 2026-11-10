@@ -108,6 +108,147 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
     return '$h:$m:$s';
   }
 
+  void _showThemePicker(BuildContext context) {
+    final selectedMode = ref.read(huzurThemeModeProvider);
+
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black54,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 0, 14, 16),
+            child: GlassContainer(
+              borderRadius: 28,
+              enableBlur: true,
+              blurSigma: 24,
+              goldAccentBorder: true,
+              padding: const EdgeInsets.all(18),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Görünüm ve Tema',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(sheetContext),
+                        icon: const Icon(
+                          Icons.close_rounded,
+                          color: Colors.white70,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  _buildThemeModeOption(
+                    sheetContext,
+                    ThemeMode.dark,
+                    selectedMode,
+                    'Koyu Amber',
+                    'Füme zemin ve sıcak amber ışık',
+                    Icons.dark_mode_rounded,
+                  ),
+                  _buildThemeModeOption(
+                    sheetContext,
+                    ThemeMode.system,
+                    selectedMode,
+                    'Cihaz Ayarı',
+                    'iPhone görünüm ayarını takip et',
+                    Icons.brightness_auto_rounded,
+                  ),
+                  _buildThemeModeOption(
+                    sheetContext,
+                    ThemeMode.light,
+                    selectedMode,
+                    'Aydınlık',
+                    'Sıcak ve açık renkli görünüm',
+                    Icons.light_mode_rounded,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildThemeModeOption(
+    BuildContext sheetContext,
+    ThemeMode mode,
+    ThemeMode selectedMode,
+    String title,
+    String subtitle,
+    IconData icon,
+  ) {
+    final selected = mode == selectedMode;
+    const amber = Color(0xFFFFA21A);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 9),
+      child: GlassContainer(
+        borderRadius: 18,
+        goldAccentBorder: selected,
+        borderColor: selected ? amber : Colors.white24,
+        gradientColors: selected
+            ? [
+                amber.withValues(alpha: 0.20),
+                const Color(0xFF211D19).withValues(alpha: 0.88),
+              ]
+            : [
+                const Color(0xFF30251D).withValues(alpha: 0.42),
+                const Color(0xFF171513).withValues(alpha: 0.86),
+              ],
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+        onTap: () async {
+          await ref.read(huzurThemeModeProvider.notifier).setMode(mode);
+          if (sheetContext.mounted) {
+            Navigator.pop(sheetContext);
+          }
+        },
+        child: Row(
+          children: [
+            Icon(icon, color: amber, size: 22),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      fontSize: 10.5,
+                      color: Colors.white60,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (selected)
+              const Icon(Icons.check_circle_rounded, color: amber, size: 19),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final prayerState = ref.watch(prayerEngineProvider);
@@ -155,29 +296,16 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                 ],
               ),
             ),
-            PopupMenuButton<ThemeMode>(
-              tooltip: 'Görünüm',
-              icon: const Icon(
+            GlassContainer(
+              borderRadius: 16,
+              padding: const EdgeInsets.all(10),
+              goldAccentBorder: true,
+              onTap: () => _showThemePicker(context),
+              child: const Icon(
                 Icons.palette_outlined,
-                color: Color(0xFF64FFDA),
+                color: Color(0xFFFFA21A),
+                size: 20,
               ),
-              onSelected: (mode) {
-                ref.read(huzurThemeModeProvider.notifier).setMode(mode);
-              },
-              itemBuilder: (context) => const [
-                PopupMenuItem(
-                  value: ThemeMode.system,
-                  child: Text('Sistem'),
-                ),
-                PopupMenuItem(
-                  value: ThemeMode.dark,
-                  child: Text('Koyu mod'),
-                ),
-                PopupMenuItem(
-                  value: ThemeMode.light,
-                  child: Text('Aydınlık mod'),
-                ),
-              ],
             ),
             const SizedBox(width: 4),
             GlassContainer(
@@ -313,7 +441,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                         children: [
                           BespokeVectorIcon(
                             type: BespokeIconType.gpsTarget,
-                            color: Color(0xFF64FFDA),
+                            color: Color(0xFFFFA21A),
                             size: 16,
                           ),
                           SizedBox(width: 6),
@@ -370,7 +498,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                           BespokeVectorIcon(
                             type: BespokeIconType.checkBadge,
                             color: _alarmConfirmed
-                                ? const Color(0xFF64FFDA)
+                                ? const Color(0xFFFFA21A)
                                 : const Color(0xFFFFE082),
                             size: 16,
                           ),
@@ -427,7 +555,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                     style: const TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF64FFDA),
+                      color: Color(0xFFFFA21A),
                     ),
                   ),
                 ],
@@ -483,7 +611,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                         children: [
                           BespokeVectorIcon(
                             type: BespokeIconType.refreshSpark,
-                            color: Color(0xFF64FFDA),
+                            color: Color(0xFFFFA21A),
                             size: 15,
                           ),
                           SizedBox(width: 6),
@@ -492,7 +620,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF64FFDA),
+                              color: Color(0xFFFFA21A),
                             ),
                           ),
                         ],
@@ -525,7 +653,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                             type: _widgetPinnedFeedback
                                 ? BespokeIconType.checkBadge
                                 : BespokeIconType.widgetSpark,
-                            color: const Color(0xFF64FFDA),
+                            color: const Color(0xFFFFA21A),
                             size: 14,
                           ),
                           const SizedBox(width: 6),
@@ -538,7 +666,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                               style: const TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: Color(0xFF64FFDA),
+                                color: Color(0xFFFFA21A),
                               ),
                             ),
                           ),
@@ -607,7 +735,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                       children: [
                         BespokeVectorIcon(
                           type: BespokeIconType.esmaGrid,
-                          color: Color(0xFF64FFDA),
+                          color: Color(0xFFFFA21A),
                           size: 20,
                         ),
                         Text(
@@ -615,7 +743,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF64FFDA),
+                            color: Color(0xFFFFA21A),
                           ),
                         ),
                       ],
@@ -715,15 +843,15 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
               Container(
                 padding: const EdgeInsets.all(13),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF64FFDA).withValues(alpha: 0.12),
+                  color: const Color(0xFFFFA21A).withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(17),
                   border: Border.all(
-                    color: const Color(0xFF64FFDA).withValues(alpha: 0.24),
+                    color: const Color(0xFFFFA21A).withValues(alpha: 0.24),
                   ),
                 ),
                 child: const Icon(
                   Icons.auto_awesome_rounded,
-                  color: Color(0xFF64FFDA),
+                  color: Color(0xFFFFA21A),
                   size: 25,
                 ),
               ),
@@ -907,7 +1035,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                       children: [
                         Icon(
                           Icons.location_on_rounded,
-                          color: Color(0xFF64FFDA),
+                          color: Color(0xFFFFA21A),
                           size: 21,
                         ),
                         SizedBox(width: 8),
@@ -944,7 +1072,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                         hintStyle: const TextStyle(color: Colors.white54),
                         prefixIcon: const Icon(
                           Icons.search_rounded,
-                          color: Color(0xFF64FFDA),
+                          color: Color(0xFFFFA21A),
                         ),
                         suffixIcon: searchController.text.isEmpty
                             ? null
@@ -979,7 +1107,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
                           borderSide: const BorderSide(
-                            color: Color(0xFF64FFDA),
+                            color: Color(0xFFFFA21A),
                           ),
                         ),
                       ),
@@ -998,14 +1126,14 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                         children: [
                           Icon(
                             Icons.my_location_rounded,
-                            color: Color(0xFF64FFDA),
+                            color: Color(0xFFFFA21A),
                             size: 17,
                           ),
                           SizedBox(width: 8),
                           Text(
                             'Konumumu otomatik algıla',
                             style: TextStyle(
-                              color: Color(0xFF64FFDA),
+                              color: Color(0xFFFFA21A),
                               fontSize: 12.5,
                               fontWeight: FontWeight.bold,
                             ),
@@ -1057,7 +1185,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                                   padding: const EdgeInsets.only(bottom: 5),
                                   child: Material(
                                     color: selected
-                                        ? const Color(0xFF64FFDA)
+                                        ? const Color(0xFFFFA21A)
                                             .withValues(alpha: 0.13)
                                         : Colors.white.withValues(alpha: 0.045),
                                     borderRadius: BorderRadius.circular(13),
@@ -1078,7 +1206,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                                               Icons.location_city_rounded,
                                               size: 17,
                                               color: selected
-                                                  ? const Color(0xFF64FFDA)
+                                                  ? const Color(0xFFFFA21A)
                                                   : Colors.white60,
                                             ),
                                             const SizedBox(width: 10),
@@ -1096,7 +1224,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                                                           : FontWeight.w600,
                                                       color: selected
                                                           ? const Color(
-                                                              0xFF64FFDA)
+                                                              0xFFFFA21A)
                                                           : Colors.white,
                                                     ),
                                                   ),
@@ -1113,7 +1241,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                                             if (selected)
                                               const Icon(
                                                 Icons.check_circle_rounded,
-                                                color: Color(0xFF64FFDA),
+                                                color: Color(0xFFFFA21A),
                                                 size: 19,
                                               ),
                                           ],
@@ -1156,11 +1284,11 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                             ),
                           ),
                           selected: selected,
-                          selectedColor: const Color(0xFF64FFDA),
+                          selectedColor: const Color(0xFFFFA21A),
                           backgroundColor: Colors.white.withValues(alpha: 0.08),
                           side: BorderSide(
                             color: selected
-                                ? const Color(0xFF64FFDA)
+                                ? const Color(0xFFFFA21A)
                                 : Colors.white24,
                           ),
                           onSelected: (_) {
@@ -1235,7 +1363,7 @@ class _CrystalOrbGaugePainter extends CustomPainter {
         end: Alignment.bottomCenter,
         colors: [
           accentColor.withValues(alpha: 0.38),
-          const Color(0xFF00E5FF).withValues(alpha: 0.14),
+          const Color(0xFFFFB74D).withValues(alpha: 0.14),
         ],
       ).createShader(Offset.zero & size);
 
