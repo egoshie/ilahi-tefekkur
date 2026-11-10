@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "148314918860",
+    "project_id": "huzur-ai-20261108-76dccd",
+    "storage_bucket": "huzur-ai-20261108-76dccd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:148314918860:android:7edca54251c49cdf391769",
+        "android_client_info": {
+          "package_name": "com.ilahi.tefekkur"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCHPbYdnQQAI5p3Sz5_lToehD9Ly0FCMqs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
