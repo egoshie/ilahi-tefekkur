@@ -1,7 +1,7 @@
 name: ilahi_tefekkur
 description: "Huzur - Ilahi Metinler, Tefekkur ve Ibadet Ekosistemi V5.0 Production"
 publish_to: 'none'
-version: 1.0.0+14.6
+version: 1.0.0+14.7
 
 environment:
   sdk: '>=3.2.0 <4.0.0'
@@ -32,6 +32,7 @@ dependencies:
   firebase_core: ^5.1.0
   firebase_ai: ^5.1.0
   firebase_app_check: ^0.5.1
+  image_picker: ^1.1.2
 
 dev_dependencies:
   flutter_test:

@@ -706,7 +706,9 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
           goldAccentBorder: true,
           padding: const EdgeInsets.all(16),
           onTap: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const AiHuzurScreen()),
+            MaterialPageRoute(
+                builder: (_) =>
+                    AiHuzurScreen(onNavigateToTab: widget.onSwitchTab)),
           ),
           child: Row(
             children: [
@@ -730,7 +732,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("AI Huzur",
+                    Text("Huzur Dini Asistan",
                         style: TextStyle(
                             fontSize: 16, fontWeight: FontWeight.w800)),
                     SizedBox(height: 4),

@@ -58,7 +58,7 @@
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Oluşturduğunuz ayet ve Esma hikâye kartlarını Fotoğraflar galerisine kaydetmek için izin gereklidir.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Paylaşım stüdyosunda oluşturulan hikâye kartlarını galeriye kaydetmek için izin gereklidir.</string>
+	<string>Paylaşım stüdyosunda hikâye kartlarını kaydetmek ve Huzur Dini Asistan ile incelemek için seçtiğiniz fotoğraflara erişilir.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>audio</string>

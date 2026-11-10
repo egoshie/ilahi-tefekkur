@@ -1,55 +1,129 @@
-import "package:flutter/material.dart";
-import "package:firebase_ai/firebase_ai.dart";
-import "../../core/theme/glass_container.dart";
+import 'dart:async';
+import 'dart:io';
 
-const _systemPrompt =
-    "Sen Huzur uygulamasının dini konulara odaklanan yapay zeka rehberisin. "
-    "Yalnızca din, inanç, ibadet, kutsal metinler, dinler tarihi, dini ahlak "
-    "ve karşılaştırmalı din konularında yardımcı ol. Konu dışı sorulara "
-    "nazikçe Huzur AI uygulamasının yalnızca dini sorular için olduğunu söyle. "
-    "Türkçe, anlaşılır, saygılı ve tarafsız cevap ver. Ayet veya hadis "
-    "kaynağı uydurma. Emin olmadığın bilgiyi açıkça belirt. Kesin fetva "
-    "verme; gerektiğinde yetkin bir din uzmanına danışılmasını öner.";
+import 'package:firebase_ai/firebase_ai.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class AiHuzurScreen extends StatefulWidget {
-  const AiHuzurScreen({super.key});
+import '../../core/services/pricing_and_premium_service.dart';
+import '../../core/theme/glass_container.dart';
+import '../paywall/liquid_glass_paywall.dart';
+
+const _quotaKey = 'huzur_dini_asistan_free_questions_v1';
+const _freeQuestionLimit = 3;
+
+const _systemPrompt = '''
+Sen Huzur uygulamasının Huzur Dini Asistanısın. Türkçe, sakin, anlaşılır, saygılı ve tarafsız konuş. Kullanıcının sorusu uzunsa ihtiyacı kadar uzun ve faydalı yanıt ver. Yanıtını 500 karakterle sınırlama; 500 karakter sınırı yalnızca kullanıcının yazdığı soru içindir.
+
+YANIT BİÇİMİ:
+Markdown kullanma. #, ##, ###, **, *** ve ters tırnak gibi biçimlendirme işaretlerini yazma. Düzgün paragraflar kullan. Uzun cevapları mobil ekranda okunabilir kısa paragraflara böl. Gereksiz tekrar yapma.
+
+DİNİ BİLGİ:
+Din, inanç, ibadet, Kur'an, Tevrat, İncil, dinler tarihi, dini ahlak, tefsir ve karşılaştırmalı dinler hakkında yardımcı ol. Ayet, hadis, sure numarası, hadis numarası veya kaynak uydurma. Kaynağından emin değilsen bunu açıkça söyle; kesin olmayan numara verme. Mezhep farklılıklarını gerektiğinde belirt. Kesin fetva verme; özel dini hükümler için ehil bir din uzmanına danışılmasını öner. Görseldeki metin okunmuyorsa tahmin etme. Görselin kaynağını doğrulayamıyorsan doğrulanmış gibi sunma.
+
+HUZUR UYGULAMASINI TANI:
+Huzur, Kur'an, ibadet, tefekkür ve günlük manevi düzen için hazırlanmış bir iOS uygulamasıdır. Kullanıcı uygulamanın özelliklerini ve nereden açacağını da sorabilir. Bu sorular uygulama kapsamındadır. Özelliğin nereden açılacağını kısa ve somut biçimde anlat; alt menü adını söyle.
+
+Gerçek alt menü sırası ve özellikleri:
+Huzur: Ana sayfa, ezan vakitleri, seçili şehir, vakit atmosferi, günlük ayet ve ana sayfa araçları. Ana sayfanın üst kısmındaki Huzur Özel düğmesi abonelik ekranını açar.
+Kur'an: Sureler, ayetler, kutsal metin araması, Kur'an tilaveti ve ses oynatımı. Kutsal metinler alanından Tevrat ve İncil içeriklerine de ulaşılır; bazı içerikler Huzur Özel planına bağlı olabilir.
+Hıfz: Hıfz Akademisi, sure ve ayet seçimi, ezber durumunu öğreniliyor, ezberlendi veya tekrar edilmeli olarak takip etme.
+Plan: Günlük Planım, günlük görev ve ibadet/tefekkür planı oluşturma ve takip etme.
+Zikir: Akışkan Zikirmatik, günlük zikir toplamı, zikir hedefleri, özel zikir ve 99 Esmaül Hüsna.
+Araçlar: Kıble pusulası, ambiyans mikseri ve kaza namazı/ibadet çetelesi. Ambiyans seçenekleri ney, yağmur, su ve rüzgâr sesleridir.
+
+HUZUR ÖZEL:
+Ana sayfanın üstündeki Huzur Özel düğmesinden açılır. Mevcut teklif ekranında reklamsız kullanım, Tevrat'ın 39 ve İncil'in 27 kitabı, 15 büyük kıssada karşılaştırmalı inceleme, sınırsız Kur'an dinleme ve arka plan tilaveti, kilit ekranı saatlik ayet widget'ı, hikâye/paylaşım stüdyosu, sınırsız zikirmatik ve 99 Esmaül Hüsna rehberi gibi avantajlar sunulur. Plan ve erişim ayrıntıları Huzur Özel ekranından kontrol edilmelidir. Kullanıcı adına satın alma yapma ve fiyat tahmin etme.
+
+UYGULAMADA YÖNLENDİRME:
+Kullanıcı bir bölümü açmak veya nerede olduğunu öğrenmek istediğinde cevabın en sonuna uygun etiketi ekle. Etiketi açıklama; uygulama onu gerçek bir düğmeye dönüştürür.
+Ana sayfa: [[HUZUR_ACTION:home]]
+Kur'an: [[HUZUR_ACTION:quran]]
+Hıfz: [[HUZUR_ACTION:hifz]]
+Plan: [[HUZUR_ACTION:planner]]
+Zikir: [[HUZUR_ACTION:zikr]]
+Araçlar: [[HUZUR_ACTION:tools]]
+Huzur Özel: [[HUZUR_ACTION:premium]]
+Yalnızca kullanıcı yönlendirme istediğinde etiket ekle. Normal dini cevaplarda etiket ekleme.
+
+Dini konular ve Huzur uygulamasının kullanımı dışında kalan soruları nazikçe geri çevir. Var olmayan bir uygulama düğmesi veya özellik tarif etme.
+''';
+
+class AiHuzurScreen extends ConsumerStatefulWidget {
+  final ValueChanged<int>? onNavigateToTab;
+
+  const AiHuzurScreen({super.key, this.onNavigateToTab});
 
   @override
-  State<AiHuzurScreen> createState() => _AiHuzurScreenState();
+  ConsumerState<AiHuzurScreen> createState() => _AiHuzurScreenState();
 }
 
-class _AiHuzurScreenState extends State<AiHuzurScreen> {
+class _AiHuzurScreenState extends ConsumerState<AiHuzurScreen> {
   final _input = TextEditingController();
   final _scroll = ScrollController();
+  final _picker = ImagePicker();
+
   final List<_ChatMessage> _messages = [
     _ChatMessage(
-      text: "Selam. Ben Huzur AI. Din, inanç, ibadet ve kutsal metinler "
-          "hakkındaki sorularını birlikte inceleyebiliriz. Sana nasıl "
-          "yardımcı olabilirim?",
+      text:
+          'Selam. Ben Huzur Dini Asistan. Dini sorularını yanıtlayabilir, Kur’an ve kutsal metinleri inceleyebilir, ayrıca Huzur uygulamasını kullanırken sana yol gösterebilirim. İstersen bir görsel de gönderebilirsin.',
       isUser: false,
     ),
   ];
 
   ChatSession? _chat;
+  XFile? _selectedImage;
   bool _sending = false;
+  bool _usageReady = false;
+  int _freeQuestionCount = 0;
 
   ChatSession get _session {
     if (_chat != null) return _chat!;
+
     final model = FirebaseAI.googleAI().generativeModel(
-      model: "gemini-3.5-flash-lite",
+      model: 'gemini-3.5-flash-lite',
       systemInstruction: Content.system(_systemPrompt),
       generationConfig: GenerationConfig(
-        temperature: 0.4,
-        maxOutputTokens: 900,
+        temperature: 0.35,
+        maxOutputTokens: 4096,
       ),
     );
+
     _chat = model.startChat();
     return _chat!;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_loadQuota());
+  }
+
+  Future<void> _loadQuota() async {
+    try {
+      await ref.read(premiumServiceProvider.notifier).ensurePremiumAccess();
+      final preferences = await SharedPreferences.getInstance();
+
+      if (!mounted) return;
+
+      setState(() {
+        _freeQuestionCount = preferences.getInt(_quotaKey) ?? 0;
+        _usageReady = true;
+      });
+    } catch (_) {
+      if (mounted) {
+        setState(() => _usageReady = true);
+      }
+    }
   }
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!_scroll.hasClients) return;
+
       _scroll.animateTo(
         _scroll.position.maxScrollExtent,
         duration: const Duration(milliseconds: 250),
@@ -58,35 +132,139 @@ class _AiHuzurScreenState extends State<AiHuzurScreen> {
     });
   }
 
-  Future<void> _send() async {
-    final question = _input.text.trim();
-    if (question.isEmpty || _sending) return;
+  void _showMessage(String message) {
+    if (!mounted) return;
 
-    _input.clear();
-    final answerIndex = _messages.length + 1;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
 
-    setState(() {
-      _messages.add(_ChatMessage(text: question, isUser: true));
-      _messages.add(_ChatMessage(
-        text: "",
-        isUser: false,
-        isTyping: true,
-      ));
-      _sending = true;
-    });
-    _scrollToBottom();
+  Future<void> _pickImage() async {
+    if (_sending) return;
 
     try {
-      await for (final chunk
-          in _session.sendMessageStream(Content.text(question))) {
+      final image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1600,
+        maxHeight: 1600,
+        imageQuality: 82,
+        requestFullMetadata: false,
+      );
+
+      if (image == null || !mounted) return;
+
+      final size = await File(image.path).length();
+
+      if (size > 15 * 1024 * 1024) {
+        _showMessage('Bu görsel çok büyük. Daha küçük bir görsel seç.');
+        return;
+      }
+
+      setState(() => _selectedImage = image);
+    } catch (_) {
+      _showMessage('Görsel seçilemedi. Yeniden deneyebilirsin.');
+    }
+  }
+
+  Future<void> _send() async {
+    final question = _input.text.trim();
+    final image = _selectedImage;
+
+    if (_sending || (question.isEmpty && image == null)) return;
+
+    if (question.length > 500) {
+      _showMessage('Sorun en fazla 500 karakter olabilir.');
+      return;
+    }
+
+    if (!_usageReady) {
+      await _loadQuota();
+    }
+
+    if (!mounted) return;
+
+    await ref.read(premiumServiceProvider.notifier).ensurePremiumAccess();
+
+    if (!mounted) return;
+
+    final premium = ref.read(premiumServiceProvider);
+
+    if (premium.isLoading) {
+      _showMessage('Huzur Özel erişimin kontrol ediliyor. Tekrar dene.');
+      return;
+    }
+
+    if (!premium.isPremium && _freeQuestionCount >= _freeQuestionLimit) {
+      await LiquidGlassPaywallSheet.show(context);
+      return;
+    }
+
+    _input.clear();
+
+    setState(() {
+      _selectedImage = null;
+
+      _messages.add(
+        _ChatMessage(
+          text: question.isEmpty ? 'Bu görseli incele.' : question,
+          isUser: true,
+          imagePath: image?.path,
+        ),
+      );
+
+      _messages.add(
+        _ChatMessage(
+          text: '',
+          isUser: false,
+          isTyping: true,
+        ),
+      );
+
+      _sending = true;
+    });
+
+    final answerIndex = _messages.length - 1;
+    _scrollToBottom();
+
+    var completed = false;
+
+    try {
+      Content request;
+
+      if (image != null) {
+        final bytes = await File(image.path).readAsBytes();
+        final path = image.path.toLowerCase();
+
+        final mimeType = path.endsWith('.png')
+            ? 'image/png'
+            : path.endsWith('.webp')
+                ? 'image/webp'
+                : 'image/jpeg';
+
+        final prompt = question.isEmpty
+            ? 'Bu görseli dikkatle incele. İçindeki yazıları, dini sembolleri veya nesneleri yalnızca gerçekten okuyabildiğin ölçüde açıkla. Dini bir içerik varsa kaynağını uydurma.'
+            : question;
+
+        request = Content.multi([
+          TextPart(prompt),
+          InlineDataPart(mimeType, bytes),
+        ]);
+      } else {
+        request = Content.text(question);
+      }
+
+      await for (final chunk in _session.sendMessageStream(request)) {
         if (!mounted) return;
-        final part = chunk.text ?? "";
+
+        final part = chunk.text ?? '';
         if (part.isEmpty) continue;
 
         setState(() {
           _messages[answerIndex].text += part;
           _messages[answerIndex].isTyping = false;
         });
+
         _scrollToBottom();
       }
 
@@ -94,23 +272,65 @@ class _AiHuzurScreenState extends State<AiHuzurScreen> {
         setState(() {
           _messages[answerIndex].isTyping = false;
           _messages[answerIndex].text =
-              "Bu soruya şu anda yanıt oluşturamadım. Tekrar deneyebilirsin.";
+              'Bu soruya şu anda yanıt oluşturamadım. Tekrar deneyebilirsin.';
         });
       }
+
+      completed = true;
     } catch (_) {
       if (mounted) {
         setState(() {
           _messages[answerIndex].isTyping = false;
           _messages[answerIndex].text =
-              "Şu anda bağlantı kuramadım. Lütfen tekrar dene.";
+              'Şu anda bağlantı kuramadım. Lütfen tekrar dene.';
         });
       }
     } finally {
+      if (completed && !premium.isPremium) {
+        try {
+          final preferences = await SharedPreferences.getInstance();
+          final nextCount = _freeQuestionCount + 1;
+
+          await preferences.setInt(_quotaKey, nextCount);
+
+          if (mounted) {
+            setState(() => _freeQuestionCount = nextCount);
+          }
+        } catch (_) {}
+      }
+
       if (mounted) {
         setState(() => _sending = false);
         _scrollToBottom();
       }
     }
+  }
+
+  Future<void> _openAssistantAction(String action) async {
+    HapticFeedback.selectionClick();
+
+    if (action == 'premium') {
+      await LiquidGlassPaywallSheet.show(context);
+      return;
+    }
+
+    const tabByAction = <String, int>{
+      'home': 0,
+      'quran': 1,
+      'hifz': 4,
+      'planner': 5,
+      'zikr': 2,
+      'tools': 3,
+    };
+
+    final tab = tabByAction[action];
+    final navigate = widget.onNavigateToTab;
+
+    if (tab == null || navigate == null) return;
+
+    final navigator = Navigator.of(context);
+    await navigator.maybePop();
+    navigate(tab);
   }
 
   @override
@@ -122,13 +342,21 @@ class _AiHuzurScreenState extends State<AiHuzurScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final premium = ref.watch(premiumServiceProvider);
+
+    final quotaLabel = premium.isLoading || !_usageReady
+        ? 'Erişim kontrol ediliyor…'
+        : premium.isPremium
+            ? 'Huzur Özel • Sınırsız soru'
+            : 'Ücretsiz soru: $_freeQuestionCount/$_freeQuestionLimit';
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: SafeArea(
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 18, 14),
+              padding: const EdgeInsets.fromLTRB(12, 8, 18, 8),
               child: Row(
                 children: [
                   IconButton(
@@ -147,16 +375,18 @@ class _AiHuzurScreenState extends State<AiHuzurScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "AI Huzur",
+                          'Huzur Dini Asistan',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            fontSize: 19,
+                            fontSize: 17,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
                         Text(
-                          "Dini sorular için akıllı rehber",
+                          'Dini bilgi ve uygulama rehberi',
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: 10.5,
                             color: Colors.white60,
                           ),
                         ),
@@ -169,69 +399,156 @@ class _AiHuzurScreenState extends State<AiHuzurScreen> {
                     size: 8,
                   ),
                   const SizedBox(width: 5),
-                  const Text("Çevrimiçi", style: TextStyle(fontSize: 10)),
+                  const Text('Hazır', style: TextStyle(fontSize: 10)),
                 ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Text(
+                quotaLabel,
+                style: const TextStyle(
+                  color: Color(0xFF64FFDA),
+                  fontSize: 10.5,
+                ),
               ),
             ),
             Expanded(
               child: ListView.builder(
                 controller: _scroll,
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 18),
+                padding: const EdgeInsets.fromLTRB(14, 8, 14, 14),
                 itemCount: _messages.length,
                 itemBuilder: (context, index) {
                   final message = _messages[index];
-                  return _MessageBubble(message: message);
+                  final action = _actionFromText(message.text);
+
+                  return _MessageBubble(
+                    message: message,
+                    actionLabel: action == null ? null : _actionLabel(action),
+                    onAction: action == null
+                        ? null
+                        : () => _openAssistantAction(action),
+                  );
                 },
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(14, 8, 14, 12),
-              child: GlassContainer(
-                borderRadius: 24,
-                emeraldGlow: true,
-                enableBlur: true,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 7,
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.chat_bubble_outline_rounded,
-                      color: Color(0xFF64FFDA),
-                      size: 20,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: TextField(
-                        controller: _input,
-                        enabled: !_sending,
-                        minLines: 1,
-                        maxLines: 4,
-                        textInputAction: TextInputAction.send,
-                        onSubmitted: (_) => _send(),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                        ),
-                        decoration: const InputDecoration(
-                          hintText: "Dini bir soru sor...",
-                          hintStyle: TextStyle(color: Colors.white54),
-                          border: InputBorder.none,
-                          isDense: true,
+              padding: const EdgeInsets.fromLTRB(12, 6, 12, 10),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_selectedImage != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: GlassContainer(
+                        borderRadius: 18,
+                        emeraldGlow: true,
+                        padding: const EdgeInsets.all(8),
+                        child: Row(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: Image.file(
+                                File(_selectedImage!.path),
+                                width: 54,
+                                height: 54,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            const Expanded(
+                              child: Text(
+                                'Görsel inceleme için hazır',
+                                style: TextStyle(fontSize: 12),
+                              ),
+                            ),
+                            IconButton(
+                              tooltip: 'Görseli kaldır',
+                              onPressed: _sending
+                                  ? null
+                                  : () => setState(
+                                        () => _selectedImage = null,
+                                      ),
+                              icon: const Icon(
+                                Icons.close_rounded,
+                                color: Colors.white70,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                    IconButton(
-                      onPressed: _sending ? null : _send,
-                      icon: Icon(
-                        Icons.arrow_upward_rounded,
-                        color:
-                            _sending ? Colors.white30 : const Color(0xFFFFE082),
-                      ),
+                  GlassContainer(
+                    borderRadius: 24,
+                    emeraldGlow: true,
+                    enableBlur: true,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 5,
                     ),
-                  ],
-                ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        IconButton(
+                          tooltip: 'Galeriden görsel ekle',
+                          onPressed: _sending ? null : _pickImage,
+                          icon: const Icon(
+                            Icons.add_photo_alternate_outlined,
+                            color: Color(0xFF64FFDA),
+                            size: 22,
+                          ),
+                        ),
+                        Expanded(
+                          child: TextField(
+                            controller: _input,
+                            enabled: !_sending,
+                            minLines: 1,
+                            maxLines: 4,
+                            maxLength: 500,
+                            maxLengthEnforcement: MaxLengthEnforcement.enforced,
+                            textInputAction: TextInputAction.send,
+                            onSubmitted: (_) => _send(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                            ),
+                            buildCounter: (
+                              context, {
+                              required currentLength,
+                              required isFocused,
+                              maxLength,
+                            }) {
+                              return Text(
+                                '$currentLength/500',
+                                style: const TextStyle(
+                                  color: Colors.white38,
+                                  fontSize: 9,
+                                ),
+                              );
+                            },
+                            decoration: const InputDecoration(
+                              hintText: 'Dini bir soru sor...',
+                              hintStyle: TextStyle(color: Colors.white54),
+                              border: InputBorder.none,
+                              isDense: true,
+                              contentPadding:
+                                  EdgeInsets.symmetric(vertical: 12),
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: _sending ? null : _send,
+                          icon: Icon(
+                            Icons.arrow_upward_rounded,
+                            color: _sending
+                                ? Colors.white30
+                                : const Color(0xFFFFE082),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -241,22 +558,66 @@ class _AiHuzurScreenState extends State<AiHuzurScreen> {
   }
 }
 
+String? _actionFromText(String text) {
+  final match = RegExp(
+    r'\[\[HUZUR_ACTION:(home|quran|hifz|planner|zikr|tools|premium)\]\]',
+  ).firstMatch(text);
+
+  return match?.group(1);
+}
+
+String _actionLabel(String action) {
+  const labels = <String, String>{
+    'home': 'Huzur ana sayfasını aç',
+    'quran': 'Kur’an ve kutsal metinleri aç',
+    'hifz': 'Hıfz Akademisi’ni aç',
+    'planner': 'Günlük Planım’ı aç',
+    'zikr': 'Zikirmatik ve Esmaül Hüsna’yı aç',
+    'tools': 'Kıble ve Araçlar’ı aç',
+    'premium': 'Huzur Özel’i keşfet',
+  };
+
+  return labels[action] ?? 'Bölümü aç';
+}
+
+String _cleanMessageText(String value) {
+  return value
+      .replaceAll(RegExp(r'\[\[HUZUR_ACTION:[a-z_]+\]\]'), '')
+      .replaceAll(RegExp(r'^\s{0,3}#{1,6}\s*', multiLine: true), '')
+      .replaceAll('***', '')
+      .replaceAll('**', '')
+      .replaceAll('__', '')
+      .replaceAll('~~', '')
+      .replaceAll(String.fromCharCode(96), '')
+      .replaceAll(RegExp(r'^\s*[-*]\s+', multiLine: true), '• ')
+      .replaceAll(RegExp(r'\n{3,}'), '\n\n')
+      .trim();
+}
+
 class _ChatMessage {
   String text;
   final bool isUser;
   bool isTyping;
+  final String? imagePath;
 
   _ChatMessage({
     required this.text,
     required this.isUser,
     this.isTyping = false,
+    this.imagePath,
   });
 }
 
 class _MessageBubble extends StatelessWidget {
   final _ChatMessage message;
+  final String? actionLabel;
+  final VoidCallback? onAction;
 
-  const _MessageBubble({required this.message});
+  const _MessageBubble({
+    required this.message,
+    this.actionLabel,
+    this.onAction,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -268,17 +629,18 @@ class _MessageBubble extends StatelessWidget {
         padding: const EdgeInsets.only(bottom: 12),
         child: ConstrainedBox(
           constraints: BoxConstraints(
-            maxWidth: MediaQuery.sizeOf(context).width * 0.82,
+            maxWidth: MediaQuery.sizeOf(context).width * 0.88,
           ),
           child: GlassContainer(
             borderRadius: 20,
             emeraldGlow: !user,
             goldAccentBorder: user,
             padding: const EdgeInsets.symmetric(
-              horizontal: 15,
+              horizontal: 14,
               vertical: 12,
             ),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (!user)
@@ -293,10 +655,10 @@ class _MessageBubble extends StatelessWidget {
                         ),
                         SizedBox(width: 6),
                         Text(
-                          "HUZUR AI",
+                          'HUZUR DİNİ ASİSTAN',
                           style: TextStyle(
-                            fontSize: 10,
-                            letterSpacing: 1.1,
+                            fontSize: 9.5,
+                            letterSpacing: 0.8,
                             fontWeight: FontWeight.w800,
                             color: Color(0xFF64FFDA),
                           ),
@@ -304,15 +666,62 @@ class _MessageBubble extends StatelessWidget {
                       ],
                     ),
                   ),
+                if (message.imagePath != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.file(
+                        File(message.imagePath!),
+                        width: 260,
+                        height: 190,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
                 if (message.isTyping)
                   const _TypingIndicator()
                 else
                   SelectableText(
-                    message.text,
+                    _cleanMessageText(message.text),
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 13.5,
-                      height: 1.55,
+                      height: 1.5,
+                    ),
+                  ),
+                if (actionLabel != null && onAction != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 10),
+                    child: GlassContainer(
+                      borderRadius: 14,
+                      emeraldGlow: true,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      onTap: onAction,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              actionLabel!,
+                              style: const TextStyle(
+                                color: Color(0xFF64FFDA),
+                                fontWeight: FontWeight.w700,
+                                fontSize: 11.5,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Icon(
+                            Icons.arrow_forward_ios_rounded,
+                            color: Color(0xFFFFE082),
+                            size: 12,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
               ],
@@ -339,6 +748,7 @@ class _TypingIndicatorState extends State<_TypingIndicator>
   @override
   void initState() {
     super.initState();
+
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
@@ -346,10 +756,15 @@ class _TypingIndicatorState extends State<_TypingIndicator>
 
     _dots = List.generate(3, (index) {
       final start = index * 0.18;
+
       return Tween<double>(begin: 0.2, end: 1).animate(
         CurvedAnimation(
           parent: _controller,
-          curve: Interval(start, start + 0.55, curve: Curves.easeInOut),
+          curve: Interval(
+            start,
+            start + 0.55,
+            curve: Curves.easeInOut,
+          ),
         ),
       );
     });
@@ -367,8 +782,11 @@ class _TypingIndicatorState extends State<_TypingIndicator>
       mainAxisSize: MainAxisSize.min,
       children: [
         const Text(
-          "Yanıt hazırlanıyor ",
-          style: TextStyle(color: Colors.white70, fontSize: 12),
+          'Yanıt hazırlanıyor ',
+          style: TextStyle(
+            color: Colors.white70,
+            fontSize: 12,
+          ),
         ),
         ..._dots.map(
           (animation) => FadeTransition(
