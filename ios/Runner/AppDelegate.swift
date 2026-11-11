@@ -4,9 +4,6 @@ import AVFoundation
 import MediaPlayer
 import Photos
 import UserNotifications
-#if canImport(FoundationModels)
-import FoundationModels
-#endif
 #if canImport(WidgetKit)
 import WidgetKit
 #endif
@@ -24,10 +21,6 @@ class PhotoSaveCallbackTarget: NSObject {
     private var cachedArtwork: MPMediaItemArtwork?
     private var remoteCommandsConfigured = false
 
-#if canImport(FoundationModels)
-    private var huzurLocalAISession: Any?
-    private var huzurLocalAIInstructions: String?
-#endif
 
     override func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         if #available(iOS 10.0, *) { UNUserNotificationCenter.current().delegate = self }
@@ -38,150 +31,6 @@ WidgetCenter.shared.reloadAllTimelines()
 #endif
 }
         if let controller = window?.rootViewController as? FlutterViewController {
-            let localAIChannel = FlutterMethodChannel(
-                name: "com.ilahi.tefekkur/local_ai",
-                binaryMessenger: controller.binaryMessenger
-            )
-
-            localAIChannel.setMethodCallHandler { [weak self] call, result in
-                guard let self = self else {
-                    result(FlutterError(
-                        code: "app-unavailable",
-                        message: "Huzur bağlantısı hazır değil.",
-                        details: nil
-                    ))
-                    return
-                }
-
-                switch call.method {
-                case "availability":
-#if canImport(FoundationModels)
-                    if #available(iOS 26.0, *) {
-                        switch SystemLanguageModel.default.availability {
-                        case .available:
-                            result([
-                                "available": true,
-                                "reason": "available"
-                            ])
-                        case .unavailable(let reason):
-                            result([
-                                "available": false,
-                                "reason": String(describing: reason)
-                            ])
-                        }
-                    } else {
-                        result([
-                            "available": false,
-                            "reason": "unsupported-ios"
-                        ])
-                    }
-#else
-                    result([
-                        "available": false,
-                        "reason": "framework-unavailable"
-                    ])
-#endif
-
-                case "generate":
-                    guard
-                        let args = call.arguments as? [String: Any],
-                        let prompt = args["prompt"] as? String,
-                        !prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                    else {
-                        result(FlutterError(
-                            code: "invalid-prompt",
-                            message: "Geçerli bir soru girilmedi.",
-                            details: nil
-                        ))
-                        return
-                    }
-
-                    let instructions = args["instructions"] as? String
-                        ?? "Sen Huzur uygulamasının dini bilgi asistanısın."
-
-#if canImport(FoundationModels)
-                    if #available(iOS 26.0, *) {
-                        guard case .available = SystemLanguageModel.default.availability else {
-                            result(FlutterError(
-                                code: "model-unavailable",
-                                message: "Apple Intelligence bu cihazda hazır değil.",
-                                details: nil
-                            ))
-                            return
-                        }
-
-                        Task { @MainActor [weak self] in
-                            guard let self = self else {
-                                result(FlutterError(
-                                    code: "app-unavailable",
-                                    message: "Huzur bağlantısı kapandı.",
-                                    details: nil
-                                ))
-                                return
-                            }
-
-                            do {
-                                let cachedSession =
-                                    self.huzurLocalAISession as? LanguageModelSession
-
-                                if cachedSession == nil ||
-                                    self.huzurLocalAIInstructions != instructions {
-                                    self.huzurLocalAISession =
-                                        LanguageModelSession(instructions: instructions)
-                                    self.huzurLocalAIInstructions = instructions
-                                }
-
-                                guard let session =
-                                    self.huzurLocalAISession as? LanguageModelSession else {
-                                    throw NSError(
-                                        domain: "HuzurLocalAI",
-                                        code: 1,
-                                        userInfo: [
-                                            NSLocalizedDescriptionKey:
-                                                "Yerel AI oturumu oluşturulamadı."
-                                        ]
-                                    )
-                                }
-
-                                let response = try await session.respond(to: prompt)
-                                result(["text": response.content])
-                            } catch {
-                                result(FlutterError(
-                                    code: "generation-failed",
-                                    message: "Yerel yanıt oluşturulamadı.",
-                                    details: error.localizedDescription
-                                ))
-                            }
-                        }
-                    } else {
-                        result(FlutterError(
-                            code: "unsupported-ios",
-                            message: "Yerel AI için daha yeni iOS gerekiyor.",
-                            details: nil
-                        ))
-                    }
-#else
-                    result(FlutterError(
-                        code: "framework-unavailable",
-                        message: "Foundation Models bu derlemede bulunmuyor.",
-                        details: nil
-                    ))
-#endif
-
-                case "reset":
-#if canImport(FoundationModels)
-                    if #available(iOS 26.0, *) {
-                        self.huzurLocalAISession = nil
-                        self.huzurLocalAIInstructions = nil
-                    }
-#endif
-                    result(true)
-
-                default:
-                    result(FlutterMethodNotImplemented)
-                }
-            }
-
             let bridgeChannel = FlutterMethodChannel(name: "com.ilahi.tefekkur/native_bridge", binaryMessenger: controller.binaryMessenger)
             bridgeChannel.setMethodCallHandler { (call: FlutterMethodCall, result: @escaping FlutterResult) in
                 switch call.method {

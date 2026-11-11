@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:firebase_ai/firebase_ai.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'local_ai_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -192,8 +191,16 @@ class _AiHuzurScreenState extends ConsumerState<AiHuzurScreen> {
     final question = _input.text.trim();
     final image = _selectedImage;
 
-    if (_sending || (question.isEmpty && image == null)) return;
+    if (!mounted || _sending || (question.isEmpty && image == null)) {
+      return;
+    }
 
+    if (question.length > 500) {
+      _showMessage('Sorun en fazla 500 karakter olabilir.');
+      return;
+    }
+
+    // Apple ile giriş zorunluluğu korunuyor.
     final signedInUser = FirebaseAuth.instance.currentUser;
     final hasAppleSignIn = signedInUser?.providerData.any(
           (info) => info.providerId == 'apple.com',
@@ -207,177 +214,220 @@ class _AiHuzurScreenState extends ConsumerState<AiHuzurScreen> {
       return;
     }
 
-    if (question.length > 500) {
-      _showMessage('Sorun en fazla 500 karakter olabilir.');
-      return;
-    }
+    setState(() => _sending = true);
 
-    if (!_usageReady) {
-      await _loadQuota();
-    }
-
-    if (!mounted) return;
-
-    await ref.read(premiumServiceProvider.notifier).ensurePremiumAccess();
-
-    if (!mounted) return;
-
-    final premium = ref.read(premiumServiceProvider);
-
-    if (premium.isLoading) {
-      _showMessage('Huzur Özel erişimin kontrol ediliyor. Tekrar dene.');
-      return;
-    }
-
-    if (!premium.isPremium && _freeQuestionCount >= _freeQuestionLimit) {
-      await LiquidGlassPaywallSheet.show(context);
-      return;
-    }
-
-    _input.clear();
-
-    setState(() {
-      _selectedImage = null;
-
-      _messages.add(
-        _ChatMessage(
-          text: question.isEmpty ? 'Bu görseli incele.' : question,
-          isUser: true,
-          imagePath: image?.path,
-        ),
-      );
-
-      _messages.add(
-        _ChatMessage(
-          text: '',
-          isUser: false,
-          isTyping: true,
-        ),
-      );
-
-      _sending = true;
-    });
-
-    final answerIndex = _messages.length - 1;
-    _scrollToBottom();
+    var answerIndex = -1;
+    bool? premiumForRequest;
 
     var completed = false;
+    var stage = 'İstek hazırlığı';
+
+    void logError(Object error, StackTrace stackTrace) {
+      debugPrint(
+        '[HuzurAI][$stage] ${error.runtimeType}: $error',
+      );
+      debugPrintStack(stackTrace: stackTrace);
+    }
 
     try {
-      final currentUser = FirebaseAuth.instance.currentUser;
-      if (currentUser == null) {
-        throw StateError('Firebase oturumu bulunamadı.');
+      // 1. Kullanım kotası.
+      if (!_usageReady) {
+        stage = 'Kullanım kotası yükleme';
+
+        await _loadQuota().timeout(
+          const Duration(seconds: 10),
+        );
       }
 
-      // Bu yetki yalnızca güvenilir sunucu tarafından verilen
-      // Firebase Authentication custom claim üzerinden okunur.
-      // Sunucu ve yerel AI yedek motoru aktif
-      const canUseGemini = true;
+      if (!mounted) return;
 
-      final availability = await LocalAIService.checkAvailability();
+      // 2. Premium erişim kontrolü.
+      stage = 'Premium erişim kontrolü';
 
-      var localSucceeded = false;
+      await ref
+          .read(premiumServiceProvider.notifier)
+          .ensurePremiumAccess()
+          .timeout(const Duration(seconds: 16));
 
-      // Birinci tercih: Apple Intelligence cihaz içi model.
-      if (availability.available && image == null) {
-        try {
-          final localAnswer = await LocalAIService.generate(
-            prompt: question,
-            instructions: _systemPrompt,
-          );
+      if (!mounted) return;
 
-          if (!mounted) return;
+      final premium = ref.read(premiumServiceProvider);
+      premiumForRequest = premium.isPremium;
 
-          setState(() {
-            _messages[answerIndex].text = localAnswer;
-            _messages[answerIndex].isTyping = false;
-          });
-
-          localSucceeded = true;
-        } catch (_) {
-          // Yerel model yanıt veremedi.
-          // Yedek motor kontrolüne devam edilir.
-        }
+      if (premium.isLoading) {
+        _showMessage(
+          'Huzur Özel erişimin kontrol ediliyor. Tekrar dene.',
+        );
+        return;
       }
 
-      // İkinci tercih: Gemini yedek motoru.
-      if (!localSucceeded) {
-        if (canUseGemini) {
-          Content request;
-
-          if (image != null) {
-            final bytes = await File(image.path).readAsBytes();
-            final path = image.path.toLowerCase();
-
-            final mimeType = path.endsWith('.png')
-                ? 'image/png'
-                : path.endsWith('.webp')
-                    ? 'image/webp'
-                    : 'image/jpeg';
-
-            final prompt = question.isEmpty
-                ? 'Bu görseli dikkatle incele. İçindeki metinleri '
-                    've dini içeriği yalnızca doğrulayabildiğin ölçüde açıkla.'
-                : question;
-
-            request = Content.multi([
-              TextPart(prompt),
-              InlineDataPart(mimeType, bytes),
-            ]);
-          } else {
-            request = Content.text(question);
-          }
-
-          // Mevcut Gemini ChatSession korunuyor.
-          await for (final chunk in _session.sendMessageStream(request)) {
-            if (!mounted) return;
-
-            final part = chunk.text ?? '';
-            if (part.isEmpty) continue;
-
-            setState(() {
-              _messages[answerIndex].text += part;
-              _messages[answerIndex].isTyping = false;
-            });
-
-            _scrollToBottom();
-          }
-        }
+      if (!premium.isPremium && _freeQuestionCount >= _freeQuestionLimit) {
+        await LiquidGlassPaywallSheet.show(context);
+        return;
       }
 
-      if (mounted && _messages[answerIndex].text.isEmpty) {
+      // 3. Kullanıcı mesajını ve yanıt alanını ekle.
+      _input.clear();
+
+      setState(() {
+        _selectedImage = null;
+
+        _messages.add(
+          _ChatMessage(
+            text: question.isEmpty ? 'Bu görseli incele.' : question,
+            isUser: true,
+            imagePath: image?.path,
+          ),
+        );
+
+        _messages.add(
+          _ChatMessage(
+            text: '',
+            isUser: false,
+            isTyping: true,
+          ),
+        );
+      });
+
+      answerIndex = _messages.length - 1;
+      _scrollToBottom();
+
+      // 4. Gemini isteğini hazırla.
+      stage = 'Gemini isteği hazırlama';
+
+      Content request;
+
+      if (image != null) {
+        final bytes = await File(image.path).readAsBytes().timeout(
+              const Duration(seconds: 15),
+            );
+
+        final path = image.path.toLowerCase();
+
+        final mimeType = path.endsWith('.png')
+            ? 'image/png'
+            : path.endsWith('.webp')
+                ? 'image/webp'
+                : 'image/jpeg';
+
+        final prompt = question.isEmpty
+            ? 'Bu görseli dikkatle incele. İçindeki metinleri '
+                've dini içeriği yalnızca doğrulayabildiğin ölçüde açıkla.'
+            : question;
+
+        request = Content.multi([
+          TextPart(prompt),
+          InlineDataPart(mimeType, bytes),
+        ]);
+      } else {
+        request = Content.text(question);
+      }
+
+      // 5. Tek yanıt motoru: Gemini.
+      stage = 'Gemini yanıt akışı';
+
+      final responseStream = _session
+          .sendMessageStream(request)
+          .timeout(const Duration(seconds: 60));
+
+      await for (final chunk in responseStream) {
+        if (!mounted) return;
+
+        final part = chunk.text ?? '';
+
+        if (part.isEmpty) continue;
+
         setState(() {
+          _messages[answerIndex].text += part;
           _messages[answerIndex].isTyping = false;
-          _messages[answerIndex].text =
-              'Şu anda yanıt oluşturulamadı. Lütfen tekrar dene.';
         });
+
+        _scrollToBottom();
       }
 
-      completed = _messages[answerIndex].text.trim().isNotEmpty;
-    } catch (_) {
+      // Stream normal şekilde tamamlandı.
       if (mounted) {
-        setState(() {
-          _messages[answerIndex].isTyping = false;
-          _messages[answerIndex].text =
-              'Şu anda bağlantı kuramadım. Lütfen tekrar dene.';
-        });
+        final answer = _messages[answerIndex].text.trim();
+
+        if (answer.isEmpty) {
+          setState(() {
+            _messages[answerIndex].isTyping = false;
+            _messages[answerIndex].text =
+                'Gemini şu anda yanıt oluşturamadı. Lütfen tekrar dene.';
+          });
+        } else {
+          completed = true;
+        }
+      }
+    } catch (error, stackTrace) {
+      logError(error, stackTrace);
+
+      if (mounted) {
+        if (answerIndex >= 0 && answerIndex < _messages.length) {
+          setState(() {
+            final message = _messages[answerIndex];
+            message.isTyping = false;
+
+            if (message.text.trim().isNotEmpty) {
+              message.text += error is TimeoutException
+                  ? '\n\nGemini yanıt akışı 60 saniye boyunca '
+                      'yeni veri göndermedi. Bu yanıt kısmi olabilir.'
+                  : '\n\nYanıt tamamlanamadı. Lütfen tekrar dene.';
+            } else {
+              message.text = error is TimeoutException
+                  ? 'Yanıt bekleme süresi doldu. Lütfen tekrar dene.'
+                  : 'Gemini bağlantısı kurulamadı. Lütfen tekrar dene.';
+            }
+          });
+        } else {
+          _showMessage(
+            error is TimeoutException
+                ? 'İşlem zaman aşımına uğradı. Tekrar deneyebilirsin.'
+                : 'İşlem tamamlanamadı. Tekrar deneyebilirsin.',
+          );
+        }
       }
     } finally {
-      if (completed && !premium.isPremium) {
+      // 6. Ücretsiz kullanım kotasını kaydet.
+      final nextCount = completed && premiumForRequest == false
+          ? _freeQuestionCount + 1
+          : null;
+
+      if (nextCount != null) {
         try {
-          final preferences = await SharedPreferences.getInstance();
-          final nextCount = _freeQuestionCount + 1;
+          final preferences = await SharedPreferences.getInstance()
+              .timeout(const Duration(seconds: 5));
 
-          await preferences.setInt(_quotaKey, nextCount);
-
-          if (mounted) {
-            setState(() => _freeQuestionCount = nextCount);
-          }
-        } catch (_) {}
+          await preferences
+              .setInt(_quotaKey, nextCount)
+              .timeout(const Duration(seconds: 5));
+        } catch (error, stackTrace) {
+          debugPrint(
+            '[HuzurAI][QuotaSave] ${error.runtimeType}: $error',
+          );
+          debugPrintStack(stackTrace: stackTrace);
+        }
       }
 
+      // 7. Her koşulda yükleme bayraklarını kapat.
       if (mounted) {
-        setState(() => _sending = false);
+        setState(() {
+          if (answerIndex >= 0 && answerIndex < _messages.length) {
+            final message = _messages[answerIndex];
+            message.isTyping = false;
+
+            if (message.text.trim().isEmpty) {
+              message.text = 'Yanıt oluşturulamadı. Lütfen tekrar dene.';
+            }
+          }
+
+          if (nextCount != null) {
+            _freeQuestionCount = nextCount;
+          }
+
+          _sending = false;
+        });
+
         _scrollToBottom();
       }
     }
