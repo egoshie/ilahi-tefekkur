@@ -3,6 +3,10 @@ name: Huzur iOS App Store Build
 on:
   push:
     branches: [main]
+    paths:
+      - '**'
+      - '!docs/**'
+      - '!.github/workflows/build_ios_ipa.yml'
   workflow_dispatch:
 
 permissions:

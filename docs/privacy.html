@@ -31,14 +31,14 @@
       <span class="badge">HUZUR • RESMİ GİZLİLİK VE VERİ KORUMA POLİTİKASI</span>
       <h1>HUZUR - GİZLİLİK POLİTİKASI (PRIVACY POLICY)</h1>
       <div class="meta-box">
-        <strong>Son Güncelleme Tarihi:</strong> 4 Kasım 2026<br>
+        <strong>Son Güncelleme Tarihi:</strong> 11 Kasım 2026<br>
         <strong>Uygulama Adı:</strong> Huzur (İlahi Metinler, Tefekkür ve İbadet Rehberi)<br>
         <strong>Geliştirici / Veri Sorumlusu:</strong> Halil İbrahim Cebeci<br>
         <strong>İletişim E-posta Adresi:</strong> <a href="mailto:halilibrahimcebeci0@icloud.com">halilibrahimcebeci0@icloud.com</a>
       </div>
       <p><strong>Huzur</strong> ("Uygulama") olarak kullanıcılarımızın gizliliğine, kişisel verilerinin korunmasına ve manevi ibadet alanlarının mahremiyetine en üst düzeyde saygı duyuyoruz. Bu Gizlilik Politikası; Apple App Store İnceleme Yönergeleri (App Store Review Guidelines 5.1), 6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) ve Genel Veri Koruma Tüzüğü (GDPR) standartlarına tam uyumlu olarak, uygulamamızı kullandığınızda hangi verilerin nasıl işlendiğini şeffaf bir biçimde açıklamaktadır.</p>
       <div class="highlight-box">
-        <strong>Temel Gizlilik Sözümüz:</strong> Huzur, kullanıcılarından hesap oluşturmasını, ad-soyad, telefon numarası veya e-posta adresi girmesini <strong>talep etmez</strong>. Uygulamamız "Cihaz İçi Öncelikli" (Local-First) mimariyle çalışır; hiçbir reklam ağı barındırmaz ve verilerinizi üçüncü taraflara satmaz.
+        <strong>Temel Gizlilik Açıklaması:</strong> Huzur'un temel bölümleri hesap açmadan kullanılabilir. "Huzur Dini Asistanı" özelliği için Apple ile giriş gerekir ve oturum Firebase Authentication üzerinden yönetilir. Kullanıcının AI asistanına gönderdiği soru metni ve isteğe bağlı görsel, yanıt oluşturulması amacıyla Firebase AI Logic aracılığıyla Google Gemini hizmetine iletilir. Bu nedenle Huzur'un tüm özellikleri yalnızca cihaz içinde çalışan bir mimariye sahip değildir.
       </div>
       <h2>1. TOPLANAN VERİLER VE KULLANIM AMAÇLARI</h2>
       <h3>A. Konum Bilgileri (NSLocationWhenInUseUsageDescription)</h3>
@@ -54,39 +54,66 @@
       </ul>
       <h3>C. Cihaz İçi Yerel Kayıtlar (SQLite, SharedPreferences ve WidgetKit)</h3>
       <ul>
-        <li><strong>Ne Saklanır:</strong> Favoriye eklediğiniz ayetler, son okuduğunuz sure/bab yer imleri, günlük zikirmatik sayaçlarınız, kaza namazı/orucu çeteleniz, 30 cüz hatim ilerlemeniz, ücretsiz sesli sure dinletisi kullanımını takip eden tamamlanmış dinleti sayısı ve Kilit Ekranı Widget (App Group: <code>group.com.ilahi.tefekkur</code>) tercihleriniz.</li>
+        <li><strong>Ne Saklanır:</strong> Favoriye eklediğiniz ayetler, son okuduğunuz sure/bab yer imleri, günlük zikirmatik sayaçlarınız, kaza namazı/orucu çeteleniz, 30 cüz hatim ilerlemeniz, ücretsiz sesli sure dinletisi kullanımını takip eden tamamlanmış dinleti sayısı, AI asistanının ücretsiz soru kullanım sayacı ve Kilit Ekranı Widget (App Group: <code>group.com.ilahi.tefekkur</code>) tercihleriniz.</li>
         <li><strong>Nerede Saklanır:</strong> Bu verilerin tamamı yalnızca kendi iPhone/iPad veya Android cihazınızın yerel güvenli hafızasında saklanır. Uygulamayı cihazınızdan sildiğinizde bu kayıtların tamamı cihazınızdan kalıcı olarak silinir.</li>
       </ul>
       <h3>D. Pusula ve Hareket Sensörleri (Magnetometer)</h3>
       <ul>
         <li><strong>Nasıl Kullanılır:</strong> Kıble Pusulası ekranında cihazınızın manyetik yönünü tespit ederek Kâbe açısını canlı göstermek için kullanılır. Sensör verileri anlık olarak cihaz içinde işlenir ve hiçbir yere kaydedilmez.</li>
       </ul>
-      <h2>2. İNTERNET BAĞLANTISI VE ÜÇÜNCÜ TARAF İÇERİK SERVİSLERİ</h2>
-      <p>Uygulama; kutsal metinleri (Kur'ân-ı Kerîm, Tevrat, İncil) ve sesli Kur'ân tilavetlerini getirmek için güvenli <code>HTTPS</code> protokolü üzerinden aşağıdaki açık kaynaklı ve kamuya açık içerik API servislerine anonim istekler gönderir:</p>
+      <h3>E. Apple ile Giriş ve AI Hesap Bilgileri</h3>
       <ul>
-        <li><strong>AlQuran Cloud & Islamic Network CDN:</strong> Kur'ân-ı Kerîm Arapça metinleri, Türkçe meali ve sesli MP3 tilavet akışı.</li>
-        <li><strong>GetBible & Bolls.life API:</strong> Türkçe Kutsal Kitap (Tevrat ve İncil) bab ve ayet metinleri.</li>
-        <li><strong>Google Fonts:</strong> Huzur arayüzünde kullanılan Plus Jakarta Sans yazı tipi HTTPS üzerinden Google Fonts kaynaklarından alınabilir.</li>
+        <li><strong>AI erişimi:</strong> Apple ile giriş yalnızca Huzur Dini Asistanı özelliğini kullanmak için gereklidir. Uygulamanın AI dışındaki temel bölümleri Apple hesabıyla giriş yapılmadan kullanılabilir.</li>
+        <li><strong>İşlenen hesap bilgileri:</strong> Giriş akışı Apple tarafından başlatılır ve Firebase Authentication ile yönetilir. Uygulama Apple sağlayıcısından e-posta ve ad kapsamlarını ister. Apple'ın kullanıcıya ve seçtiği gizlilik ayarlarına bağlı olarak sağladığı ad, e-posta veya özel e-posta yönlendirme adresi ile Firebase kullanıcı kimliği, sağlayıcı bilgisi ve oturum durumu kimlik doğrulama amacıyla işlenebilir.</li>
+        <li><strong>Kimlik doğrulama altyapısı:</strong> Firebase Authentication, oturumun kurulması ve sürdürülmesi için gerekli hesap ve teknik bilgileri işler. Giriş parolanız Huzur tarafından istenmez veya saklanmaz.</li>
       </ul>
-      <p>Bu HTTPS bağlantılarında standart ağ iletişimi gereği IP adresiniz ilgili içerik veya yazı tipi sunucuları tarafından görülebilir. Huzur bu isteklerde adınızı, hesap kimliğinizi veya GPS konumunuzu göndermez; bu bağlantıları reklam ya da kullanıcı takibi için kullanmaz. Üçüncü taraf sağlayıcıların kendi veri işleme uygulamaları kendi gizlilik politikalarına tabidir.</p>
+      <h3>F. Huzur Dini Asistanı: Soru Metinleri, Sohbet Bağlamı ve Görseller</h3>
+      <ul>
+        <li><strong>Gönderilen içerik:</strong> AI asistanında gönder düğmesine bastığınızda yazdığınız soru ve varsa özellikle seçtiğiniz görsel, yanıt oluşturulması amacıyla Firebase AI Logic SDK üzerinden Google Gemini hizmetine iletilir. Devam eden sohbetin yanıt için gerekli önceki mesaj bağlamı da isteğe eklenebilir.</li>
+        <li><strong>Kullanılan model:</strong> İncelenen uygulama sürümünde <code>FirebaseAI.googleAI()</code> sağlayıcısı ve <code>gemini-3.5-flash-lite</code> modeli kullanılmaktadır. Model veya sağlayıcı sürüm güncellemeleriyle değişebilir.</li>
+        <li><strong>Görseller:</strong> Uygulama, AI ekranında sizin galeriden seçtiğiniz görseli istek içeriğine ekler. Seçmediğiniz galeri fotoğrafları AI isteğine eklenmez.</li>
+        <li><strong>Yerel kullanım sayacı:</strong> Ücretsiz AI soru kullanım sayacı cihazda <code>SharedPreferences</code> aracılığıyla saklanır. İncelenen kod sürümünde sohbet dökümünü geliştiriciye ait bir Firestore veya Cloud Storage alanına yazan bir işlem görülmemiştir. Bu açıklama, Google/Firebase hizmetlerinin kendi teknik kayıt veya saklama süreçleri hakkında bir taahhüt değildir.</li>
+        <li><strong>Gönderim tercihi:</strong> AI özelliği isteğe bağlıdır. AI kullanmamanız, uygulamanın AI dışındaki bölümlerine erişiminizi engellemez. AI içeriği üçüncü taraf hizmete gönderilmeden önce uygulama içinde ayrıca açık bilgilendirme ve izin adımı sunulmalıdır; bu izin Apple ile giriş yapılmasından veya bu politikayı okumuş olmaktan ayrı bir işlemdir.</li>
+      </ul>
+      <h2>2. İNTERNET BAĞLANTISI VE ÜÇÜNCÜ TARAF İÇERİK SERVİSLERİ</h2>
+      <p>Uygulama, kutsal metinleri ve sesli Kur'ân tilavetlerini getirmek için güvenli <code>HTTPS</code> bağlantıları üzerinden aşağıdaki hizmetlere istek gönderir:</p>
+      <ul>
+        <li><strong>AlQuran Cloud ve Islamic Network CDN:</strong> Kur'ân-ı Kerîm Arapça metinleri, Türkçe meali ve sesli MP3 tilavet akışı.</li>
+        <li><strong>GetBible ve Bolls.life API:</strong> Türkçe Kutsal Kitap (Tevrat ve İncil) metinleri.</li>
+        <li><strong>Google Fonts:</strong> Arayüz yazı tiplerinin alınması.</li>
+      </ul>
+      <p>Bu servislerin sunucuları, standart ağ iletişimi kapsamında IP adresi ve bağlantı/istek bilgilerini görebilir. Bu hizmetlerin kendi veri işleme uygulamaları ilgili sağlayıcıların gizlilik koşullarına tabidir.</p>
+      <h3>Firebase ve Google AI hizmetleri</h3>
+      <ul>
+        <li><strong>Firebase Authentication:</strong> AI özelliği için Apple ile giriş oturumunu yönetir.</li>
+        <li><strong>Firebase App Check:</strong> AI hizmetine yönelik isteklerin uygulama kaynaklı olup olmadığını denetlemeye yardımcı olan güvenlik katmanıdır.</li>
+        <li><strong>Firebase AI Logic ve Google Gemini:</strong> Kullanıcının AI asistanına gönderdiği soru metni, isteğe bağlı görsel ve yanıt için gerekli sohbet bağlamı işlenmek üzere Google'ın Gemini hizmetine iletilir.</li>
+      </ul>
+      <p>AI istekleri sırasında IP adresi, bağlantı bilgileri ve hizmetin güvenli çalışması için gerekli teknik veriler de ilgili altyapı sağlayıcıları tarafından işlenebilir. Veriler, Google/Firebase'in ilgili şartları, geliştiricinin hizmet sağlayıcıyla yürürlükteki yazılı düzenlemesi ve uygulanabilir mevzuat kapsamında işlenir. Sağlayıcıların saklama, güvenlik incelemesi ve veri işleme koşulları zamanla veya kullanılan hizmet planına göre değişebilir. Huzur, sağlayıcıların kontrolündeki saklama süreleri veya işlemleri hakkında bağımsız bir garanti vermez.</p>
+      <p>Sağlayıcıların güncel açıklamaları için <a href="https://firebase.google.com/docs/ai-logic" target="_blank" rel="noopener noreferrer">Firebase AI Logic belgelerini</a>, <a href="https://ai.google.dev/gemini-api/terms" target="_blank" rel="noopener noreferrer">Gemini API koşullarını</a> ve <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Google Gizlilik Politikası'nı</a> inceleyebilirsiniz.</p>
       <h2>3. UYGULAMA İÇİ SATIN ALIMLAR (HUZUR ÖZEL ABONELİKLERİ)</h2>
       <ul>
         <li>Uygulama içindeki <strong>"Huzur Özel"</strong> (Aylık Plan, Yıllık Plan veya Ömür Boyu Tam Erişim) satın alımları doğrudan <strong>Apple App Store (StoreKit)</strong> resmi altyapısı üzerinden gerçekleştirilir.</li>
         <li>Kredi kartı, banka kartı, Apple Pay veya fatura bilgileriniz <strong>Huzur veya Geliştirici tarafından kesinlikle görülmez, işlenmez ve saklanmaz.</strong> Tüm finansal işlemler Apple Inc.'in kendi yüksek güvenlik ve gizlilik standartlarına tabidir.</li>
       </ul>
-      <h2>4. REKLAM, TAKİP VE ÜÇÜNCÜ TARAF ANALİTİK YOKTUR (ZERO TRACKING)</h2>
+      <h2>4. REKLAM VE REKLAM AMAÇLI TAKİP</h2>
       <ul>
-        <li><strong>Huzur</strong> içerisinde hiçbir üçüncü taraf reklam ağı (AdMob, Meta Audience Network vb.) bulunmamaktadır. İbadet ve okuma deneyiminiz reklamlarla kesintiye uğratılmaz.</li>
-        <li>Kullanıcı davranışlarını izleyen, profilleyen veya veri simsarlarına satan hiçbir takip kodu (IDFA / App Tracking Transparency) <strong>kullanılmamaktadır.</strong></li>
+        <li>Huzur'da üçüncü taraf reklam ağı veya reklam gösterimi bulunmaz.</li>
+        <li>Firebase Authentication, Firebase App Check ve Firebase AI Logic, açıklanan giriş, güvenlik ve AI işlevlerini sunmak için kullanılan hizmetlerdir. Bu hizmetlerin güvenlik ve teknik işletim amacıyla işleyebileceği veriler, reklam amaçlı takip olmadığı varsayımıyla gizlilik açıklamasından çıkarılmamıştır; ilgili sağlayıcı koşulları geçerlidir.</li>
+        <li>Bu politika, uygulamanın ileride ekleyebileceği yeni SDK, analitik veya reklam hizmetlerini kapsıyor sayılmaz. Böyle bir değişiklik yapılırsa politika güncellenir ve gerekli izinler alınır.</li>
       </ul>
-      <h2>5. ÇOCUKLARIN GİZLİLİĞİ</h2>
-      <p>Uygulamamız genel izleyici ve her yaştan kullanıcı (4+) için uygundur. 13 yaşın altındaki çocuklar dahil hiçbir kullanıcıdan bilerek veya dolaylı olarak kişisel veri toplamayız.</p>
-      <h2>6. KULLANICI HAKLARI VE VERİ SİLME</h2>
-      <p>Uygulama hiçbir uzak sunucuda kişisel veri veya kullanıcı hesabı tutmadığı için, tüm verilerinizin kontrolü doğrudan sizin elinizdedir:</p>
-      <ul>
-        <li>Uygulama içindeki sayaç ve hatim sıfırlama butonlarıyla yerel verilerinizi dilediğiniz an sıfırlayabilirsiniz.</li>
-        <li>Uygulamayı cihazınızdan kaldırdığınızda (Uninstall), cihaz içinde tutulan tüm veritabanı, önbellek ve tercihler anında ve kalıcı olarak silinir.</li>
-      </ul>
+      <h2>5. YAŞ UYGUNLUĞU VE ÇOCUKLARIN GİZLİLİĞİ</h2>
+      <p>Huzur'un mağaza yaş derecelendirmesi, her bir üçüncü taraf hizmetin kendi kullanım koşullarından ayrıdır. Huzur Dini Asistanı'nın kullanılabilirliği; geliştiricinin Google ile yürürlükte bulunan yazılı hizmet düzenlemesinde izin verilen kapsam, ilgili mağaza kuralları ve kullanıcının bulunduğu yerde geçerli mevzuat birlikte değerlendirilerek belirlenir. Bu politika, herhangi bir sağlayıcının yaş veya uygunluk şartlarını ortadan kaldırmaz. Geliştirici, bu koşulları karşılamayan kullanıcılara AI hizmetini sunmamalıdır.</p>
+      <p>Apple ile giriş akışında uygulama e-posta ve ad kapsamlarını ister; doğum tarihi bu akışta istenmez. Kullanıcıların AI asistanına kendilerine veya başkalarına ait hassas kişisel bilgileri göndermemeleri tavsiye edilir.</p>
+      <h2>6. VERİ SAKLAMA, HESAP SİLME VE KULLANICI HAKLARI</h2>
+      <h3>A. Cihazda saklanan veriler</h3>
+      <p>Favoriler, sayaçlar, tercihler ve AI ücretsiz kullanım sayacı gibi yerel veriler cihazda saklanır. Uygulamayı kaldırmak cihazdaki yerel uygulama verilerini kaldırabilir; ancak bu işlem Firebase Authentication üzerinde oluşturulmuş AI giriş hesabını veya Google/Firebase gibi sağlayıcıların kendi sistemlerindeki kayıtları kendiliğinden silmez.</p>
+      <h3>B. Apple ile giriş hesabının silinmesi</h3>
+      <p>AI özelliği için Firebase Authentication üzerinde bir kullanıcı hesabı/kimliği oluşturulabilir. Hesabınızın ve geliştiricinin kontrolündeki ilişkili verilerin silinmesini talep etmek için <a href="mailto:halilibrahimcebeci0@icloud.com">halilibrahimcebeci0@icloud.com</a> adresine başvurabilirsiniz. Talep, hesap sahibinin doğrulanmasının ardından makul süre içinde işleme alınır. Geliştiricinin kontrolündeki Firebase Authentication hesabı ve silinmesi gereken ilişkili kayıtlar silinir; yasal olarak saklanması gereken kayıtlar yalnızca zorunlu süre ve amaçla tutulabilir.</p>
+      <p>Google, Apple ve diğer hizmet sağlayıcıların kendi sistemlerinde tuttukları teknik kayıtlar, ilgili sağlayıcının kendi silme ve saklama kurallarına tabidir. Uygulamayı kaldırmak bu sağlayıcılardaki verilerin silindiği anlamına gelmez.</p>
+      <h3>C. AI verileri ve kullanıcı tercihleri</h3>
+      <p>AI asistanına gönderdiğiniz soru ve görseller, yanıt oluşturulması için ilgili sağlayıcıya iletilir. Gönderilmiş bir isteğin üçüncü taraf sistemlerdeki işlenmesini Huzur uygulamasından geriye dönük olarak durdurmak her zaman mümkün olmayabilir. Sağlayıcı tarafındaki silme veya saklama talepleri, ilgili sağlayıcının koşulları çerçevesinde değerlendirilir. Daha fazla bilgi veya veri talebi için yukarıdaki e-posta adresinden geliştiriciyle iletişime geçebilirsiniz.</p>
+      <p><strong>Önemli:</strong> Apple App Store'da hesap oluşturmayı destekleyen uygulamalar için hesap silmenin uygulama içinden başlatılabilmesi gerekir. Yalnızca e-posta desteği bu gerekliliğin yerini tutmaz; uygulama içi hesap silme akışı ayrıca sağlanmalıdır.</p>
       <h2>7. İLETİŞİM</h2>
       <p>Bu Gizlilik Politikası veya uygulamamızın veri güvenliği uygulamaları hakkında her türlü soru, görüş ve talebiniz için doğrudan Geliştirici ile iletişime geçebilirsiniz:</p>
       <ul>
