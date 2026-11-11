@@ -234,7 +234,7 @@ jobs:
             archive \
             DART_OBFUSCATION=true \
             EXTRA_GEN_SNAPSHOT_OPTIONS=--strip \
-            SPLIT_DEBUG_INFO="$GITHUB_WORKSPACE/build/huzur-symbols/15.4" \
+            SPLIT_DEBUG_INFO="$GITHUB_WORKSPACE/build/huzur-symbols/15.5" \
             DEVELOPMENT_TEAM="$TEAM_ID"
 
           APP_PATH="$ARCHIVE_PATH/Products/Applications/Runner.app"
@@ -256,7 +256,7 @@ jobs:
           WIDGET_BUILD=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$WIDGET_PATH/Info.plist")
 
           test "$APP_VERSION" = "1.0.0"
-          test "$APP_BUILD" = "15.4"
+          test "$APP_BUILD" = "15.5"
           test "$WIDGET_VERSION" = "$APP_VERSION"
           test "$WIDGET_BUILD" = "$APP_BUILD"
 
@@ -310,10 +310,10 @@ jobs:
           IPA_SOURCE="$(find "$EXPORT_PATH" -maxdepth 1 -name '*.ipa' -print -quit)"
           test -n "$IPA_SOURCE"
 
-          cp "$IPA_SOURCE" output/Huzur-1.0.0-15.4.ipa
-          unzip -t output/Huzur-1.0.0-15.4.ipa >/dev/null
-          shasum -a 256 output/Huzur-1.0.0-15.4.ipa
-          ls -lh output/Huzur-1.0.0-15.4.ipa
+          cp "$IPA_SOURCE" output/Huzur-1.0.0-15.5.ipa
+          unzip -t output/Huzur-1.0.0-15.5.ipa >/dev/null
+          shasum -a 256 output/Huzur-1.0.0-15.5.ipa
+          ls -lh output/Huzur-1.0.0-15.5.ipa
 
       - name: Encrypt signed IPA for public artifact storage
         env:
@@ -321,8 +321,8 @@ jobs:
         run: |
           set -euo pipefail
 
-          IPA_SOURCE="output/Huzur-1.0.0-15.4.ipa"
-          IPA_ENCRYPTED="$RUNNER_TEMP/Huzur-1.0.0-15.4.ipa.enc"
+          IPA_SOURCE="output/Huzur-1.0.0-15.5.ipa"
+          IPA_ENCRYPTED="$RUNNER_TEMP/Huzur-1.0.0-15.5.ipa.enc"
 
           test -s "$IPA_SOURCE"
           test -n "$HUZUR_IPA_ENCRYPTION_KEY"
@@ -339,7 +339,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: Huzur-AppStore-IPA-Encrypted
-          path: ${{ runner.temp }}/Huzur-1.0.0-15.4.ipa.enc
+          path: ${{ runner.temp }}/Huzur-1.0.0-15.5.ipa.enc
           if-no-files-found: error
           retention-days: 7
 
@@ -350,12 +350,12 @@ jobs:
         run: |
           set -euo pipefail
 
-          SYMBOL_DIR="$GITHUB_WORKSPACE/build/huzur-symbols/15.4"
+          SYMBOL_DIR="$GITHUB_WORKSPACE/build/huzur-symbols/15.5"
           test -s "$SYMBOL_DIR/app.ios-arm64.symbols"
           test -n "$HUZUR_SYMBOLS_ENCRYPTION_KEY"
 
-          SYMBOL_ARCHIVE="$RUNNER_TEMP/Huzur-15.4-Dart-Symbols.tar.gz"
-          ENCRYPTED_ARCHIVE="$RUNNER_TEMP/Huzur-15.4-Dart-Symbols.tar.gz.enc"
+          SYMBOL_ARCHIVE="$RUNNER_TEMP/Huzur-15.5-Dart-Symbols.tar.gz"
+          ENCRYPTED_ARCHIVE="$RUNNER_TEMP/Huzur-15.5-Dart-Symbols.tar.gz.enc"
 
           tar -czf "$SYMBOL_ARCHIVE" -C "$SYMBOL_DIR" .
           openssl enc -aes-256-cbc -salt -pbkdf2 -iter 600000 \
@@ -370,8 +370,8 @@ jobs:
       - name: Upload encrypted Dart symbols
         uses: actions/upload-artifact@v7
         with:
-          name: Huzur-15.4-Dart-Symbols-Encrypted
-          path: ${{ runner.temp }}/Huzur-15.4-Dart-Symbols.tar.gz.enc
+          name: Huzur-15.5-Dart-Symbols-Encrypted
+          path: ${{ runner.temp }}/Huzur-15.5-Dart-Symbols.tar.gz.enc
           if-no-files-found: error
           retention-days: 90
 
@@ -401,7 +401,7 @@ jobs:
 
           openssl pkey -in "$KEY_FILE" -noout
 
-          IPA_PATH="output/Huzur-1.0.0-15.4.ipa"
+          IPA_PATH="output/Huzur-1.0.0-15.5.ipa"
           test -s "$IPA_PATH"
 
           echo "Uploading Huzur IPA to App Store Connect..."
