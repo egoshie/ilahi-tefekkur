@@ -12,6 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/services/pricing_and_premium_service.dart';
 import '../../core/theme/glass_container.dart';
 import '../paywall/liquid_glass_paywall.dart';
+import 'ai_privacy_consent.dart';
 
 const _quotaKey = 'huzur_dini_asistan_free_questions_v1';
 const _freeQuestionLimit = 3;
@@ -97,6 +98,7 @@ class _AiHuzurScreenState extends ConsumerState<AiHuzurScreen> {
   ChatSession? _chat;
   XFile? _selectedImage;
   bool _sending = false;
+  bool _consentPending = false;
   bool _usageReady = false;
   int _freeQuestionCount = 0;
 
@@ -161,7 +163,7 @@ class _AiHuzurScreenState extends ConsumerState<AiHuzurScreen> {
   }
 
   Future<void> _pickImage() async {
-    if (_sending) return;
+    if (_sending || _consentPending) return;
 
     try {
       final image = await _picker.pickImage(
@@ -191,7 +193,10 @@ class _AiHuzurScreenState extends ConsumerState<AiHuzurScreen> {
     final question = _input.text.trim();
     final image = _selectedImage;
 
-    if (!mounted || _sending || (question.isEmpty && image == null)) {
+    if (!mounted ||
+        _sending ||
+        _consentPending ||
+        (question.isEmpty && image == null)) {
       return;
     }
 
@@ -211,6 +216,38 @@ class _AiHuzurScreenState extends ConsumerState<AiHuzurScreen> {
       _showMessage(
         'Huzur Dini Asistanı için önce Apple ile giriş yapmalısın.',
       );
+      return;
+    }
+
+    var consentGranted = false;
+    setState(() => _consentPending = true);
+
+    try {
+      consentGranted = await AiPrivacyConsent.ensureConsent(
+        context,
+        signedInUser!.uid,
+      );
+    } catch (_) {
+      _showMessage(
+        'Gizlilik izni kontrol edilemedi. İnternet bağlantını kontrol et.',
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _consentPending = false);
+      }
+    }
+
+    if (!mounted || !consentGranted) return;
+
+    final activeUser = FirebaseAuth.instance.currentUser;
+    final sessionStillValid = activeUser != null &&
+        activeUser.uid == signedInUser!.uid &&
+        activeUser.providerData.any(
+          (info) => info.providerId == 'apple.com',
+        );
+
+    if (!sessionStillValid) {
+      _showMessage('Oturumun sona erdi. Yeniden Apple ile giriş yap.');
       return;
     }
 
@@ -434,7 +471,7 @@ class _AiHuzurScreenState extends ConsumerState<AiHuzurScreen> {
   }
 
   Future<void> _sendSuggestedQuestion(String prompt) async {
-    if (_sending) return;
+    if (_sending || _consentPending) return;
     _input.text = prompt;
     await _send();
   }
@@ -787,7 +824,8 @@ class _AiHuzurScreenState extends ConsumerState<AiHuzurScreen> {
                       children: [
                         IconButton(
                           tooltip: 'Galeriden görsel ekle',
-                          onPressed: _sending ? null : _pickImage,
+                          onPressed:
+                              _sending || _consentPending ? null : _pickImage,
                           icon: const Icon(
                             Icons.add_rounded,
                             color: Color(0xFFFFA21A),
@@ -797,7 +835,7 @@ class _AiHuzurScreenState extends ConsumerState<AiHuzurScreen> {
                         Expanded(
                           child: TextField(
                             controller: _input,
-                            enabled: !_sending,
+                            enabled: !_sending && !_consentPending,
                             minLines: 1,
                             maxLines: 4,
                             maxLength: 500,
@@ -833,7 +871,7 @@ class _AiHuzurScreenState extends ConsumerState<AiHuzurScreen> {
                           ),
                         ),
                         IconButton(
-                          onPressed: _sending ? null : _send,
+                          onPressed: _sending || _consentPending ? null : _send,
                           icon: Icon(
                             Icons.arrow_upward_rounded,
                             color: _sending

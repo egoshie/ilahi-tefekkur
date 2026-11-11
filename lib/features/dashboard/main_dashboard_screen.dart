@@ -15,6 +15,7 @@ import '../../core/theme/liquid_glass_theme.dart';
 import '../../core/theme/story_share_sheet.dart';
 import '../esma/esmaul_husna_sheet.dart';
 import '../ai_huzur/ai_huzur_entry_screen.dart';
+import '../profile/profile_screen.dart';
 import '../paywall/liquid_glass_paywall.dart';
 
 class MainDashboardScreen extends ConsumerStatefulWidget {
@@ -473,6 +474,22 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                     ),
                   ),
                 ],
+              ),
+            ),
+            const SizedBox(width: 4),
+            GlassContainer(
+              borderRadius: 16,
+              padding: const EdgeInsets.all(10),
+              goldAccentBorder: true,
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const ProfileScreen(),
+                ),
+              ),
+              child: const Icon(
+                Icons.person_outline_rounded,
+                color: Color(0xFFFFC15A),
+                size: 20,
               ),
             ),
           ],
