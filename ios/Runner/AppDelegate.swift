@@ -25,10 +25,7 @@ class PhotoSaveCallbackTarget: NSObject {
     private var remoteCommandsConfigured = false
 
 #if canImport(FoundationModels)
-    @available(iOS 26.0, *)
-    private var huzurLocalAISession: LanguageModelSession?
-
-    @available(iOS 26.0, *)
+    private var huzurLocalAISession: Any?
     private var huzurLocalAIInstructions: String?
 #endif
 
@@ -124,14 +121,18 @@ WidgetCenter.shared.reloadAllTimelines()
                             }
 
                             do {
-                                if self.huzurLocalAISession == nil ||
+                                let cachedSession =
+                                    self.huzurLocalAISession as? LanguageModelSession
+
+                                if cachedSession == nil ||
                                     self.huzurLocalAIInstructions != instructions {
                                     self.huzurLocalAISession =
                                         LanguageModelSession(instructions: instructions)
                                     self.huzurLocalAIInstructions = instructions
                                 }
 
-                                guard let session = self.huzurLocalAISession else {
+                                guard let session =
+                                    self.huzurLocalAISession as? LanguageModelSession else {
                                     throw NSError(
                                         domain: "HuzurLocalAI",
                                         code: 1,
