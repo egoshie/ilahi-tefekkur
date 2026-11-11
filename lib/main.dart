@@ -45,27 +45,25 @@ class HuzurApp extends ConsumerWidget {
     final prayer = ref.watch(prayerEngineProvider);
     final mode = ref.watch(huzurThemeModeProvider);
     final darkPalette = LiquidGlassPalette.forPeriod(prayer.activePeriod);
-    final lightPalette = LiquidGlassPalette.forPeriod(
-      prayer.activePeriod,
-      brightness: Brightness.light,
-    );
-
+    final coalPalette = LiquidGlassPalette.coalForPeriod(prayer.activePeriod);
     return MaterialApp(
       title: 'Huzur',
       debugShowCheckedModeBanner: false,
-      theme: LiquidGlassPalette.buildTheme(lightPalette),
+      theme: LiquidGlassPalette.buildTheme(coalPalette),
       darkTheme: LiquidGlassPalette.buildTheme(darkPalette),
       themeMode: mode,
       home: Builder(
         builder: (context) {
-          final dark = Theme.of(context).brightness == Brightness.dark;
-          final palette = dark ? darkPalette : lightPalette;
+          final platformDark =
+              MediaQuery.platformBrightnessOf(context) == Brightness.dark;
+          final useAmber = mode == ThemeMode.dark ||
+              (mode == ThemeMode.system && platformDark);
+          final palette = useAmber ? darkPalette : coalPalette;
           return AnnotatedRegion<SystemUiOverlayStyle>(
-            value: SystemUiOverlayStyle(
+            value: const SystemUiOverlayStyle(
               statusBarColor: Colors.transparent,
-              statusBarIconBrightness:
-                  dark ? Brightness.light : Brightness.dark,
-              statusBarBrightness: dark ? Brightness.dark : Brightness.light,
+              statusBarIconBrightness: Brightness.light,
+              statusBarBrightness: Brightness.dark,
             ),
             child: LiquidRootShell(palette: palette),
           );

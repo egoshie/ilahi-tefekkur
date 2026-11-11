@@ -130,6 +130,22 @@ class LiquidGlassPalette {
     );
   }
 
+  static LiquidGlassPalette coalForPeriod(PrayerPeriod period) {
+    final dark = _darkForPeriod(period);
+    return LiquidGlassPalette(
+      deepCosmicStart: const Color(0xFF171A1E),
+      deepCosmicMid: const Color(0xFF252B32),
+      deepCosmicEnd: const Color(0xFF111418),
+      auroraPrimary: const Color(0xFFFFB52E),
+      auroraSecondary: const Color(0xFFFFD27A),
+      crystalAccent: const Color(0xFFFFC15A),
+      specularHighlight: const Color(0xFFE7EDF2),
+      periodTitle: dark.periodTitle,
+      spiritualSubtitle: dark.spiritualSubtitle,
+      brightness: Brightness.dark,
+    );
+  }
+
   static ThemeData buildTheme(LiquidGlassPalette palette) {
     final isDark = palette.brightness == Brightness.dark;
     final foreground = isDark ? Colors.white : const Color(0xFF18372C);

@@ -329,8 +329,8 @@ class _AiHuzurScreenState extends ConsumerState<AiHuzurScreen> {
       answerIndex = _messages.length - 1;
       _scrollToBottom();
 
-      // 4. Gemini isteğini hazırla.
-      stage = 'Gemini isteği hazırlama';
+      // 4. Yapay zekâ isteğini hazırla.
+      stage = 'Yapay zekâ isteği hazırlama';
 
       Content request;
 
@@ -360,8 +360,8 @@ class _AiHuzurScreenState extends ConsumerState<AiHuzurScreen> {
         request = Content.text(question);
       }
 
-      // 5. Tek yanıt motoru: Gemini.
-      stage = 'Gemini yanıt akışı';
+      // 5. Tek yanıt motoru: Huzur Yapay Zekâ.
+      stage = 'Yapay zekâ yanıt akışı';
 
       final responseStream = _session
           .sendMessageStream(request)
@@ -390,7 +390,7 @@ class _AiHuzurScreenState extends ConsumerState<AiHuzurScreen> {
           setState(() {
             _messages[answerIndex].isTyping = false;
             _messages[answerIndex].text =
-                'Gemini şu anda yanıt oluşturamadı. Lütfen tekrar dene.';
+                'Yapay zekâ şu anda yanıt oluşturamadı. Lütfen tekrar dene.';
           });
         } else {
           completed = true;
@@ -407,13 +407,13 @@ class _AiHuzurScreenState extends ConsumerState<AiHuzurScreen> {
 
             if (message.text.trim().isNotEmpty) {
               message.text += error is TimeoutException
-                  ? '\n\nGemini yanıt akışı 60 saniye boyunca '
+                  ? '\n\nYapay zekâ yanıt akışı 60 saniye boyunca '
                       'yeni veri göndermedi. Bu yanıt kısmi olabilir.'
                   : '\n\nYanıt tamamlanamadı. Lütfen tekrar dene.';
             } else {
               message.text = error is TimeoutException
                   ? 'Yanıt bekleme süresi doldu. Lütfen tekrar dene.'
-                  : 'Gemini bağlantısı kurulamadı. Lütfen tekrar dene.';
+                  : 'Yapay zekâ bağlantısı kurulamadı. Lütfen tekrar dene.';
             }
           });
         } else {

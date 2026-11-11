@@ -104,7 +104,7 @@ class _AiGeminiConsentDialogState extends State<_AiGeminiConsentDialog> {
                 'Huzur Dini Asistanı yanıt oluşturabilmek için '
                 'gönderdiğin soru metnini, özellikle seçtiğin görseli '
                 've yanıt için gerekli sohbet bağlamını Firebase AI Logic '
-                'aracılığıyla Google Gemini hizmetine iletir.',
+                'aracılığıyla Google tarafından sunulan yapay zekâ hizmetine iletir.',
                 style: TextStyle(
                   color: Colors.white70,
                   fontSize: 13,

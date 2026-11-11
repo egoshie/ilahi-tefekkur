@@ -138,7 +138,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             style: TextStyle(color: Colors.white),
           ),
           content: const Text(
-            'Firebase hesabın ve geliştiricinin kontrolündeki '
+            'Huzur hesabın ve geliştiricinin kontrolündeki '
             'hesap verilerin silinecek. Apple ile giriş yetkin de '
             'iptal edilecek. Bu işlem Huzur Özel aboneliğini iptal etmez. '
             'Otomatik yenilenen aboneliğin varsa Apple hesabının '
@@ -404,7 +404,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 8),
               const Text(
                 'Soru metninin, seçtiğin görsellerin ve gerekli sohbet '
-                'bağlamının Google Gemini hizmetine aktarılmasına '
+                'bağlamının Google tarafından sunulan yapay zekâ hizmetine aktarılmasına '
                 'verdiğin izni buradan yönetebilirsin.',
                 style: TextStyle(
                   color: Colors.white70,
@@ -477,7 +477,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 subtitle: const Text(
-                  'Firebase hesabını siler ve Apple giriş yetkisini iptal eder.',
+                  'Huzur hesabını ve ilişkili giriş bilgilerini kalıcı olarak siler.',
                   style: TextStyle(
                     color: Colors.white54,
                     fontSize: 11,
