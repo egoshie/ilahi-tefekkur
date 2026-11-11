@@ -580,7 +580,9 @@ class _AiHuzurScreenState extends ConsumerState<AiHuzurScreen> {
   Widget build(BuildContext context) {
     final premium = ref.watch(premiumServiceProvider);
 
-    final quotaLabel = premium.isLoading || !_usageReady
+    final isAccessReady = !premium.isLoading && _usageReady;
+
+    final quotaLabel = !isAccessReady
         ? 'Erişim kontrol ediliyor…'
         : premium.isPremium
             ? 'Huzur Özel • Sınırsız soru'
@@ -629,13 +631,18 @@ class _AiHuzurScreenState extends ConsumerState<AiHuzurScreen> {
                       ],
                     ),
                   ),
-                  const Icon(
+                  Icon(
                     Icons.circle,
-                    color: Color(0xFFFFA21A),
+                    color: isAccessReady
+                        ? const Color(0xFF4BD6A7)
+                        : const Color(0xFFFFA21A),
                     size: 8,
                   ),
                   const SizedBox(width: 5),
-                  const Text('Hazır', style: TextStyle(fontSize: 10)),
+                  Text(
+                    isAccessReady ? 'Hazır' : 'Kontrol',
+                    style: const TextStyle(fontSize: 10),
+                  ),
                 ],
               ),
             ),

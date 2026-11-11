@@ -106,11 +106,24 @@ class PremiumServiceNotifier extends StateNotifier<PremiumState> {
   }
 
   Future<bool> ensurePremiumAccess() async {
+    if (!state.isLoading) return state.isPremium;
+
     try {
-      await _initialization;
+      await _initialization.timeout(const Duration(seconds: 15));
+      return state.isPremium;
+    } on TimeoutException {
+      state = state.copyWith(
+        isLoading: false,
+        statusMessage:
+            'Apple erişimi zamanında doğrulanamadı. Tekrar kontrol edilecek.',
+      );
       return state.isPremium;
     } catch (_) {
-      return false;
+      state = state.copyWith(
+        isLoading: false,
+        statusMessage: 'Apple erişimi doğrulanamadı.',
+      );
+      return state.isPremium;
     }
   }
 

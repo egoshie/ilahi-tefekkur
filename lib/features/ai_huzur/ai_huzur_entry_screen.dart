@@ -16,6 +16,14 @@ class AiHuzurEntryScreen extends StatefulWidget {
 }
 
 class _AiHuzurEntryScreenState extends State<AiHuzurEntryScreen> {
+  late final Stream<User?> _authStateChanges;
+
+  @override
+  void initState() {
+    super.initState();
+    _authStateChanges = FirebaseAuth.instance.authStateChanges();
+  }
+
   bool _signingIn = false;
   String? _errorMessage;
 
@@ -220,7 +228,7 @@ class _AiHuzurEntryScreenState extends State<AiHuzurEntryScreen> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
+      stream: _authStateChanges,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
