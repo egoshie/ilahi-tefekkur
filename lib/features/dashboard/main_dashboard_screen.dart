@@ -16,6 +16,7 @@ import '../../core/theme/story_share_sheet.dart';
 import '../esma/esmaul_husna_sheet.dart';
 import '../ai_huzur/ai_huzur_entry_screen.dart';
 import '../profile/profile_screen.dart';
+import '../world/huzur_world_screen.dart';
 import '../paywall/liquid_glass_paywall.dart';
 
 class MainDashboardScreen extends ConsumerStatefulWidget {
@@ -997,6 +998,55 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
             ),
           ],
         ),
+        GlassContainer(
+          borderRadius: 24,
+          emeraldGlow: true,
+          goldAccentBorder: true,
+          padding: const EdgeInsets.all(16),
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => HuzurWorldScreen(onSwitchTab: widget.onSwitchTab),
+            ),
+          ),
+          child: const Row(
+            children: [
+              Icon(
+                Icons.public_rounded,
+                color: Color(0xFFFFC66D),
+                size: 28,
+              ),
+              SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Huzur Dünya',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Dünya zikir ağı ve dua paylaşımı',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        color: Colors.white70,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                color: Color(0xFFFFE082),
+                size: 16,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
         GlassContainer(
           borderRadius: 24,
           emeraldGlow: true,

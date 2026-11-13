@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -124,6 +126,97 @@ class PremiumServiceNotifier extends StateNotifier<PremiumState> {
         statusMessage: 'Apple erişimi doğrulanamadı.',
       );
       return state.isPremium;
+    }
+  }
+
+  /// Apple'ın StoreKit 2 imzalı işlemini Firebase sunucusunda doğrular.
+  /// Bu metot, Premium gerektiren bulut özelliklerinden önce çağrılmalıdır.
+  Future<bool> verifyPremiumWithServer() async {
+    if (!Platform.isIOS || !await ensurePremiumAccess()) {
+      return false;
+    }
+
+    if (FirebaseAuth.instance.currentUser == null) {
+      state = state.copyWith(
+        statusMessage:
+            'Bulut Premium doğrulaması için Apple hesabınla giriş yapmalısın.',
+      );
+      return false;
+    }
+
+    try {
+      final transactions = await SK2Transaction.currentEntitlements();
+
+      final candidates = transactions
+          .where((transaction) => _productIds.contains(transaction.productId))
+          .toList();
+
+      candidates.sort((a, b) {
+        if (a.productId == kLifetimeId && b.productId != kLifetimeId) {
+          return -1;
+        }
+        if (b.productId == kLifetimeId && a.productId != kLifetimeId) {
+          return 1;
+        }
+        return _purchaseDateMillis(b).compareTo(_purchaseDateMillis(a));
+      });
+
+      if (candidates.isEmpty) {
+        state = state.copyWith(
+          statusMessage:
+              'Apple hesabında aktif Premium satın alımı bulunamadı.',
+        );
+        return false;
+      }
+
+      final callable = FirebaseFunctions.instanceFor(
+        region: 'europe-west3',
+      ).httpsCallable(
+        'verifyPremium',
+        options: HttpsCallableOptions(
+          timeout: const Duration(seconds: 60),
+          limitedUseAppCheckToken: true,
+        ),
+      );
+
+      for (final transaction in candidates) {
+        final signedTransaction = transaction.receiptData;
+        if (signedTransaction == null || signedTransaction.isEmpty) {
+          continue;
+        }
+
+        final response = await callable.call(<String, dynamic>{
+          'signedTransaction': signedTransaction,
+        });
+
+        final data = Map<String, dynamic>.from(response.data as Map);
+        final verifiedProduct = data['productId'] as String?;
+
+        if (data['isPremium'] == true &&
+            verifiedProduct != null &&
+            _productIds.contains(verifiedProduct)) {
+          state = state.copyWith(
+            statusMessage:
+                'Premium erişimin Apple ve Huzur sunucusunda doğrulandı.',
+          );
+          return true;
+        }
+      }
+
+      state = state.copyWith(
+        statusMessage: 'Apple sunucusunda aktif Premium yetkisi doğrulanamadı.',
+      );
+      return false;
+    } on FirebaseFunctionsException catch (error) {
+      state = state.copyWith(
+        statusMessage: 'Sunucu Premium doğrulaması başarısız (${error.code}).',
+      );
+      return false;
+    } catch (_) {
+      state = state.copyWith(
+        statusMessage: 'Premium sunucu doğrulaması şu anda tamamlanamadı.',
+      );
+      return false;
     }
   }
 

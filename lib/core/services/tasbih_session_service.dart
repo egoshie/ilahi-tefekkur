@@ -1,11 +1,15 @@
+import "dart:async";
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import "dhikr_sync_service.dart";
+import "prayer_service.dart";
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/v42_models.dart';
 import 'database_seeder.dart';
 import 'user_progress_service.dart';
 
 class TasbihSessionState {
-  final List< TasbihRecord > records;
+  final List<TasbihRecord> records;
   final int activeIndex;
   final bool hapticEnabled;
   final int todayTotalCount;
@@ -24,7 +28,7 @@ class TasbihSessionState {
   }
 
   TasbihSessionState copyWith({
-    List< TasbihRecord >? records,
+    List<TasbihRecord>? records,
     int? activeIndex,
     bool? hapticEnabled,
     int? todayTotalCount,
@@ -39,24 +43,26 @@ class TasbihSessionState {
 }
 
 final tasbihSessionProvider =
-    StateNotifierProvider< TasbihSessionNotifier, TasbihSessionState >((ref) {
+    StateNotifierProvider<TasbihSessionNotifier, TasbihSessionState>((ref) {
   return TasbihSessionNotifier(ref);
 });
 
-class TasbihSessionNotifier extends StateNotifier< TasbihSessionState > {
+class TasbihSessionNotifier extends StateNotifier<TasbihSessionState> {
   final Ref _ref;
+  late final DhikrSyncService _dhikrSyncService;
 
   TasbihSessionNotifier(this._ref) : super(const TasbihSessionState()) {
+    _dhikrSyncService = DhikrSyncService();
     loadSession();
   }
 
-  Future< void > loadSession() async {
+  Future<void> loadSession() async {
     final db = _ref.read(databaseServiceProvider);
     final prefs = await SharedPreferences.getInstance();
     final list = await db.getTasbihRecords();
     final haptic = prefs.getBool('v42_tasbih_haptic') ?? true;
     final savedIdx = prefs.getInt('v42_tasbih_active_idx') ?? 0;
-    final dailyTotal = prefs.getInt('v42_daily_dhikr') ?? 0;
+    final dailyTotal = prefs.getInt(huzurDailyDhikrStorageKey()) ?? 0;
 
     state = state.copyWith(
       records: list,
@@ -64,27 +70,29 @@ class TasbihSessionNotifier extends StateNotifier< TasbihSessionState > {
       hapticEnabled: haptic,
       todayTotalCount: dailyTotal,
     );
+
+    unawaited(_dhikrSyncService.syncPending());
   }
 
-  Future< void > selectIndex(int index) async {
+  Future<void> selectIndex(int index) async {
     if (index < 0 || index >= state.records.length) return;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('v42_tasbih_active_idx', index);
     state = state.copyWith(activeIndex: index);
   }
 
-  Future< void > toggleHaptic(bool enabled) async {
+  Future<void> toggleHaptic(bool enabled) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('v42_tasbih_haptic', enabled);
     state = state.copyWith(hapticEnabled: enabled);
   }
 
-  Future< int > incrementActive() async {
+  Future<int> incrementActive() async {
     final current = state.activeRecord;
     if (current == null) return 0;
 
     final nextCount = current.count + 1;
-    final updatedList = List< TasbihRecord >.from(state.records);
+    final updatedList = List<TasbihRecord>.from(state.records);
     final idx = state.activeIndex.clamp(0, updatedList.length - 1);
     updatedList[idx] = current.copyWith(count: nextCount);
 
@@ -99,24 +107,46 @@ class TasbihSessionNotifier extends StateNotifier< TasbihSessionState > {
           .updateTasbihCount(current.id!, nextCount);
     }
     await _ref.read(userProgressProvider.notifier).incrementDailyDhikr(1);
+
+    state = state.copyWith(
+      todayTotalCount: _ref.read(userProgressProvider).dailyDhikrCount,
+    );
+
+    final worldPrefs = await SharedPreferences.getInstance();
+    final selectedCountryCode =
+        worldPrefs.getString('huzur_world_country_code');
+
+    await _dhikrSyncService.recordDhikr(
+      countryName: selectedCountryCode ??
+          _ref.read(prayerEngineProvider).selectedCity.country,
+    );
+
     return nextCount;
   }
 
-  Future< void > resetActiveCount() async {
+  @override
+  void dispose() {
+    _dhikrSyncService.dispose();
+    super.dispose();
+  }
+
+  Future<void> resetActiveCount() async {
     final current = state.activeRecord;
     if (current == null) return;
 
-    final updatedList = List< TasbihRecord >.from(state.records);
+    final updatedList = List<TasbihRecord>.from(state.records);
     final idx = state.activeIndex.clamp(0, updatedList.length - 1);
     updatedList[idx] = current.copyWith(count: 0);
     state = state.copyWith(records: updatedList);
 
     if (current.id != null) {
-      await _ref.read(databaseServiceProvider).updateTasbihCount(current.id!, 0);
+      await _ref
+          .read(databaseServiceProvider)
+          .updateTasbihCount(current.id!, 0);
     }
   }
 
-  Future< void > startEsmaTarget(EsmaulHusnaItem esma) async {
+  Future<void> startEsmaTarget(EsmaulHusnaItem esma) async {
     final db = _ref.read(databaseServiceProvider);
     final title = "Yâ ${esma.transliteration}";
     final existingIdx = state.records
@@ -139,7 +169,7 @@ class TasbihSessionNotifier extends StateNotifier< TasbihSessionState > {
     );
   }
 
-  Future< void > addCustomDhikr({
+  Future<void> addCustomDhikr({
     required String title,
     required String arabic,
     required int target,
