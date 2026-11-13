@@ -11,7 +11,7 @@ permissions:
 jobs:
   build-ios:
     name: Archive and export signed iOS app
-    runs-on: macos-26-intel
+    runs-on: macos-26
     timeout-minutes: 60
 
     env:
