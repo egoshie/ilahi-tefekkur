@@ -1,17 +1,20 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/services/huzur_api_service.dart';
+import '../../core/services/pricing_and_premium_service.dart';
+import '../paywall/liquid_glass_paywall.dart';
 
-class DuaCommunityPanel extends StatefulWidget {
+class DuaCommunityPanel extends ConsumerStatefulWidget {
   const DuaCommunityPanel({super.key});
 
   @override
-  State<DuaCommunityPanel> createState() => _DuaCommunityPanelState();
+  ConsumerState<DuaCommunityPanel> createState() => _DuaCommunityPanelState();
 }
 
-class _DuaCommunityPanelState extends State<DuaCommunityPanel> {
+class _DuaCommunityPanelState extends ConsumerState<DuaCommunityPanel> {
   static const _gold = Color(0xFFFFCE78);
   static const _turquoise = Color(0xFF75DCCF);
   static const _panel = Color(0xFF121F20);
@@ -24,6 +27,7 @@ class _DuaCommunityPanelState extends State<DuaCommunityPanel> {
 
   bool _loading = true;
   bool _sending = false;
+  bool _checkingPremium = false;
   String? _error;
 
   bool get _signedIn => FirebaseAuth.instance.currentUser != null;
@@ -49,9 +53,8 @@ class _DuaCommunityPanelState extends State<DuaCommunityPanel> {
       if (!mounted) return;
 
       setState(() {
-        _posts = raw
-            .map((item) => Map<String, dynamic>.from(item as Map))
-            .toList();
+        _posts =
+            raw.map((item) => Map<String, dynamic>.from(item as Map)).toList();
         _loading = false;
       });
     } catch (error) {
@@ -74,7 +77,220 @@ class _DuaCommunityPanelState extends State<DuaCommunityPanel> {
     );
   }
 
-  Future<void> _createPost() async {
+  Future<void> _openDuaComposer() async {
+    if (_checkingPremium) return;
+
+    if (!_signedIn) {
+      _message('Dua bırakmak için önce Apple hesabınla giriş yapmalısın.');
+      return;
+    }
+
+    setState(() => _checkingPremium = true);
+
+    try {
+      final premium = ref.read(premiumServiceProvider.notifier);
+
+      // First check the locally verified StoreKit 2 entitlement.
+      final hasAppleEntitlement = await premium.ensurePremiumAccess();
+      if (!mounted) return;
+
+      if (!hasAppleEntitlement) {
+        await LiquidGlassPaywallSheet.show(context);
+        return;
+      }
+
+      // Then ask the existing Firebase callable to verify the signed
+      // StoreKit transaction on the server before opening the composer.
+      final verifiedOnServer = await premium.verifyPremiumWithServer();
+      if (!mounted) return;
+
+      if (!verifiedOnServer) {
+        final message = ref.read(premiumServiceProvider).statusMessage;
+        _message(message ?? 'Premium erişimi sunucuda doğrulanamadı.');
+        return;
+      }
+
+      await showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        useSafeArea: true,
+        backgroundColor: Colors.transparent,
+        barrierColor: Colors.black.withValues(alpha: 0.68),
+        builder: (sheetContext) => _buildComposerSheet(sheetContext),
+      );
+    } catch (error) {
+      _message('Premium kontrolü tamamlanamadı. Tekrar deneyebilirsin.');
+      debugPrint('Huzur Dua Premium kontrolü: $error');
+    } finally {
+      if (mounted) setState(() => _checkingPremium = false);
+    }
+  }
+
+  Widget _buildComposerSheet(BuildContext sheetContext) {
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.viewInsetsOf(sheetContext).bottom,
+      ),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 22),
+        decoration: BoxDecoration(
+          color: const Color(0xFF101A1D),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+          border: Border.all(color: _gold.withValues(alpha: 0.28)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.32),
+              blurRadius: 30,
+              offset: const Offset(0, -8),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 42,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.24),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 22),
+              Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: _gold.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: const Icon(
+                      Icons.volunteer_activism_rounded,
+                      color: _gold,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Dua bırak',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 19,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        SizedBox(height: 3),
+                        Text(
+                          'Gönlünden geçen duayı dünyayla paylaş.',
+                          style: TextStyle(
+                            color: Colors.white60,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _gold.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: _gold.withValues(alpha: 0.25)),
+                    ),
+                    child: const Text(
+                      'HUZUR ÖZEL',
+                      style: TextStyle(
+                        color: _gold,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: _bodyController,
+                autofocus: true,
+                minLines: 5,
+                maxLines: 8,
+                maxLength: 500,
+                textCapitalization: TextCapitalization.sentences,
+                style: const TextStyle(color: Colors.white, fontSize: 15),
+                decoration: InputDecoration(
+                  hintText: 'Duanı buraya yaz...',
+                  hintStyle: const TextStyle(color: Colors.white38),
+                  counterStyle: const TextStyle(color: Colors.white38),
+                  filled: true,
+                  fillColor: Colors.white.withValues(alpha: 0.045),
+                  contentPadding: const EdgeInsets.all(16),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(18),
+                    borderSide: const BorderSide(color: Colors.white12),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(18),
+                    borderSide: const BorderSide(color: Colors.white12),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(18),
+                    borderSide: const BorderSide(color: _gold),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 7),
+              const Text(
+                'Paylaşmadan önce kişisel bilgilerini ve başkalarını tanımlayan '
+                'ayrıntıları eklemediğinden emin ol.',
+                style: TextStyle(
+                    color: Colors.white38, fontSize: 10, height: 1.45),
+              ),
+              const SizedBox(height: 17),
+              FilledButton.icon(
+                onPressed: _sending ? null : () => _createPost(sheetContext),
+                icon: _sending
+                    ? const SizedBox(
+                        width: 17,
+                        height: 17,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Color(0xFF17120A),
+                        ),
+                      )
+                    : const Icon(Icons.send_rounded, size: 17),
+                label: Text(_sending ? 'Paylaşılıyor...' : 'Duanı paylaş'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: _gold,
+                  foregroundColor: const Color(0xFF17120A),
+                  minimumSize: const Size(double.infinity, 52),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _createPost(BuildContext sheetContext) async {
     final body = _bodyController.text.trim();
 
     if (!_signedIn) {
@@ -96,8 +312,7 @@ class _DuaCommunityPanelState extends State<DuaCommunityPanel> {
 
     try {
       final prefs = await SharedPreferences.getInstance();
-      final countryCode =
-          prefs.getString('huzur_world_country_code') ?? 'TR';
+      final countryCode = prefs.getString('huzur_world_country_code') ?? 'TR';
 
       await _api.createDuaPost(
         body: body,
@@ -106,13 +321,16 @@ class _DuaCommunityPanelState extends State<DuaCommunityPanel> {
 
       if (!mounted) return;
       _bodyController.clear();
+      if (sheetContext.mounted) Navigator.of(sheetContext).pop();
       _message('Duan paylaşıldı.');
       await _loadPosts();
     } catch (error) {
       _message(
         error is HuzurApiException && error.statusCode == 429
             ? 'Saatlik paylaşım sınırına ulaştın.'
-            : 'Dua paylaşılamadı. Tekrar deneyebilirsin.',
+            : error is HuzurApiException && error.statusCode == 403
+                ? 'Dua paylaşımı için sunucu Premium erişimini doğrulamalı.'
+                : 'Dua paylaşılamadı. Tekrar deneyebilirsin.',
       );
       debugPrint('Huzur dua paylaşımı: $error');
     } finally {
@@ -256,37 +474,54 @@ class _DuaCommunityPanelState extends State<DuaCommunityPanel> {
               height: 1.5,
             ),
           ),
-          const SizedBox(height: 13),
-          TextField(
-            controller: _bodyController,
-            minLines: 2,
-            maxLines: 4,
-            maxLength: 500,
-            style: const TextStyle(color: Colors.white, fontSize: 14),
-            decoration: InputDecoration(
-              hintText: 'Duanı buraya yaz...',
-              hintStyle: const TextStyle(color: Colors.white38),
-              counterStyle: const TextStyle(color: Colors.white38),
-              filled: true,
-              fillColor: Colors.white.withValues(alpha: 0.045),
-              contentPadding: const EdgeInsets.all(14),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(color: Colors.white12),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(color: Colors.white12),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(color: _gold),
-              ),
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.035),
+              borderRadius: BorderRadius.circular(17),
+              border: Border.all(color: _gold.withValues(alpha: 0.18)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: _gold.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(13),
+                  ),
+                  child: const Icon(Icons.edit_note_rounded, color: _gold),
+                ),
+                const SizedBox(width: 11),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Duanı dünyayla paylaş',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Huzur Özel üyelerine açık',
+                        style: TextStyle(color: Colors.white54, fontSize: 10),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.lock_rounded, color: _gold, size: 16),
+              ],
             ),
           ),
+          const SizedBox(height: 10),
           FilledButton.icon(
-            onPressed: _sending ? null : _createPost,
-            icon: _sending
+            onPressed: _checkingPremium ? null : _openDuaComposer,
+            icon: _checkingPremium
                 ? const SizedBox(
                     width: 17,
                     height: 17,
@@ -295,22 +530,24 @@ class _DuaCommunityPanelState extends State<DuaCommunityPanel> {
                       color: Color(0xFF17120A),
                     ),
                   )
-                : const Icon(Icons.send_rounded, size: 17),
-            label: Text(_sending ? 'Paylaşılıyor...' : 'Duanı paylaş'),
+                : const Icon(Icons.volunteer_activism_rounded, size: 17),
+            label:
+                Text(_checkingPremium ? 'Erişim doğrulanıyor...' : 'Dua bırak'),
             style: FilledButton.styleFrom(
               backgroundColor: _gold,
               foregroundColor: const Color(0xFF17120A),
-              minimumSize: const Size(double.infinity, 45),
+              minimumSize: const Size(double.infinity, 47),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(13),
+                borderRadius: BorderRadius.circular(14),
               ),
             ),
           ),
           if (!_signedIn) ...[
             const SizedBox(height: 9),
             const Text(
-              'Dua paylaşmak, Âmin demek ve şikâyet etmek için '
-              'mevcut Apple hesabınla giriş yapmalısın.',
+              'Dua paylaşmak için Apple hesabınla giriş ve Huzur Özel '
+              'üyeliği gerekir. Topluluk dualarını okuyabilir, Âmin diyebilir '
+              've uygunsuz içerikleri bildirebilirsin.',
               style: TextStyle(
                 color: Colors.white54,
                 fontSize: 11,

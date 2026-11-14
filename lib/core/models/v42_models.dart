@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class SurahMeta {
   final int number;
@@ -15,7 +15,7 @@ class SurahMeta {
     required this.revelationType,
   });
 
-  factory SurahMeta.fromJson(Map< String, dynamic > json, String trName) {
+  factory SurahMeta.fromJson(Map<String, dynamic> json, String trName) {
     return SurahMeta(
       number: int.tryParse(json['number'].toString()) ?? 1,
       nameArabic: (json['name'] ?? '').toString(),
@@ -47,7 +47,7 @@ class LiveAyahItem {
 
   String get uniqueKey => 'quran_${surahNumber}_$numberInSurah';
 
-  Map< String, dynamic > toJson() => {
+  Map<String, dynamic> toJson() => {
         'globalNumber': globalNumber,
         'numberInSurah': numberInSurah,
         'surahNumber': surahNumber,
@@ -57,7 +57,7 @@ class LiveAyahItem {
         'audioUrl': audioUrl,
       };
 
-  factory LiveAyahItem.fromJson(Map< String, dynamic > map) {
+  factory LiveAyahItem.fromJson(Map<String, dynamic> map) {
     return LiveAyahItem(
       globalNumber: int.tryParse(map['globalNumber'].toString()) ?? 1,
       numberInSurah: int.tryParse(map['numberInSurah'].toString()) ?? 1,
@@ -204,7 +204,7 @@ class TasbihRecord {
     );
   }
 
-  factory TasbihRecord.fromMap(Map< String, dynamic > map) {
+  factory TasbihRecord.fromMap(Map<String, dynamic> map) {
     return TasbihRecord(
       id: map['id'] as int?,
       title: (map['title'] ?? '').toString(),
@@ -233,7 +233,7 @@ class StoryThemePreset {
     required this.borderColor,
   });
 
-  static const List< StoryThemePreset > presets = [
+  static const List<StoryThemePreset> presets = [
     StoryThemePreset(
       id: 'night_black',
       title: 'Gece Siyahı',
@@ -286,7 +286,7 @@ class SavedVerseRef {
     required this.savedAtEpochMs,
   });
 
-  Map< String, dynamic > toJson() => {
+  Map<String, dynamic> toJson() => {
         'key': key,
         'tradition': tradition,
         'reference': reference,
@@ -295,7 +295,7 @@ class SavedVerseRef {
         'savedAtEpochMs': savedAtEpochMs,
       };
 
-  factory SavedVerseRef.fromJson(Map< String, dynamic > map) {
+  factory SavedVerseRef.fromJson(Map<String, dynamic> map) {
     return SavedVerseRef(
       key: (map['key'] ?? '').toString(),
       tradition: (map['tradition'] ?? 'quran').toString(),
@@ -320,14 +320,14 @@ class LastReadPosition {
     required this.chapterOrAyah,
   });
 
-  Map< String, dynamic > toJson() => {
+  Map<String, dynamic> toJson() => {
         'tradition': tradition,
         'bookOrSurahId': bookOrSurahId,
         'title': title,
         'chapterOrAyah': chapterOrAyah,
       };
 
-  factory LastReadPosition.fromJson(Map< String, dynamic > map) {
+  factory LastReadPosition.fromJson(Map<String, dynamic> map) {
     return LastReadPosition(
       tradition: (map['tradition'] ?? 'quran').toString(),
       bookOrSurahId: int.tryParse(map['bookOrSurahId'].toString()) ?? 1,
@@ -342,14 +342,14 @@ class UserProgressState {
 
   final int schemaVersion;
   final LastReadPosition? lastRead;
-  final List< SavedVerseRef > favorites;
-  final List< SavedVerseRef > bookmarks;
+  final List<SavedVerseRef> favorites;
+  final List<SavedVerseRef> bookmarks;
   final int dailyDhikrCount;
   final int missedPrayers;
   final int initialPrayers;
   final int dailyPrayerPace;
   final int missedFasts;
-  final Set< int > completedJuzs;
+  final Set<int> completedJuzs;
 
   const UserProgressState({
     this.schemaVersion = currentSchemaVersion,
@@ -370,14 +370,14 @@ class UserProgressState {
   UserProgressState copyWith({
     int? schemaVersion,
     LastReadPosition? lastRead,
-    List< SavedVerseRef >? favorites,
-    List< SavedVerseRef >? bookmarks,
+    List<SavedVerseRef>? favorites,
+    List<SavedVerseRef>? bookmarks,
     int? dailyDhikrCount,
     int? missedPrayers,
     int? initialPrayers,
     int? dailyPrayerPace,
     int? missedFasts,
-    Set< int >? completedJuzs,
+    Set<int>? completedJuzs,
   }) {
     return UserProgressState(
       schemaVersion: schemaVersion ?? this.schemaVersion,

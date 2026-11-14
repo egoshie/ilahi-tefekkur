@@ -1,5 +1,5 @@
 import 'dart:math' as math;
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 enum BespokeIconType {
   crescentOrb,
@@ -430,10 +430,14 @@ class _PureCanvasVectorIconPainter extends CustomPainter {
       case BespokeIconType.gpsTarget:
         canvas.drawCircle(c, w * 0.28, stroke);
         canvas.drawCircle(c, w * 0.09, fill);
-        canvas.drawLine(Offset(w * 0.50, h * 0.08), Offset(w * 0.50, h * 0.22), stroke);
-        canvas.drawLine(Offset(w * 0.50, h * 0.78), Offset(w * 0.50, h * 0.92), stroke);
-        canvas.drawLine(Offset(w * 0.08, h * 0.50), Offset(w * 0.22, h * 0.50), stroke);
-        canvas.drawLine(Offset(w * 0.78, h * 0.50), Offset(w * 0.92, h * 0.50), stroke);
+        canvas.drawLine(
+            Offset(w * 0.50, h * 0.08), Offset(w * 0.50, h * 0.22), stroke);
+        canvas.drawLine(
+            Offset(w * 0.50, h * 0.78), Offset(w * 0.50, h * 0.92), stroke);
+        canvas.drawLine(
+            Offset(w * 0.08, h * 0.50), Offset(w * 0.22, h * 0.50), stroke);
+        canvas.drawLine(
+            Offset(w * 0.78, h * 0.50), Offset(w * 0.92, h * 0.50), stroke);
         break;
 
       case BespokeIconType.shareCard:
@@ -459,13 +463,16 @@ class _PureCanvasVectorIconPainter extends CustomPainter {
 
       case BespokeIconType.plusCircle:
         canvas.drawCircle(c, w * 0.38, stroke);
-        canvas.drawLine(Offset(w * 0.50, h * 0.32), Offset(w * 0.50, h * 0.68), stroke);
-        canvas.drawLine(Offset(w * 0.32, h * 0.50), Offset(w * 0.68, h * 0.50), stroke);
+        canvas.drawLine(
+            Offset(w * 0.50, h * 0.32), Offset(w * 0.50, h * 0.68), stroke);
+        canvas.drawLine(
+            Offset(w * 0.32, h * 0.50), Offset(w * 0.68, h * 0.50), stroke);
         break;
 
       case BespokeIconType.minusCircle:
         canvas.drawCircle(c, w * 0.38, stroke);
-        canvas.drawLine(Offset(w * 0.32, h * 0.50), Offset(w * 0.68, h * 0.50), stroke);
+        canvas.drawLine(
+            Offset(w * 0.32, h * 0.50), Offset(w * 0.68, h * 0.50), stroke);
         break;
 
       case BespokeIconType.refreshSpark:
@@ -492,8 +499,10 @@ class _PureCanvasVectorIconPainter extends CustomPainter {
           ..lineTo(w * 0.18, h * 0.82)
           ..lineTo(w * 0.18, h * 0.62);
         canvas.drawPath(exp, stroke);
-        canvas.drawLine(Offset(w * 0.82, h * 0.18), Offset(w * 0.56, h * 0.44), stroke);
-        canvas.drawLine(Offset(w * 0.18, h * 0.82), Offset(w * 0.44, h * 0.56), stroke);
+        canvas.drawLine(
+            Offset(w * 0.82, h * 0.18), Offset(w * 0.56, h * 0.44), stroke);
+        canvas.drawLine(
+            Offset(w * 0.18, h * 0.82), Offset(w * 0.44, h * 0.56), stroke);
         break;
 
       case BespokeIconType.instagramStory:
@@ -509,13 +518,15 @@ class _PureCanvasVectorIconPainter extends CustomPainter {
         break;
 
       case BespokeIconType.downloadCard:
-        canvas.drawLine(Offset(w * 0.50, h * 0.18), Offset(w * 0.50, h * 0.66), stroke);
+        canvas.drawLine(
+            Offset(w * 0.50, h * 0.18), Offset(w * 0.50, h * 0.66), stroke);
         final dArr = Path()
           ..moveTo(w * 0.32, h * 0.50)
           ..lineTo(w * 0.50, h * 0.68)
           ..lineTo(w * 0.68, h * 0.50);
         canvas.drawPath(dArr, stroke);
-        canvas.drawLine(Offset(w * 0.22, h * 0.82), Offset(w * 0.78, h * 0.82), stroke);
+        canvas.drawLine(
+            Offset(w * 0.22, h * 0.82), Offset(w * 0.78, h * 0.82), stroke);
         break;
     }
   }

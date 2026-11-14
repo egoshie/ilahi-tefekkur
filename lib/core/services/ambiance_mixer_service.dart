@@ -32,20 +32,20 @@ class AmbianceChannel {
 }
 
 final ambianceMixerProvider =
-    StateNotifierProvider< AmbianceMixerNotifier, List< AmbianceChannel > >((ref) {
+    StateNotifierProvider<AmbianceMixerNotifier, List<AmbianceChannel>>((ref) {
   return AmbianceMixerNotifier();
 });
 
-class AmbianceMixerNotifier extends StateNotifier< List< AmbianceChannel > > {
-  final Map< String, AudioPlayer > _players = {};
+class AmbianceMixerNotifier extends StateNotifier<List<AmbianceChannel>> {
+  final Map<String, AudioPlayer> _players = {};
   bool _sessionConfigured = false;
 
   AmbianceMixerNotifier()
       : super(const [
           AmbianceChannel(
             id: 'ney',
-            title: 'Ney & Huzur Frekansı (432Hz)',
-            subtitle: 'Kesintisiz harmonik odaklanma akustiği',
+            title: 'Ney Dinletisi',
+            subtitle: 'Geleneksel ney ezgileriyle dingin bir atmosfer',
             assetPath: 'assets/audio/ney.wav',
           ),
           AmbianceChannel(
@@ -68,14 +68,14 @@ class AmbianceMixerNotifier extends StateNotifier< List< AmbianceChannel > > {
           ),
         ]);
 
-  Future< void > _ensureAudioSession() async {
+  Future<void> _ensureAudioSession() async {
     if (_sessionConfigured) return;
     final session = await AudioSession.instance;
     await session.configure(const AudioSessionConfiguration.music());
     _sessionConfigured = true;
   }
 
-  Future< void > toggleChannel(String id) async {
+  Future<void> toggleChannel(String id) async {
     await _ensureAudioSession();
     final index = state.indexWhere((c) => c.id == id);
     if (index == -1) return;
@@ -101,7 +101,7 @@ class AmbianceMixerNotifier extends StateNotifier< List< AmbianceChannel > > {
     }
   }
 
-  Future< void > setVolume(String id, double vol) async {
+  Future<void> setVolume(String id, double vol) async {
     final clamped = vol.clamp(0.0, 1.0);
     await _players[id]?.setVolume(clamped);
     state = [
@@ -110,7 +110,7 @@ class AmbianceMixerNotifier extends StateNotifier< List< AmbianceChannel > > {
     ];
   }
 
-  Future< void > stopAll() async {
+  Future<void> stopAll() async {
     for (final p in _players.values) {
       await p.stop();
     }

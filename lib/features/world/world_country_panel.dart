@@ -1,12 +1,17 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/services/huzur_api_service.dart';
 
 class WorldCountryPanel extends StatefulWidget {
-  const WorldCountryPanel({super.key});
+  final ValueChanged<List<Map<String, dynamic>>>? onRankingChanged;
+
+  const WorldCountryPanel({
+    super.key,
+    this.onRankingChanged,
+  });
 
   @override
   State<WorldCountryPanel> createState() => _WorldCountryPanelState();
@@ -65,12 +70,34 @@ class _WorldCountryPanelState extends State<WorldCountryPanel> {
       setState(() {
         _countries = countries;
         _ranking = ranking;
-        _selectedCode =
-            availableCodes.contains(savedCode) ? savedCode : 'TR';
+        _selectedCode = availableCodes.contains(savedCode) ? savedCode : 'TR';
         _totalCount = (rankingResponse['total_count'] as num?)?.toInt() ?? 0;
         _error = null;
         _loading = false;
       });
+
+      final totalsByCode = <String, int>{};
+      for (final item in ranking) {
+        final code = item['country_code']?.toString().toUpperCase() ?? '';
+        if (code.isNotEmpty) {
+          totalsByCode[code] = (item['total_count'] as num?)?.toInt() ?? 0;
+        }
+      }
+
+      final mapMarkers = countries
+          .map((country) {
+            final code =
+                country['country_code']?.toString().toUpperCase() ?? '';
+            return <String, dynamic>{
+              'country_code': code,
+              'country_name': country['country_name']?.toString() ?? code,
+              'total_count': totalsByCode[code] ?? 0,
+            };
+          })
+          .where((item) => (item['country_code'] as String).isNotEmpty)
+          .toList();
+
+      widget.onRankingChanged?.call(mapMarkers);
 
       if (_selectedCode != savedCode) {
         await prefs.setString(_countryKey, _selectedCode);
@@ -190,9 +217,8 @@ class _WorldCountryPanelState extends State<WorldCountryPanel> {
           ),
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
-            initialValue: validCodes.contains(_selectedCode)
-                ? _selectedCode
-                : null,
+            initialValue:
+                validCodes.contains(_selectedCode) ? _selectedCode : null,
             isExpanded: true,
             dropdownColor: const Color(0xFF1B2B2C),
             style: const TextStyle(color: Colors.white, fontSize: 14),

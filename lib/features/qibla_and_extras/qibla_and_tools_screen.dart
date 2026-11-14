@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -90,11 +90,10 @@ class _QiblaAndToolsScreenState extends ConsumerState<QiblaAndToolsScreen> {
         final normalizedHeading = (heading + 360.0) % 360.0;
         final correctedHeading =
             (normalizedHeading + _magneticDeclination + 360.0) % 360.0;
-        final signedError = ((currentPrayerState.qiblaDirection -
-                    correctedHeading +
-                    540.0) %
-                360.0) -
-            180.0;
+        final signedError =
+            ((currentPrayerState.qiblaDirection - correctedHeading + 540.0) %
+                    360.0) -
+                180.0;
         final absoluteError = signedError.abs();
 
         // Histerezis: hizalanma 6° içinde başlar, 10° dışına çıkınca biter.
@@ -159,9 +158,8 @@ class _QiblaAndToolsScreenState extends ConsumerState<QiblaAndToolsScreen> {
         (_magneticHeading + _magneticDeclination + 360.0) % 360.0;
     final qiblaAngle = prayerState.qiblaDirection;
     final relativeAngle = (qiblaAngle - trueHeading) * (math.pi / 180.0);
-    final alignmentColor = _isQiblaAligned
-        ? const Color(0xFF35D982)
-        : const Color(0xFFFFA21A);
+    final alignmentColor =
+        _isQiblaAligned ? const Color(0xFF35D982) : const Color(0xFFFFA21A);
 
     final completedRatio = progress.initialPrayers == 0
         ? 1.0
@@ -827,9 +825,8 @@ class _QiblaCompassPainter extends CustomPainter {
     canvas.translate(center.dx, center.dy);
     canvas.rotate(relativeRadians);
 
-    final guidanceColor = isAligned
-        ? const Color(0xFF35D982)
-        : const Color(0xFFFFA21A);
+    final guidanceColor =
+        isAligned ? const Color(0xFF35D982) : const Color(0xFFFFA21A);
 
     final shaft = Paint()
       ..color = guidanceColor

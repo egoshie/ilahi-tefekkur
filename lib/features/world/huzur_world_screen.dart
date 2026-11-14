@@ -1,6 +1,9 @@
+import 'dart:async';
 import 'dart:math' as math;
+import 'dart:io' show Platform;
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_earth_globe/flutter_earth_globe.dart';
 import 'package:flutter_earth_globe/flutter_earth_globe_controller.dart';
 import 'package:flutter_earth_globe/globe_coordinates.dart';
@@ -11,6 +14,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/services/prayer_service.dart';
 import '../../core/services/user_progress_service.dart';
+import '../../core/services/tasbih_session_service.dart';
 import 'world_country_panel.dart';
 import 'dua_community_panel.dart';
 
@@ -31,6 +35,8 @@ class _HuzurWorldScreenState extends ConsumerState<HuzurWorldScreen> {
   static const _background = Color(0xFF080F12);
 
   late final FlutterEarthGlobeController _globeController;
+  MethodChannel? _appleMapChannel;
+  List<Map<String, dynamic>> _countryMarkers = [];
 
   String? _lastCityKey;
   bool? _routeVisible;
@@ -67,7 +73,75 @@ class _HuzurWorldScreenState extends ConsumerState<HuzurWorldScreen> {
     });
   }
 
+  void _onCountryRankingChanged(
+    List<Map<String, dynamic>> markers,
+  ) {
+    _countryMarkers = markers;
+    unawaited(_sendAppleCountryMarkers());
+  }
+
+  Future<void> _sendAppleCountryMarkers() async {
+    final channel = _appleMapChannel;
+    if (!Platform.isIOS || channel == null) return;
+
+    try {
+      await channel.invokeMethod<void>(
+        "setCountryMarkers",
+        _countryMarkers,
+      );
+    } catch (error) {
+      debugPrint("Huzur ülke noktaları güncellenemedi: $error");
+    }
+  }
+
+  void _onAppleMapCreated(int viewId) {
+    if (!mounted) return;
+
+    _appleMapChannel = MethodChannel(
+      "com.ilahi.tefekkur/apple-world-map/$viewId",
+    );
+
+    final city = ref.read(prayerEngineProvider).selectedCity;
+    final count = ref.read(userProgressProvider).dailyDhikrCount;
+
+    unawaited(_sendAppleMapUpdate(city, count > 0));
+    unawaited(_sendAppleCountryMarkers());
+  }
+
+  Future<void> _sendAppleMapUpdate(
+    CityPreset city,
+    bool showRoute,
+  ) async {
+    final channel = _appleMapChannel;
+    if (!Platform.isIOS || channel == null) return;
+
+    try {
+      await channel.invokeMethod<void>("updateCity", {
+        "cityName": city.name,
+        "latitude": city.latitude,
+        "longitude": city.longitude,
+        "showRoute": showRoute,
+      });
+    } catch (error) {
+      debugPrint("Huzur Apple Maps güncellemesi: $error");
+    }
+  }
+
+  Future<void> _focusAppleMapOnMecca() async {
+    if (!Platform.isIOS) return;
+
+    final channel = _appleMapChannel;
+    if (channel == null) return;
+
+    try {
+      await channel.invokeMethod<void>("focusOnMecca");
+    } catch (error) {
+      debugPrint("Huzur Apple Maps kamera hareketi: $error");
+    }
+  }
+
   void _syncGlobe(CityPreset city, bool showRoute) {
+    unawaited(_sendAppleMapUpdate(city, showRoute));
     final cityKey = '${city.name}|${city.latitude}|${city.longitude}';
 
     if (_lastCityKey == cityKey && _routeVisible == showRoute) return;
@@ -132,6 +206,45 @@ class _HuzurWorldScreenState extends ConsumerState<HuzurWorldScreen> {
     }
   }
 
+  Future<void> _handleWorldDhikrTap() async {
+    final session = ref.read(tasbihSessionProvider);
+
+    if (session.activeRecord == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Zikir kayıtları hazırlanıyor.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    final nextCount =
+        await ref.read(tasbihSessionProvider.notifier).incrementActive();
+
+    if (!mounted || nextCount <= 0) return;
+
+    if (session.hapticEnabled) {
+      if (nextCount % 100 == 0) {
+        await HapticFeedback.heavyImpact();
+        await Future.delayed(const Duration(milliseconds: 80));
+        if (mounted) await HapticFeedback.heavyImpact();
+      } else if (nextCount % 33 == 0) {
+        await HapticFeedback.mediumImpact();
+      } else {
+        await HapticFeedback.selectionClick();
+      }
+    }
+
+    if (Platform.isIOS && mounted) {
+      try {
+        await _appleMapChannel?.invokeMethod<void>('animateDhikr');
+      } catch (error) {
+        debugPrint('Huzur Mekke animasyonu: $error');
+      }
+    }
+  }
+
   Future<void> _openTasbih() async {
     await Navigator.of(context).maybePop();
     widget.onSwitchTab?.call(2);
@@ -162,10 +275,18 @@ class _HuzurWorldScreenState extends ConsumerState<HuzurWorldScreen> {
 
     final prayer = ref.watch(prayerEngineProvider);
     final progress = ref.watch(userProgressProvider);
+    final tasbihSession = ref.watch(tasbihSessionProvider);
+    final activeTasbih = tasbihSession.activeRecord;
+    final dhikrCount = activeTasbih?.count ?? 0;
+    final dhikrTarget = (activeTasbih?.target ?? 33).clamp(1, 999999);
+    final dhikrProgress = (dhikrCount % dhikrTarget) / dhikrTarget;
     final globeSize = math.min(
       MediaQuery.sizeOf(context).width - 28,
       370.0,
     );
+    final mapHeight = (MediaQuery.sizeOf(context).height * 0.66)
+        .clamp(480.0, 720.0)
+        .toDouble();
 
     return Scaffold(
       backgroundColor: _background,
@@ -207,32 +328,260 @@ class _HuzurWorldScreenState extends ConsumerState<HuzurWorldScreen> {
               ),
               const SizedBox(height: 16),
               SizedBox(
-                height: globeSize,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Container(
-                      width: globeSize,
-                      height: globeSize,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: RadialGradient(
-                          colors: [
-                            _gold.withValues(alpha: 0.12),
-                            _turquoise.withValues(alpha: 0.055),
-                            Colors.transparent,
-                          ],
+                height: Platform.isIOS ? mapHeight : globeSize,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(26),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      if (Platform.isIOS)
+                        UiKitView(
+                          viewType: "com.ilahi.tefekkur/apple-world-map",
+                          layoutDirection: TextDirection.ltr,
+                          creationParams: {
+                            "cityName": prayer.selectedCity.name,
+                            "latitude": prayer.selectedCity.latitude,
+                            "longitude": prayer.selectedCity.longitude,
+                            "showRoute": progress.dailyDhikrCount > 0,
+                          },
+                          creationParamsCodec: const StandardMessageCodec(),
+                          onPlatformViewCreated: _onAppleMapCreated,
+                        )
+                      else
+                        Center(
+                          child: SizedBox.square(
+                            dimension: globeSize,
+                            child: FlutterEarthGlobe(
+                              controller: _globeController,
+                              radius: globeSize * 0.465,
+                            ),
+                          ),
+                        ),
+                      const IgnorePointer(
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Color(0x30050A12),
+                                Colors.transparent,
+                                Color(0x18050A12),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                    SizedBox.square(
-                      dimension: globeSize,
-                      child: FlutterEarthGlobe(
-                        controller: _globeController,
-                        radius: globeSize * 0.465,
+                      Positioned(
+                        left: 12,
+                        top: 12,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xD9101721),
+                            borderRadius: BorderRadius.circular(30),
+                            border: Border.all(
+                              color: _gold.withValues(alpha: 0.45),
+                            ),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.public_rounded,
+                                color: _gold,
+                                size: 15,
+                              ),
+                              SizedBox(width: 7),
+                              Text(
+                                "HUZUR DÜNYA",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 1,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
+                      Positioned(
+                        left: 12,
+                        right: 72,
+                        bottom: 12,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xE910151D),
+                            borderRadius: BorderRadius.circular(21),
+                            border: Border.all(
+                              color: _gold.withValues(alpha: 0.48),
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.28),
+                                blurRadius: 18,
+                                offset: const Offset(0, 5),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Text(
+                                      'DÜNYA ÜZERİNDE ZİKİR',
+                                      style: TextStyle(
+                                        color: _gold,
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: 1.1,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 5),
+                                    Text(
+                                      activeTasbih?.title ??
+                                          'Zikir kayıtları hazırlanıyor',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 5),
+                                    Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.baseline,
+                                      textBaseline: TextBaseline.alphabetic,
+                                      children: [
+                                        AnimatedSwitcher(
+                                          duration: const Duration(
+                                            milliseconds: 180,
+                                          ),
+                                          child: Text(
+                                            '$dhikrCount',
+                                            key: ValueKey(dhikrCount),
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 25,
+                                              fontWeight: FontWeight.w900,
+                                              fontFeatures: [
+                                                FontFeature.tabularFigures(),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 5),
+                                        Text(
+                                          '/ $dhikrTarget',
+                                          style: const TextStyle(
+                                            color: Colors.white60,
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const Text(
+                                      'Mekke’ye yönelen her dokunuş',
+                                      style: TextStyle(
+                                        color: Colors.white54,
+                                        fontSize: 9,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Semantics(
+                                button: true,
+                                label: 'Zikri bir artır',
+                                child: GestureDetector(
+                                  onTap: activeTasbih == null
+                                      ? null
+                                      : _handleWorldDhikrTap,
+                                  child: SizedBox(
+                                    width: 62,
+                                    height: 62,
+                                    child: Stack(
+                                      alignment: Alignment.center,
+                                      children: [
+                                        SizedBox.expand(
+                                          child: CircularProgressIndicator(
+                                            value: dhikrProgress.toDouble(),
+                                            strokeWidth: 3,
+                                            backgroundColor: Colors.white12,
+                                            valueColor:
+                                                const AlwaysStoppedAnimation<
+                                                    Color>(_gold),
+                                          ),
+                                        ),
+                                        Container(
+                                          width: 49,
+                                          height: 49,
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: _gold.withValues(
+                                              alpha: 0.16,
+                                            ),
+                                            border: Border.all(
+                                              color: _gold.withValues(
+                                                alpha: 0.65,
+                                              ),
+                                            ),
+                                          ),
+                                          child: const Icon(
+                                            Icons.touch_app_rounded,
+                                            color: _gold,
+                                            size: 27,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        right: 12,
+                        bottom: 12,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xE6151B25),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: _gold.withValues(alpha: 0.65),
+                            ),
+                          ),
+                          child: IconButton(
+                            tooltip: "Mekke konumuna odaklan",
+                            onPressed: Platform.isIOS
+                                ? () => unawaited(_focusAppleMapOnMecca())
+                                : null,
+                            icon: const Icon(
+                              Icons.mosque_rounded,
+                              color: _gold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
@@ -338,7 +687,9 @@ class _HuzurWorldScreenState extends ConsumerState<HuzurWorldScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              const WorldCountryPanel(),
+              WorldCountryPanel(
+                onRankingChanged: _onCountryRankingChanged,
+              ),
               const SizedBox(height: 16),
               const DuaCommunityPanel(),
               const SizedBox(height: 16),
@@ -360,8 +711,10 @@ class _HuzurWorldScreenState extends ConsumerState<HuzurWorldScreen> {
                 ),
               ),
               const SizedBox(height: 15),
-              const Text(
-                'Dünya haritası: NASA Blue Marble Next Generation',
+              Text(
+                Platform.isIOS
+                    ? "Apple Harita • Uydu görüntüsü"
+                    : "3D Dünya görünümü",
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.white38,
