@@ -716,7 +716,7 @@ class _HuzurWorldScreenState extends ConsumerState<HuzurWorldScreen> {
                     ? "Apple Harita • Uydu görüntüsü"
                     : "3D Dünya görünümü",
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   color: Colors.white38,
                   fontSize: 10,
                 ),
