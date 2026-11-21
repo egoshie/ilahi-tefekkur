@@ -147,8 +147,8 @@ final class HuzurAppleWorldMapPlatformView: NSObject,
         mapView.isScrollEnabled = true
         mapView.isRotateEnabled = true
         mapView.isPitchEnabled = true
-        mapView.showsCompass = false
-        mapView.showsScale = false
+        mapView.showsCompass = true
+        mapView.showsScale = true
         mapView.showsTraffic = false
         mapView.showsBuildings = true
         mapView.showsUserLocation = false
@@ -301,7 +301,7 @@ final class HuzurAppleWorldMapPlatformView: NSObject,
                 latitude: 21.0,
                 longitude: 39.0
             ),
-            fromDistance: 10_500_000,
+            fromDistance: 8_500_000,
             pitch: 0,
             heading: 0
         )

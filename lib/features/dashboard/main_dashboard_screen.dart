@@ -1029,7 +1029,7 @@ class _MainDashboardScreenState extends ConsumerState<MainDashboardScreen>
                     ),
                     SizedBox(height: 4),
                     Text(
-                      'Dünya zikir ağı ve dua paylaşımı',
+                      'Apple Haritalar üzerinde küresel zikir ağı',
                       style: TextStyle(
                         fontSize: 11.5,
                         color: Colors.white70,

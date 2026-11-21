@@ -8,7 +8,6 @@ import 'package:intl/intl.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:geomag/geomag.dart';
-import '../../core/services/ambiance_mixer_service.dart';
 import '../../core/services/prayer_service.dart';
 import '../../core/services/user_progress_service.dart';
 import '../../core/theme/glass_container.dart';
@@ -133,8 +132,6 @@ class _QiblaAndToolsScreenState extends ConsumerState<QiblaAndToolsScreen> {
   Widget build(BuildContext context) {
     final prayerState = ref.watch(prayerEngineProvider);
     final prayerNotifier = ref.read(prayerEngineProvider.notifier);
-    final ambianceChannels = ref.watch(ambianceMixerProvider);
-    final ambianceNotifier = ref.read(ambianceMixerProvider.notifier);
     final progress = ref.watch(userProgressProvider);
     final progressNotifier = ref.read(userProgressProvider.notifier);
 
@@ -176,7 +173,7 @@ class _QiblaAndToolsScreenState extends ConsumerState<QiblaAndToolsScreen> {
       padding: const EdgeInsets.fromLTRB(18, 12, 18, 32),
       children: [
         const Text(
-          "Kıble, Ambiyans Mikseri & İbadet Çetelesi",
+          "Kıble Pusulası & İbadet Çetelesi",
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 14),
@@ -299,136 +296,6 @@ class _QiblaAndToolsScreenState extends ConsumerState<QiblaAndToolsScreen> {
                   color: _isQiblaAligned ? alignmentColor : Colors.white70,
                 ),
               ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        GlassContainer(
-          borderRadius: 28,
-          emeraldGlow: true,
-          padding: const EdgeInsets.all(18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    "Tefekkür Ambiyans Ses Mikseri",
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                  ),
-                  GestureDetector(
-                    onTap: () => ambianceNotifier.stopAll(),
-                    child: const Text(
-                      "Tümünü Durdur",
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFFFFE082),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                "Arka planda kesintisiz çalışan döngüsel meditatif ses katmanları",
-                style: TextStyle(fontSize: 11, color: Colors.white70),
-              ),
-              const SizedBox(height: 12),
-              ...ambianceChannels.map((ch) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: ch.isPlaying
-                          ? const Color(0xFFFFA21A).withValues(alpha: 0.14)
-                          : Colors.white.withValues(alpha: 0.04),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: ch.isPlaying
-                            ? const Color(0xFFFFA21A)
-                            : Colors.white12,
-                        width: 0.9,
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            LiveSvgAudioVisualizer(
-                              isPlaying: ch.isPlaying,
-                              color: const Color(0xFFFFA21A),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    ch.title,
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                  Text(
-                                    ch.subtitle,
-                                    style: const TextStyle(
-                                        fontSize: 11, color: Colors.white60),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            GestureDetector(
-                              onTap: () =>
-                                  ambianceNotifier.toggleChannel(ch.id),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 7),
-                                decoration: BoxDecoration(
-                                  color: ch.isPlaying
-                                      ? const Color(0xFFFFE082)
-                                      : const Color(0xFFFFA21A),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Row(
-                                  children: [
-                                    BespokeVectorIcon(
-                                      type: ch.isPlaying
-                                          ? BespokeIconType.stopSquare
-                                          : BespokeIconType.playTriangle,
-                                      color: Colors.black,
-                                      size: 13,
-                                    ),
-                                    const SizedBox(width: 5),
-                                    Text(
-                                      ch.isPlaying ? "Durdur" : "Başlat",
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        if (ch.isPlaying)
-                          Slider(
-                            value: ch.volume,
-                            activeColor: const Color(0xFFFFA21A),
-                            onChanged: (v) =>
-                                ambianceNotifier.setVolume(ch.id, v),
-                          ),
-                      ],
-                    ),
-                  ),
-                );
-              }),
             ],
           ),
         ),
