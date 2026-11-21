@@ -1,14 +1,16 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:in_app_purchase_storekit/in_app_purchase_storekit.dart';
 import 'package:in_app_purchase_storekit/store_kit_2_wrappers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'huzur_api_service.dart';
 
 class RegionalOffer {
   final String localeCode;
@@ -91,6 +93,7 @@ class PremiumServiceNotifier extends StateNotifier<PremiumState> {
   };
 
   final InAppPurchase _iap = InAppPurchase.instance;
+  final HuzurApiService _api = HuzurApiService();
 
   StreamSubscription<List<PurchaseDetails>>? _purchaseSub;
   late final Future<void> _initialization;
@@ -129,24 +132,52 @@ class PremiumServiceNotifier extends StateNotifier<PremiumState> {
     }
   }
 
-  /// Apple'ın StoreKit 2 imzalı işlemini Firebase sunucusunda doğrular.
-  /// Bu metot, Premium gerektiren bulut özelliklerinden önce çağrılmalıdır.
-  Future<bool> verifyPremiumWithServer() async {
-    if (!Platform.isIOS || !await ensurePremiumAccess()) {
+  Future<bool> ensureStoreKitPremiumAccess() async {
+    try {
+      await _initialization.timeout(const Duration(seconds: 15));
+
+      if (!Platform.isIOS) return false;
+
+      return await _refreshStoreKitEntitlements();
+    } on TimeoutException {
+      state = state.copyWith(
+        isLoading: false,
+        statusMessage:
+            'Apple erişimi zamanında doğrulanamadı. Tekrar kontrol edilecek.',
+      );
+      return false;
+    } catch (_) {
+      state = state.copyWith(
+        isLoading: false,
+        statusMessage: 'Apple erişimi doğrulanamadı.',
+      );
       return false;
     }
+  }
+
+  Future<bool> verifyPremiumWithServer() async {
+    if (!Platform.isIOS) return false;
 
     if (FirebaseAuth.instance.currentUser == null) {
       state = state.copyWith(
         statusMessage:
-            'Bulut Premium doğrulaması için Apple hesabınla giriş yapmalısın.',
+            'Sunucu Premium doğrulaması için hesabına giriş yapmalısın.',
       );
       return false;
     }
 
     try {
-      final transactions = await SK2Transaction.currentEntitlements();
+      final serverStatus = await _api.getMyPremiumStatus();
+      if (serverStatus['is_premium'] == true) {
+        state = state.copyWith(
+          isPremium: true,
+          isLoading: false,
+          statusMessage: 'Premium erişimin Huzur sunucusunda doğrulandı.',
+        );
+        return true;
+      }
 
+      final transactions = await SK2Transaction.currentEntitlements();
       final candidates = transactions
           .where((transaction) => _productIds.contains(transaction.productId))
           .toList();
@@ -161,59 +192,49 @@ class PremiumServiceNotifier extends StateNotifier<PremiumState> {
         return _purchaseDateMillis(b).compareTo(_purchaseDateMillis(a));
       });
 
-      if (candidates.isEmpty) {
-        state = state.copyWith(
-          statusMessage:
-              'Apple hesabında aktif Premium satın alımı bulunamadı.',
-        );
-        return false;
-      }
-
-      final callable = FirebaseFunctions.instanceFor(
-        region: 'europe-west3',
-      ).httpsCallable(
-        'verifyPremium',
-        options: HttpsCallableOptions(
-          timeout: const Duration(seconds: 60),
-          limitedUseAppCheckToken: true,
-        ),
-      );
-
       for (final transaction in candidates) {
         final signedTransaction = transaction.receiptData;
-        if (signedTransaction == null || signedTransaction.isEmpty) {
-          continue;
-        }
+        if (signedTransaction == null || signedTransaction.isEmpty) continue;
 
-        final response = await callable.call(<String, dynamic>{
-          'signedTransaction': signedTransaction,
-        });
-
-        final data = Map<String, dynamic>.from(response.data as Map);
-        final verifiedProduct = data['productId'] as String?;
-
-        if (data['isPremium'] == true &&
-            verifiedProduct != null &&
-            _productIds.contains(verifiedProduct)) {
-          state = state.copyWith(
-            statusMessage:
-                'Premium erişimin Apple ve Huzur sunucusunda doğrulandı.',
+        try {
+          final data = await _api.verifyPremiumTransaction(
+            signedTransaction: signedTransaction,
           );
-          return true;
+          final productId = data['product_id'] as String?;
+
+          if (data['verified'] == true &&
+              data['is_premium'] == true &&
+              productId != null &&
+              _productIds.contains(productId)) {
+            state = state.copyWith(
+              isPremium: true,
+              activePlanId: productId,
+              isLoading: false,
+              statusMessage:
+                  'Premium erişimin Apple ve Huzur sunucusunda doğrulandı.',
+            );
+            return true;
+          }
+        } catch (error) {
+          debugPrint(
+            'HUZUR_PREMIUM server verification attempt failed: '
+            '${error.runtimeType}',
+          );
         }
       }
 
       state = state.copyWith(
-        statusMessage: 'Apple sunucusunda aktif Premium yetkisi doğrulanamadı.',
+        isLoading: false,
+        statusMessage:
+            'Bu Huzur hesabında sunucu tarafından doğrulanmış aktif Premium bulunamadı.',
       );
       return false;
-    } on FirebaseFunctionsException catch (error) {
-      state = state.copyWith(
-        statusMessage: 'Sunucu Premium doğrulaması başarısız (${error.code}).',
+    } catch (error, stackTrace) {
+      debugPrint(
+        'HUZUR_PREMIUM status check failed: ${error.runtimeType}\n$stackTrace',
       );
-      return false;
-    } catch (_) {
       state = state.copyWith(
+        isLoading: false,
         statusMessage: 'Premium sunucu doğrulaması şu anda tamamlanamadı.',
       );
       return false;
@@ -312,6 +333,10 @@ class PremiumServiceNotifier extends StateNotifier<PremiumState> {
         statusMessage:
             state.isPremium ? null : 'App Store ürünleri şu anda yüklenemedi.',
       );
+    }
+
+    if (FirebaseAuth.instance.currentUser != null) {
+      await verifyPremiumWithServer();
     }
   }
 
@@ -474,15 +499,30 @@ class PremiumServiceNotifier extends StateNotifier<PremiumState> {
         return;
       }
 
-      // Flutter IAP API'sinde abonelikler ve tüketilemeyen ürünler
-      // buyNonConsumable ile başlatılır.
+      if (FirebaseAuth.instance.currentUser == null) {
+        state = state.copyWith(
+          isLoading: false,
+          statusMessage:
+              'Huzur Özel satın alımı için önce Apple ile giriş yapmalısın.',
+        );
+        return;
+      }
+
+      // The stable UUID is persisted by the backend per Firebase UID.
+      final accountToken = await _api.getPremiumAccountToken().timeout(
+            const Duration(seconds: 20),
+          );
+
       debugPrint(
         'HUZUR_IAP purchase request: '
         'plan=$planId product=${product.id} price=${product.price}',
       );
 
       final started = await _iap.buyNonConsumable(
-        purchaseParam: PurchaseParam(productDetails: product),
+        purchaseParam: Sk2PurchaseParam(
+          productDetails: product,
+          applicationUserName: accountToken,
+        ),
       );
 
       if (!started) {
@@ -605,48 +645,74 @@ class PremiumServiceNotifier extends StateNotifier<PremiumState> {
           bool exactPurchaseVerified = false;
 
           try {
-            // PurchaseStatus tek başına doğrulama değildir.
-            // Yalnızca Apple'ın doğruladığı currentEntitlements
-            // listesinde aynı ürün bulunursa işlem onaylanır.
             final transactions = await SK2Transaction.currentEntitlements();
+            final candidates = transactions
+                .where((transaction) =>
+                    transaction.productId == purchase.productID &&
+                    _productIds.contains(transaction.productId))
+                .toList();
 
-            exactPurchaseVerified = transactions.any(
-              (transaction) =>
-                  transaction.productId == purchase.productID &&
-                  _productIds.contains(transaction.productId),
-            );
+            for (final transaction in candidates) {
+              final signedTransaction = transaction.receiptData;
+              if (signedTransaction == null || signedTransaction.isEmpty) {
+                continue;
+              }
 
-            if (exactPurchaseVerified) {
-              _applyCurrentEntitlements(
-                transactions,
-                message: 'Premium erişiminiz Apple tarafından doğrulandı.',
-              );
-            } else {
-              // Başka geçerli bir Premium ürünü varsa onu koru.
-              _applyCurrentEntitlements(transactions);
+              try {
+                final data = await _api.verifyPremiumTransaction(
+                  signedTransaction: signedTransaction,
+                );
+                final verifiedProduct = data['product_id'] as String?;
 
+                if (data['verified'] == true &&
+                    data['is_premium'] == true &&
+                    verifiedProduct == purchase.productID &&
+                    _productIds.contains(verifiedProduct)) {
+                  exactPurchaseVerified = true;
+                  state = state.copyWith(
+                    isPremium: true,
+                    activePlanId: verifiedProduct,
+                    isLoading: false,
+                    statusMessage:
+                        'Premium satın alımın Apple ve Huzur sunucusunda doğrulandı.',
+                  );
+                  break;
+                }
+              } catch (verificationError) {
+                debugPrint(
+                  'HUZUR_IAP backend verification failed: '
+                  '${verificationError.runtimeType}',
+                );
+              }
+            }
+
+            if (!exactPurchaseVerified) {
               state = state.copyWith(
                 isLoading: false,
                 statusMessage:
-                    'Bu satın alma Apple tarafından aktif yetki olarak doğrulanamadı. Premium erişimi bu işlemle açılmadı.',
+                    'Apple işlemi alındı ancak bu Huzur hesabı için sunucu doğrulaması tamamlanmadı. İşlem beklemede bırakıldı.',
               );
             }
-          } catch (_) {
+          } catch (error, stackTrace) {
+            debugPrint(
+              'HUZUR_IAP entitlement verification failed: '
+              '${error.runtimeType}\n$stackTrace',
+            );
             state = state.copyWith(
               isLoading: false,
               statusMessage:
-                  'Apple doğrulamasına şu anda ulaşılamadı. Premium erişimi açılmadı.',
+                  'Apple satın alımı şu anda Huzur sunucusunda doğrulanamadı.',
             );
           }
 
-          // İşlem ancak doğrulanmış ve uygulamaya teslim edilmişse bitirilir.
+          // Complete only after the backend confirms account ownership.
           if (exactPurchaseVerified && purchase.pendingCompletePurchase) {
             try {
               await _iap.completePurchase(purchase);
             } catch (_) {
               state = state.copyWith(
                 statusMessage:
-                    'Premium doğrulandı; ancak satın alma işlemi App Store üzerinde henüz tamamlanamadı.',
+                    'Premium doğrulandı; App Store işleminin tamamlanması bekleniyor.',
               );
             }
           }
@@ -665,6 +731,15 @@ class PremiumServiceNotifier extends StateNotifier<PremiumState> {
       return;
     }
 
+    if (FirebaseAuth.instance.currentUser == null) {
+      state = state.copyWith(
+        isLoading: false,
+        statusMessage:
+            'Satın alımları Huzur hesabına bağlamak için önce Apple ile giriş yapmalısın.',
+      );
+      return;
+    }
+
     state = state.copyWith(
       isLoading: true,
       statusMessage: 'Apple satın alımlarınız kontrol ediliyor...',
@@ -672,19 +747,21 @@ class PremiumServiceNotifier extends StateNotifier<PremiumState> {
 
     try {
       await _iap.restorePurchases();
-
-      final restored = await _refreshStoreKitEntitlements(
-        successMessage: 'Satın alımlarınız Apple tarafından doğrulandı.',
+      final restored = await verifyPremiumWithServer().timeout(
+        const Duration(seconds: 45),
       );
 
       if (!restored) {
         state = state.copyWith(
           isLoading: false,
           statusMessage:
-              'Bu Apple hesabında aktif Huzur Premium satın alımı bulunamadı.',
+              'Bu Huzur hesabında sunucu tarafından doğrulanmış aktif Premium bulunamadı. Eski, hesap tokenı olmayan satın alımlar ayrıca güvenli eşleştirme gerektirebilir.',
         );
       }
-    } catch (_) {
+    } catch (error, stackTrace) {
+      debugPrint(
+        'HUZUR_IAP restore failed: ${error.runtimeType}\n$stackTrace',
+      );
       state = state.copyWith(
         isLoading: false,
         statusMessage: 'Satın alımlar geri yüklenirken bir hata oluştu.',
@@ -721,6 +798,7 @@ class PremiumServiceNotifier extends StateNotifier<PremiumState> {
   @override
   void dispose() {
     _purchaseSub?.cancel();
+    _api.close();
     super.dispose();
   }
 }

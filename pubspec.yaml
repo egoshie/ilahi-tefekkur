@@ -31,7 +31,7 @@ dependencies:
   intl: ^0.20.2
   hijri: ^3.0.0
   in_app_purchase: ^3.2.0
-  in_app_purchase_storekit: ^0.4.16
+  in_app_purchase_storekit: ^0.4.17
   firebase_core: ^5.1.0
   firebase_ai: ^5.1.0
   firebase_app_check: ^0.5.1

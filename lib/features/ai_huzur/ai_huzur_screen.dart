@@ -16,9 +16,10 @@ import 'ai_privacy_consent.dart';
 
 const _quotaKey = 'huzur_dini_asistan_free_questions_v1';
 const _freeQuestionLimit = 3;
+const _maxQuestionLength = 4000;
 
 const _systemPrompt = '''
-Sen Huzur uygulamasının Huzur Dini Asistanısın. Türkçe, sakin, anlaşılır, saygılı ve tarafsız konuş. Kullanıcının sorusu uzunsa ihtiyacı kadar uzun ve faydalı yanıt ver. Yanıtını 500 karakterle sınırlama; 500 karakter sınırı yalnızca kullanıcının yazdığı soru içindir.
+Sen Huzur uygulamasının Huzur Dini Asistanısın. Türkçe, sakin, anlaşılır, saygılı ve tarafsız konuş. Kullanıcının sorusu uzunsa ihtiyacı kadar uzun ve faydalı yanıt ver. Yanıtını kısa kesme; kullanıcının sorusu uygulamanın 4000 karakter sınırına kadar olabilir.
 
 KESİN KONU SINIRI:
 Yalnızca İslam dini, Kur'an-ı Kerim, tefsir, hadis, sünnet,
@@ -110,7 +111,7 @@ class _AiHuzurScreenState extends ConsumerState<AiHuzurScreen> {
       systemInstruction: Content.system(_systemPrompt),
       generationConfig: GenerationConfig(
         temperature: 0.35,
-        maxOutputTokens: 4096,
+        maxOutputTokens: 8192,
       ),
     );
 
@@ -200,8 +201,8 @@ class _AiHuzurScreenState extends ConsumerState<AiHuzurScreen> {
       return;
     }
 
-    if (question.length > 500) {
-      _showMessage('Sorun en fazla 500 karakter olabilir.');
+    if (question.length > _maxQuestionLength) {
+      _showMessage('Sorun en fazla $_maxQuestionLength karakter olabilir.');
       return;
     }
 
@@ -365,7 +366,7 @@ class _AiHuzurScreenState extends ConsumerState<AiHuzurScreen> {
 
       final responseStream = _session
           .sendMessageStream(request)
-          .timeout(const Duration(seconds: 60));
+          .timeout(const Duration(minutes: 3));
 
       await for (final chunk in responseStream) {
         if (!mounted) return;
@@ -407,7 +408,7 @@ class _AiHuzurScreenState extends ConsumerState<AiHuzurScreen> {
 
             if (message.text.trim().isNotEmpty) {
               message.text += error is TimeoutException
-                  ? '\n\nYapay zekâ yanıt akışı 60 saniye boyunca '
+                  ? '\n\nYapay zekâ yanıt akışı 3 dakika boyunca '
                       'yeni veri göndermedi. Bu yanıt kısmi olabilir.'
                   : '\n\nYanıt tamamlanamadı. Lütfen tekrar dene.';
             } else {
@@ -838,7 +839,7 @@ class _AiHuzurScreenState extends ConsumerState<AiHuzurScreen> {
                             enabled: !_sending && !_consentPending,
                             minLines: 1,
                             maxLines: 4,
-                            maxLength: 500,
+                            maxLength: _maxQuestionLength,
                             maxLengthEnforcement: MaxLengthEnforcement.enforced,
                             textInputAction: TextInputAction.send,
                             onSubmitted: (_) => _send(),

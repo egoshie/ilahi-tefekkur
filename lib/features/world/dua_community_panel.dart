@@ -91,7 +91,7 @@ class _DuaCommunityPanelState extends ConsumerState<DuaCommunityPanel> {
       final premium = ref.read(premiumServiceProvider.notifier);
 
       // First check the locally verified StoreKit 2 entitlement.
-      final hasAppleEntitlement = await premium.ensurePremiumAccess();
+      final hasAppleEntitlement = await premium.ensureStoreKitPremiumAccess();
       if (!mounted) return;
 
       if (!hasAppleEntitlement) {
@@ -99,17 +99,9 @@ class _DuaCommunityPanelState extends ConsumerState<DuaCommunityPanel> {
         return;
       }
 
-      // Then ask the existing Firebase callable to verify the signed
-      // StoreKit transaction on the server before opening the composer.
-      final verifiedOnServer = await premium.verifyPremiumWithServer();
-      if (!mounted) return;
-
-      if (!verifiedOnServer) {
-        final message = ref.read(premiumServiceProvider).statusMessage;
-        _message(message ?? 'Premium erişimi sunucuda doğrulanamadı.');
-        return;
-      }
-
+      // Premium yetkisi Apple StoreKit 2 tarafından cihazda
+      // doğrulandı. Burada ikinci bir Firebase Premium kontrolü yok.
+      // Dua API'si Firebase Auth ve App Check ile korunmaya devam eder.
       await showModalBottomSheet<void>(
         context: context,
         isScrollControlled: true,

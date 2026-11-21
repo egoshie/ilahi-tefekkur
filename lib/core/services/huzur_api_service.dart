@@ -27,7 +27,6 @@ class HuzurApiService {
   final http.Client _client;
   final String _baseUrl;
 
-
   Uri _validatedBaseUri() {
     if (_baseUrl.isEmpty) {
       throw StateError("HUZUR_API_BASE_URL henüz yapılandırılmadı.");
@@ -86,21 +85,25 @@ class HuzurApiService {
     final idToken = await user.getIdToken();
     final appCheckToken = await FirebaseAppCheck.instance.getToken();
 
-    if (idToken == null || idToken.isEmpty ||
-        appCheckToken == null || appCheckToken.isEmpty) {
+    if (idToken == null ||
+        idToken.isEmpty ||
+        appCheckToken == null ||
+        appCheckToken.isEmpty) {
       throw const HuzurApiException("Güvenlik tokenları alınamadı.");
     }
 
-    final response = await _client.put(
-      _validatedBaseUri().resolve("/v1/me/country"),
-      headers: {
-        "Accept": "application/json",
-        "Content-Type": "application/json",
-        "Authorization": "Bearer $idToken",
-        "X-Firebase-AppCheck": appCheckToken,
-      },
-      body: jsonEncode({"country_code": countryCode}),
-    ).timeout(const Duration(seconds: 15));
+    final response = await _client
+        .put(
+          _validatedBaseUri().resolve("/v1/me/country"),
+          headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "Authorization": "Bearer $idToken",
+            "X-Firebase-AppCheck": appCheckToken,
+          },
+          body: jsonEncode({"country_code": countryCode}),
+        )
+        .timeout(const Duration(seconds: 15));
 
     if (response.statusCode != 200) {
       throw HuzurApiException(
@@ -236,7 +239,6 @@ class HuzurApiService {
     return decoded;
   }
 
-
   Future<Map<String, String>> _duaAuthHeaders() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
@@ -249,8 +251,10 @@ class HuzurApiService {
     final idToken = await user.getIdToken();
     final appCheckToken = await FirebaseAppCheck.instance.getToken();
 
-    if (idToken == null || idToken.isEmpty ||
-        appCheckToken == null || appCheckToken.isEmpty) {
+    if (idToken == null ||
+        idToken.isEmpty ||
+        appCheckToken == null ||
+        appCheckToken.isEmpty) {
       throw const HuzurApiException("Güvenlik tokenları alınamadı.");
     }
 
@@ -271,11 +275,13 @@ class HuzurApiService {
       headers["Content-Type"] = "application/json";
     }
 
-    final response = await _client.post(
-      _validatedBaseUri().resolve(path),
-      headers: headers,
-      body: body == null ? null : jsonEncode(body),
-    ).timeout(const Duration(seconds: 15));
+    final response = await _client
+        .post(
+          _validatedBaseUri().resolve(path),
+          headers: headers,
+          body: body == null ? null : jsonEncode(body),
+        )
+        .timeout(const Duration(seconds: 15));
 
     if (response.statusCode != 200) {
       throw HuzurApiException(
@@ -323,6 +329,114 @@ class HuzurApiService {
       "/v1/dua/posts/$postId/report",
       body: {"reason": reason},
     );
+  }
+
+  Future<Map<String, String>> _premiumAuthHeaders() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      throw const HuzurApiException(
+        "Premium işlemi için hesabına giriş yapmalısın.",
+        statusCode: 401,
+      );
+    }
+
+    final idToken = await user.getIdToken();
+    final appCheckToken = await FirebaseAppCheck.instance.getToken();
+
+    if (idToken == null ||
+        idToken.isEmpty ||
+        appCheckToken == null ||
+        appCheckToken.isEmpty) {
+      throw const HuzurApiException("Güvenlik tokenları alınamadı.");
+    }
+
+    return {
+      "Accept": "application/json",
+      "Authorization": "Bearer $idToken",
+      "X-Firebase-AppCheck": appCheckToken,
+    };
+  }
+
+  Future<String> getPremiumAccountToken() async {
+    final response = await _client
+        .post(
+          _validatedBaseUri().resolve("/v1/premium/account-token"),
+          headers: await _premiumAuthHeaders(),
+        )
+        .timeout(const Duration(seconds: 20));
+
+    if (response.statusCode != 200) {
+      throw HuzurApiException(
+        "Premium hesap tokenı alınamadı.",
+        statusCode: response.statusCode,
+      );
+    }
+
+    final decoded = jsonDecode(response.body);
+    if (decoded is! Map<String, dynamic>) {
+      throw const HuzurApiException(
+          "Premium sunucusundan geçersiz yanıt alındı.");
+    }
+
+    final token = decoded["app_account_token"];
+    if (token is! String || token.isEmpty) {
+      throw const HuzurApiException(
+          "Apple hesap tokenı yanıt içinde bulunamadı.");
+    }
+    return token;
+  }
+
+  Future<Map<String, dynamic>> verifyPremiumTransaction({
+    required String signedTransaction,
+  }) async {
+    final headers = await _premiumAuthHeaders();
+    headers["Content-Type"] = "application/json";
+
+    final response = await _client
+        .post(
+          _validatedBaseUri().resolve("/v1/premium/verify"),
+          headers: headers,
+          body: jsonEncode({
+            "signed_transaction": signedTransaction,
+            "allow_legacy_claim": false,
+          }),
+        )
+        .timeout(const Duration(seconds: 30));
+
+    if (response.statusCode != 200) {
+      throw HuzurApiException(
+        "Apple satın alımı Huzur sunucusunda doğrulanamadı.",
+        statusCode: response.statusCode,
+      );
+    }
+
+    final decoded = jsonDecode(response.body);
+    if (decoded is! Map<String, dynamic>) {
+      throw const HuzurApiException("Premium doğrulama yanıtı okunamadı.");
+    }
+    return decoded;
+  }
+
+  Future<Map<String, dynamic>> getMyPremiumStatus() async {
+    final response = await _client
+        .get(
+          _validatedBaseUri().resolve("/v1/premium/me"),
+          headers: await _premiumAuthHeaders(),
+        )
+        .timeout(const Duration(seconds: 20));
+
+    if (response.statusCode != 200) {
+      throw HuzurApiException(
+        "Premium hesap durumu alınamadı.",
+        statusCode: response.statusCode,
+      );
+    }
+
+    final decoded = jsonDecode(response.body);
+    if (decoded is! Map<String, dynamic>) {
+      throw const HuzurApiException("Premium hesap yanıtı okunamadı.");
+    }
+    return decoded;
   }
 
   void close() {
