@@ -498,6 +498,7 @@ class HuzurApiService {
 
   Future<Map<String, dynamic>> verifyPremiumTransaction({
     required String signedTransaction,
+    bool allowLegacyClaim = false,
   }) async {
     final headers = await _premiumAuthHeaders();
     headers["Content-Type"] = "application/json";
@@ -508,7 +509,7 @@ class HuzurApiService {
           headers: headers,
           body: jsonEncode({
             "signed_transaction": signedTransaction,
-            "allow_legacy_claim": false,
+            "allow_legacy_claim": allowLegacyClaim,
           }),
         )
         .timeout(const Duration(seconds: 30));

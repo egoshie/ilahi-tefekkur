@@ -155,7 +155,7 @@ class PremiumServiceNotifier extends StateNotifier<PremiumState> {
     }
   }
 
-  Future<bool> verifyPremiumWithServer() async {
+  Future<bool> verifyPremiumWithServer({bool allowLegacyClaim = false}) async {
     if (!Platform.isIOS) return false;
 
     if (FirebaseAuth.instance.currentUser == null) {
@@ -199,6 +199,7 @@ class PremiumServiceNotifier extends StateNotifier<PremiumState> {
         try {
           final data = await _api.verifyPremiumTransaction(
             signedTransaction: signedTransaction,
+            allowLegacyClaim: allowLegacyClaim,
           );
           final productId = data['product_id'] as String?;
 
@@ -661,6 +662,7 @@ class PremiumServiceNotifier extends StateNotifier<PremiumState> {
               try {
                 final data = await _api.verifyPremiumTransaction(
                   signedTransaction: signedTransaction,
+                  allowLegacyClaim: purchase.status == PurchaseStatus.restored,
                 );
                 final verifiedProduct = data['product_id'] as String?;
 
@@ -747,7 +749,12 @@ class PremiumServiceNotifier extends StateNotifier<PremiumState> {
 
     try {
       await _iap.restorePurchases();
-      final restored = await verifyPremiumWithServer().timeout(
+      // Legacy transactions without appAccountToken may only be claimed
+      // through this explicit StoreKit restore action. The server still checks
+      // Apple's JWS and rejects transactions owned by a different Huzur UID.
+      final restored = await verifyPremiumWithServer(
+        allowLegacyClaim: true,
+      ).timeout(
         const Duration(seconds: 45),
       );
 
