@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/services/huzur_api_service.dart';
 import '../ai_huzur/ai_privacy_consent.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -11,6 +12,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  final HuzurApiService _api = HuzurApiService();
   bool _busy = false;
   String? _consentUid;
   Future<bool>? _consentFuture;
@@ -189,7 +191,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         );
       }
 
-      // Önce Sign in with Apple yetkisini iptal et.
+      // Önce geliştiricinin kontrolündeki sunucu verilerini sil.
+      // Bu adım başarısızsa Apple/Firebase hesabı silinmez; kullanıcı tekrar deneyebilir.
+      await _api.deleteMyAccount();
+
+      // Sunucu temizliği tamamlandıktan sonra Sign in with Apple yetkisini iptal et.
       await FirebaseAuth.instance.revokeTokenWithAuthorizationCode(
         authorizationCode,
       );
@@ -499,6 +505,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ],
       ],
     );
+  }
+
+  @override
+  void dispose() {
+    _api.close();
+    super.dispose();
   }
 
   @override

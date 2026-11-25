@@ -403,6 +403,168 @@ class _DuaCommunityPanelState extends ConsumerState<DuaCommunityPanel> {
     }
   }
 
+  Future<void> _blockUser(String publicId) async {
+    if (!_signedIn) {
+      _message('Kullanıcı engellemek için Apple hesabınla giriş yapmalısın.');
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Kullanıcıyı engelle?'),
+        content: const Text(
+          'Bu kullanıcının duaları senin topluluk akışında gösterilmeyecek. '
+          'Engeli daha sonra kaldırabilirsin.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Vazgeç'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Engelle'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    try {
+      await _api.blockDuaUser(publicId);
+      _message('Kullanıcı engellendi.');
+      await _loadPosts();
+    } catch (error) {
+      _message('Kullanıcı engellenemedi. Tekrar deneyebilirsin.');
+      debugPrint('Huzur kullanıcı engelleme: $error');
+    }
+  }
+
+  Future<void> _deleteOwnPost(String postId) async {
+    if (!_signedIn) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Duan silinsin mi?'),
+        content: const Text(
+          'Bu dua topluluk akışından ve Huzur sunucusundaki ilişkili '
+          'Âmin ve şikâyet kayıtlarıyla birlikte kalıcı olarak silinir.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Vazgeç'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Duanı sil'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    try {
+      await _api.deleteDuaPost(postId);
+      _message('Duan silindi.');
+      await _loadPosts();
+    } catch (error) {
+      _message('Dua silinemedi. Tekrar deneyebilirsin.');
+      debugPrint('Huzur dua silme: $error');
+    }
+  }
+
+  Future<void> _manageBlockedUsers() async {
+    if (!_signedIn) return;
+
+    try {
+      final response = await _api.getBlockedDuaUsers();
+      final blocked = (response['blocked_users'] as List? ?? [])
+          .map((item) => Map<String, dynamic>.from(item as Map))
+          .toList();
+      if (!mounted) return;
+      if (blocked.isEmpty) {
+        _message('Engellediğin kullanıcı bulunmuyor.');
+        return;
+      }
+
+      await showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        useSafeArea: true,
+        backgroundColor: const Color(0xFF101A1D),
+        builder: (sheetContext) => StatefulBuilder(
+          builder: (context, setSheetState) => SizedBox(
+            height: MediaQuery.sizeOf(context).height * 0.55,
+            child: Column(
+              children: [
+                const Padding(
+                  padding: EdgeInsets.all(18),
+                  child: Text(
+                    'Engellenen kullanıcılar',
+                    style: TextStyle(
+                      color: _gold,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: blocked.length,
+                    itemBuilder: (context, index) {
+                      final publicId =
+                          blocked[index]['public_id']?.toString() ?? '';
+                      final shortId = publicId.length > 8
+                          ? publicId.substring(0, 8)
+                          : publicId;
+                      return ListTile(
+                        title: const Text(
+                          'Huzur kullanıcısı',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        subtitle: Text(
+                          'Kullanıcı kodu: $shortId',
+                          style: const TextStyle(color: Colors.white54),
+                        ),
+                        trailing: TextButton(
+                          onPressed: publicId.isEmpty
+                              ? null
+                              : () async {
+                                  try {
+                                    await _api.unblockDuaUser(publicId);
+                                    setSheetState(
+                                        () => blocked.removeAt(index));
+                                    if (mounted) await _loadPosts();
+                                    if (blocked.isEmpty &&
+                                        sheetContext.mounted) {
+                                      Navigator.of(sheetContext).pop();
+                                    }
+                                    _message('Kullanıcı engeli kaldırıldı.');
+                                  } catch (error) {
+                                    _message('Engel kaldırılamadı.');
+                                    debugPrint('Huzur engel kaldırma: $error');
+                                  }
+                                },
+                          child: const Text('Engeli kaldır'),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    } catch (error) {
+      _message('Engellenen kullanıcılar yüklenemedi.');
+      debugPrint('Huzur engellenen kullanıcılar: $error');
+    }
+  }
+
   String _timeLabel(dynamic value) {
     final date = DateTime.tryParse(value?.toString() ?? '');
     if (date == null) return '';
@@ -448,6 +610,15 @@ class _DuaCommunityPanelState extends ConsumerState<DuaCommunityPanel> {
                   ),
                 ),
               ),
+              if (_signedIn)
+                IconButton(
+                  onPressed: _manageBlockedUsers,
+                  tooltip: 'Engellenen kullanıcıları yönet',
+                  icon: const Icon(
+                    Icons.block_rounded,
+                    color: Colors.white54,
+                  ),
+                ),
               IconButton(
                 onPressed: _loading ? null : _loadPosts,
                 tooltip: 'Duaları yenile',
@@ -602,7 +773,8 @@ class _DuaCommunityPanelState extends ConsumerState<DuaCommunityPanel> {
           const SizedBox(height: 10),
           const Text(
             'Paylaşımlar herkese açıktır ve 24 saat sonra yayından kalkar. '
-            'Uygunsuz içerikleri şikâyet edebilirsin.',
+            'Kişisel bilgi, bağlantı, hakaret, taciz ve nefret söylemi yasaktır. '
+            'Uygunsuz içeriği şikâyet edebilir, kullanıcıları engelleyebilirsin.',
             style: TextStyle(
               color: Colors.white38,
               fontSize: 10,
@@ -661,26 +833,55 @@ class _DuaCommunityPanelState extends ConsumerState<DuaCommunityPanel> {
                   ),
                 ),
               PopupMenuButton<String>(
-                tooltip: 'Şikâyet et',
+                tooltip: 'Şikâyet et veya engelle',
                 icon: const Icon(
                   Icons.more_horiz_rounded,
                   color: Colors.white54,
                 ),
                 color: const Color(0xFF1B2B2C),
-                onSelected: (reason) => _report(id, reason),
-                itemBuilder: (_) => const [
-                  PopupMenuItem(
+                onSelected: (action) {
+                  if (action == 'block') {
+                    final publicId = post['author_public_id']?.toString();
+                    if (publicId != null && publicId.isNotEmpty) {
+                      _blockUser(publicId);
+                    }
+                  } else if (action == 'delete') {
+                    _deleteOwnPost(id);
+                  } else {
+                    _report(id, action);
+                  }
+                },
+                itemBuilder: (_) => [
+                  const PopupMenuItem(
                     value: 'spam',
                     child: Text('Spam'),
                   ),
-                  PopupMenuItem(
+                  const PopupMenuItem(
                     value: 'inappropriate',
                     child: Text('Uygunsuz içerik'),
                   ),
-                  PopupMenuItem(
+                  const PopupMenuItem(
+                    value: 'personal_information',
+                    child: Text('Kişisel bilgi'),
+                  ),
+                  const PopupMenuItem(
+                    value: 'harassment',
+                    child: Text('Taciz veya hedef gösterme'),
+                  ),
+                  const PopupMenuItem(
                     value: 'other',
                     child: Text('Diğer'),
                   ),
+                  if (_signedIn && post['is_mine'] != true)
+                    const PopupMenuItem(
+                      value: 'block',
+                      child: Text('Kullanıcıyı engelle'),
+                    ),
+                  if (_signedIn && post['is_mine'] == true)
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: Text('Kendi duanı sil'),
+                    ),
                 ],
               ),
             ],

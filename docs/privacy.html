@@ -31,7 +31,7 @@
       <span class="badge">HUZUR • RESMİ GİZLİLİK VE VERİ KORUMA POLİTİKASI</span>
       <h1>HUZUR - GİZLİLİK POLİTİKASI (PRIVACY POLICY)</h1>
       <div class="meta-box">
-        <strong>Son Güncelleme Tarihi:</strong> 11 Kasım 2026<br>
+        <strong>Son Güncelleme Tarihi:</strong> 22 Kasım 2026<br>
         <strong>Uygulama Adı:</strong> Huzur (İlahi Metinler, Tefekkür ve İbadet Rehberi)<br>
         <strong>Geliştirici / Veri Sorumlusu:</strong> Halil İbrahim Cebeci<br>
         <strong>İletişim E-posta Adresi:</strong> <a href="mailto:halilibrahimcebeci0@icloud.com">halilibrahimcebeci0@icloud.com</a>
@@ -55,7 +55,7 @@
       <h3>C. Cihaz İçi Yerel Kayıtlar (SQLite, SharedPreferences ve WidgetKit)</h3>
       <ul>
         <li><strong>Ne Saklanır:</strong> Favoriye eklediğiniz ayetler, son okuduğunuz sure/bab yer imleri, günlük zikirmatik sayaçlarınız, kaza namazı/orucu çeteleniz, 30 cüz hatim ilerlemeniz, ücretsiz sesli sure dinletisi kullanımını takip eden tamamlanmış dinleti sayısı, AI asistanının ücretsiz soru kullanım sayacı ve Kilit Ekranı Widget (App Group: <code>group.com.ilahi.tefekkur</code>) tercihleriniz.</li>
-        <li><strong>Nerede Saklanır:</strong> Bu verilerin tamamı yalnızca kendi iPhone/iPad veya Android cihazınızın yerel güvenli hafızasında saklanır. Uygulamayı cihazınızdan sildiğinizde bu kayıtların tamamı cihazınızdan kalıcı olarak silinir.</li>
+        <li><strong>Nerede Saklanır:</strong> Bu başlıkta sayılan yerel kayıtlar cihazınızda saklanır. Dünya zikir ağı ve Dua Bırak özellikleri kullanıldığında, aşağıda açıklanan sınırlı sayaç, ülke ve topluluk verileri ayrıca Huzur sunucusuna gönderilebilir.</li>
       </ul>
       <h3>D. Pusula ve Hareket Sensörleri (Magnetometer)</h3>
       <ul>
@@ -63,7 +63,7 @@
       </ul>
       <h3>E. Apple ile Giriş ve AI Hesap Bilgileri</h3>
       <ul>
-        <li><strong>AI erişimi:</strong> Apple ile giriş yalnızca Huzur Dini Asistanı özelliğini kullanmak için gereklidir. Uygulamanın AI dışındaki temel bölümleri Apple hesabıyla giriş yapılmadan kullanılabilir.</li>
+        <li><strong>Hesap gerektiren özellikler:</strong> Huzur Dini Asistanı, Dua Bırak paylaşımı/Âmin/şikâyet ve kullanıcı hesabına bağlı zikir senkronizasyonu için Apple ile giriş gerekir. Uygulamanın birçok temel okuma, vakit ve cihaz içi özelliği hesap açmadan kullanılabilir.</li>
         <li><strong>İşlenen hesap bilgileri:</strong> Giriş akışı Apple tarafından başlatılır ve Firebase Authentication ile yönetilir. Uygulama Apple sağlayıcısından e-posta ve ad kapsamlarını ister. Apple'ın kullanıcıya ve seçtiği gizlilik ayarlarına bağlı olarak sağladığı ad, e-posta veya özel e-posta yönlendirme adresi ile Firebase kullanıcı kimliği, sağlayıcı bilgisi ve oturum durumu kimlik doğrulama amacıyla işlenebilir.</li>
         <li><strong>Kimlik doğrulama altyapısı:</strong> Firebase Authentication, oturumun kurulması ve sürdürülmesi için gerekli hesap ve teknik bilgileri işler. Giriş parolanız Huzur tarafından istenmez veya saklanmaz.</li>
       </ul>
@@ -75,6 +75,15 @@
         <li><strong>Yerel kullanım sayacı:</strong> Ücretsiz AI soru kullanım sayacı cihazda <code>SharedPreferences</code> aracılığıyla saklanır. İncelenen kod sürümünde sohbet dökümünü geliştiriciye ait bir Firestore veya Cloud Storage alanına yazan bir işlem görülmemiştir. Bu açıklama, Google/Firebase hizmetlerinin kendi teknik kayıt veya saklama süreçleri hakkında bir taahhüt değildir.</li>
         <li><strong>Gönderim tercihi:</strong> AI özelliği isteğe bağlıdır. AI kullanmamanız, uygulamanın AI dışındaki bölümlerine erişiminizi engellemez. AI içeriği üçüncü taraf hizmete gönderilmeden önce uygulama içinde ayrıca açık bilgilendirme ve izin adımı sunulmalıdır; bu izin Apple ile giriş yapılmasından veya bu politikayı okumuş olmaktan ayrı bir işlemdir.</li>
       </ul>
+      <h3>G. Dünya Zikir Ağı ve Dua Bırak: Sunucuya Aktarılan Veriler</h3>
+      <ul>
+        <li><strong>Zikir senkronizasyonu:</strong> Apple ile giriş yapmış kullanıcının zikir paketleri; adet, gün, ülke kodu ve Firebase kullanıcı kimliğiyle Huzur sunucusuna gönderilebilir. Kişiye bağlı günlük toplamlar ve ülke tercihi hesabın işletilmesi ve dünya sıralamasının oluşturulması için işlenir. Ülke bazlı genel toplamlar kullanıcı kimliği içermeyecek şekilde toplulaştırılır.</li>
+        <li><strong>Dua Bırak:</strong> Paylaştığınız dua metni, ülke kodu, oluşturulma ve sona erme zamanı, Âmin sayısı ve moderasyon durumu Huzur sunucusunda saklanır. Dua metni topluluk akışında diğer kullanıcılara gösterilir. İçerik 24 saat sonra herkese açık akıştan kalkar; güvenlik ve şikâyet incelemesi için 30 gün daha saklanabilir. Günlük temizlik görevi çalıştırılmadığında bu süre garanti edilemez.</li>
+        <li><strong>Şikâyet ve engelleme:</strong> Şikâyet nedeni, şikâyet eden hesap kimliği ve engelleme ilişkisi kötüye kullanımı önleme ve moderasyon için işlenir. Şikâyet eden kimliği diğer kullanıcılara gösterilmez.</li>
+        <li><strong>Sunucu altyapısı:</strong> Bu işlemler Firebase Authentication ile doğrulanan kullanıcı kimliği ve Firebase App Check güvenlik belirteciyle korunur. Huzur API'si bu özellikler için tam GPS koordinatınızı istemez; ülke kodu uygulamadaki ülke seçiminizden alınır.</li>
+      </ul>
+      <h3>H. Premium Satın Alma Doğrulaması</h3>
+      <p>Premium erişimini doğrulamak için Apple tarafından imzalanan işlem verisi, ürün kimliği, işlem/abonelik tanımlayıcıları, App Account Token, satın alma ve sona erme bilgileri, mağaza ortamı ve Firebase kullanıcı kimliği Huzur sunucusunda işlenebilir. Ödeme kartı bilgileri Huzur'a gönderilmez. Hesap silindiğinde işlem sahipliği, satın alımın başka bir hesaba yeniden bağlanmasını önlemek ve doğrulama geçmişini korumak için doğrudan Firebase UID yerine takma kimlikle tutulabilir; bu kayıt anonim değil, takma kimlikli işlem kaydıdır.</p>
       <h2>2. İNTERNET BAĞLANTISI VE ÜÇÜNCÜ TARAF İÇERİK SERVİSLERİ</h2>
       <p>Uygulama, kutsal metinleri ve sesli Kur'ân tilavetlerini getirmek için güvenli <code>HTTPS</code> bağlantıları üzerinden aşağıdaki hizmetlere istek gönderir:</p>
       <ul>
@@ -109,11 +118,11 @@
       <h3>A. Cihazda saklanan veriler</h3>
       <p>Favoriler, sayaçlar, tercihler ve AI ücretsiz kullanım sayacı gibi yerel veriler cihazda saklanır. Uygulamayı kaldırmak cihazdaki yerel uygulama verilerini kaldırabilir; ancak bu işlem Firebase Authentication üzerinde oluşturulmuş AI giriş hesabını veya Google/Firebase gibi sağlayıcıların kendi sistemlerindeki kayıtları kendiliğinden silmez.</p>
       <h3>B. Apple ile giriş hesabının silinmesi</h3>
-      <p>AI özelliği için Firebase Authentication üzerinde bir kullanıcı hesabı/kimliği oluşturulabilir. Hesabınızın ve geliştiricinin kontrolündeki ilişkili verilerin silinmesini talep etmek için <a href="mailto:halilibrahimcebeci0@icloud.com">halilibrahimcebeci0@icloud.com</a> adresine başvurabilirsiniz. Talep, hesap sahibinin doğrulanmasının ardından makul süre içinde işleme alınır. Geliştiricinin kontrolündeki Firebase Authentication hesabı ve silinmesi gereken ilişkili kayıtlar silinir; yasal olarak saklanması gereken kayıtlar yalnızca zorunlu süre ve amaçla tutulabilir.</p>
+      <p>Profilim bölümündeki <strong>Hesabımı sil</strong> işlemi, Apple ile yeniden kimlik doğrulamasından sonra Huzur hesabının silinmesini uygulama içinden başlatır. Geliştiricinin kontrolündeki Firebase Authentication hesabı, bilinen Firebase kullanıcı kayıtları ve Huzur sunucusundaki hesaba bağlı dua, Âmin, şikâyet, engelleme, kişi bazlı zikir ve ülke tercihi kayıtları silinir. Apple işlem doğrulama kayıtlarının sınırlı bir bölümü, satın alma sahipliğini korumak için geri döndürülemez takma kimlikle tutulabilir. Bu kayıtlar anonim değildir; yasal veya güvenlik gerekleriyle saklanan kayıtlar yalnızca gerekli kapsamda tutulur.</p>
       <p>Google, Apple ve diğer hizmet sağlayıcıların kendi sistemlerinde tuttukları teknik kayıtlar, ilgili sağlayıcının kendi silme ve saklama kurallarına tabidir. Uygulamayı kaldırmak bu sağlayıcılardaki verilerin silindiği anlamına gelmez.</p>
       <h3>C. AI verileri ve kullanıcı tercihleri</h3>
       <p>AI asistanına gönderdiğiniz soru ve görseller, yanıt oluşturulması için ilgili sağlayıcıya iletilir. Gönderilmiş bir isteğin üçüncü taraf sistemlerdeki işlenmesini Huzur uygulamasından geriye dönük olarak durdurmak her zaman mümkün olmayabilir. Sağlayıcı tarafındaki silme veya saklama talepleri, ilgili sağlayıcının koşulları çerçevesinde değerlendirilir. Daha fazla bilgi veya veri talebi için yukarıdaki e-posta adresinden geliştiriciyle iletişime geçebilirsiniz.</p>
-      <p><strong>Önemli:</strong> Apple App Store'da hesap oluşturmayı destekleyen uygulamalar için hesap silmenin uygulama içinden başlatılabilmesi gerekir. Yalnızca e-posta desteği bu gerekliliğin yerini tutmaz; uygulama içi hesap silme akışı ayrıca sağlanmalıdır.</p>
+      <p><strong>Hesap silme:</strong> Uygulama içinden Profilim &gt; Hesabımı sil yoluyla başlatılabilir. Uygulamayı cihazdan kaldırmak hesap silme işlemi değildir.</p>
       <h2>7. İLETİŞİM</h2>
       <p>Bu Gizlilik Politikası veya uygulamamızın veri güvenliği uygulamaları hakkında her türlü soru, görüş ve talebiniz için doğrudan Geliştirici ile iletişime geçebilirsiniz:</p>
       <ul>

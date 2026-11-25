@@ -297,11 +297,36 @@ class HuzurApiService {
     return decoded;
   }
 
-  Future<Map<String, dynamic>> getDuaPosts({int limit = 30}) {
-    return _publicGet(
-      "/v1/dua/posts",
-      queryParameters: {"limit": limit.toString()},
-    );
+  Future<Map<String, dynamic>> getDuaPosts({int limit = 30}) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return _publicGet(
+        "/v1/dua/posts",
+        queryParameters: {"limit": limit.toString()},
+      );
+    }
+
+    // Authenticated feed requests allow the server to apply this user's block list.
+    final headers = await _duaAuthHeaders();
+    final uri = _validatedBaseUri()
+        .resolve("/v1/dua/posts")
+        .replace(queryParameters: {"limit": limit.toString()});
+    final response = await _client
+        .get(uri, headers: headers)
+        .timeout(const Duration(seconds: 15));
+
+    if (response.statusCode != 200) {
+      throw HuzurApiException(
+        "Dua akışı alınamadı.",
+        statusCode: response.statusCode,
+      );
+    }
+
+    final decoded = jsonDecode(response.body);
+    if (decoded is! Map<String, dynamic>) {
+      throw const HuzurApiException("Dua akışından geçersiz yanıt alındı.");
+    }
+    return decoded;
   }
 
   Future<Map<String, dynamic>> createDuaPost({
@@ -329,6 +354,91 @@ class HuzurApiService {
       "/v1/dua/posts/$postId/report",
       body: {"reason": reason},
     );
+  }
+
+  Future<Map<String, dynamic>> getBlockedDuaUsers() async {
+    final headers = await _duaAuthHeaders();
+    final response = await _client
+        .get(_validatedBaseUri().resolve("/v1/dua/blocks"), headers: headers)
+        .timeout(const Duration(seconds: 15));
+    if (response.statusCode != 200) {
+      throw HuzurApiException(
+        "Engellenen kullanıcılar alınamadı.",
+        statusCode: response.statusCode,
+      );
+    }
+    final decoded = jsonDecode(response.body);
+    if (decoded is! Map<String, dynamic>) {
+      throw const HuzurApiException("Engelleme yanıtı okunamadı.");
+    }
+    return decoded;
+  }
+
+  Future<Map<String, dynamic>> blockDuaUser(String publicId) {
+    return _duaAuthenticatedPost(
+      "/v1/dua/users/${Uri.encodeComponent(publicId)}/block",
+    );
+  }
+
+  Future<Map<String, dynamic>> unblockDuaUser(String publicId) async {
+    final headers = await _duaAuthHeaders();
+    final uri = _validatedBaseUri().resolve(
+      "/v1/dua/users/${Uri.encodeComponent(publicId)}/block",
+    );
+    final response = await _client
+        .delete(uri, headers: headers)
+        .timeout(const Duration(seconds: 15));
+    if (response.statusCode != 200) {
+      throw HuzurApiException(
+        "Kullanıcı engeli kaldırılamadı.",
+        statusCode: response.statusCode,
+      );
+    }
+    final decoded = jsonDecode(response.body);
+    if (decoded is! Map<String, dynamic>) {
+      throw const HuzurApiException("Engel kaldırma yanıtı okunamadı.");
+    }
+    return decoded;
+  }
+
+  Future<Map<String, dynamic>> deleteMyAccount() async {
+    final headers = await _duaAuthHeaders();
+    final response = await _client
+        .delete(_validatedBaseUri().resolve("/v1/me"), headers: headers)
+        .timeout(const Duration(seconds: 30));
+    if (response.statusCode != 200) {
+      throw HuzurApiException(
+        "Hesaba bağlı sunucu verileri silinemedi.",
+        statusCode: response.statusCode,
+      );
+    }
+    final decoded = jsonDecode(response.body);
+    if (decoded is! Map<String, dynamic> || decoded["deleted"] != true) {
+      throw const HuzurApiException(
+          "Hesap silme sunucu tarafından doğrulanamadı.");
+    }
+    return decoded;
+  }
+
+  Future<Map<String, dynamic>> deleteDuaPost(String postId) async {
+    final headers = await _duaAuthHeaders();
+    final uri = _validatedBaseUri().resolve(
+      "/v1/dua/posts/${Uri.encodeComponent(postId)}",
+    );
+    final response = await _client
+        .delete(uri, headers: headers)
+        .timeout(const Duration(seconds: 15));
+    if (response.statusCode != 200) {
+      throw HuzurApiException(
+        "Dua silinemedi.",
+        statusCode: response.statusCode,
+      );
+    }
+    final decoded = jsonDecode(response.body);
+    if (decoded is! Map<String, dynamic> || decoded["deleted"] != true) {
+      throw const HuzurApiException("Dua silme işlemi doğrulanamadı.");
+    }
+    return decoded;
   }
 
   Future<Map<String, String>> _premiumAuthHeaders() async {

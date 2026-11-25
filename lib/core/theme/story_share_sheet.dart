@@ -3,8 +3,50 @@ import 'dart:ui' as ui;
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import 'glass_container.dart';
+
+const String _huzurShareMarkSvg = r'''
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="huzurGold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFF0B4"/>
+      <stop offset="0.42" stop-color="#D8AE58"/>
+      <stop offset="1" stop-color="#8B5D19"/>
+    </linearGradient>
+  </defs>
+  <path d="M11 51V29.5C11 17.9 20.4 9 32 9s21 8.9 21 20.5V51"
+        fill="none" stroke="url(#huzurGold)" stroke-width="4.2"
+        stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M22 51V30.5c0-5.5 4.5-10 10-10s10 4.5 10 10V51"
+        fill="none" stroke="url(#huzurGold)" stroke-width="4.2"
+        stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M7 52.5h50M32 20.5v31" fill="none"
+        stroke="url(#huzurGold)" stroke-width="4.2"
+        stroke-linecap="round"/>
+  <path d="M15 42h8M41 42h8" fill="none" stroke="#FFF0B4"
+        stroke-width="2.1" stroke-linecap="round" opacity=".9"/>
+</svg>
+''';
+
+const String _huzurGoldVerifiedSvg = r'''
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <defs>
+    <linearGradient id="verifiedGold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFF4BF"/>
+      <stop offset="0.35" stop-color="#E4BD66"/>
+      <stop offset="0.72" stop-color="#BD8730"/>
+      <stop offset="1" stop-color="#825516"/>
+    </linearGradient>
+  </defs>
+  <path d="M12 1.15l2.35 1.65 2.86-.12 1.25 2.57 2.57 1.25-.12 2.86L22.55 12l-1.64 2.35.12 2.86-2.57 1.25-1.25 2.57-2.86-.12L12 22.55l-2.35-1.64-2.86.12-1.25-2.57-2.57-1.25.12-2.86L1.45 12l1.64-2.35-.12-2.86 2.57-1.25 1.25-2.57 2.86.12z"
+        fill="url(#verifiedGold)" stroke="#F8E2A0" stroke-width=".55"/>
+  <path d="M7.15 12.15l3.05 3.05 6.75-6.8" fill="none"
+        stroke="#2B1D08" stroke-width="2.05" stroke-linecap="round"
+        stroke-linejoin="round"/>
+</svg>
+''';
 
 class StoryShareSheet extends StatefulWidget {
   final String arabic;
@@ -176,351 +218,152 @@ class _StoryShareSheetState extends State<StoryShareSheet> {
     }
   }
 
+  String _shareReferenceLabel() {
+    final value = widget.reference.trim();
+    if (value.isEmpty) return '';
+
+    // Current Quran call sites send "Surah Name, verse number".
+    // Present that as a clean, readable reference without altering other books.
+    final quranReference = RegExp(r'^(.+?)\s*,\s*(\d+)\s*$').firstMatch(value);
+    if (quranReference != null) {
+      return '${quranReference.group(1)} Suresi '
+          '${quranReference.group(2)}. Ayet';
+    }
+    return value;
+  }
+
   Widget _buildStoryCard() {
-    const accent = Color(0xFFFFA21A);
-    const gold = Color(0xFFFFE082);
+    const gold = Color(0xFFD8B56A);
+    const mutedGold = Color(0xFFB99A5B);
+    const quote = Color(0xFFF5F3EE);
+    final displayText = widget.turkishText.trim().isNotEmpty
+        ? widget.turkishText.trim()
+        : widget.arabic.trim();
+    final isArabicFallback = widget.turkishText.trim().isEmpty;
+    final reference = _shareReferenceLabel();
 
     return RepaintBoundary(
       key: _repaintKey,
       child: SizedBox(
         width: _storyWidth,
         height: _storyHeight,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(28),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              const DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Color(0xFF041712),
-                      Color(0xFF092B25),
-                      Color(0xFF07131D),
-                    ],
-                  ),
-                ),
+        child: ColoredBox(
+          color: Colors.black,
+          child: Center(
+            child: Container(
+              width: 318,
+              height: 354,
+              padding: const EdgeInsets.fromLTRB(21, 20, 21, 20),
+              decoration: BoxDecoration(
+                color: const Color(0xFF050505),
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: const Color(0xFF252525), width: 1),
               ),
-              Positioned(
-                top: -105,
-                right: -100,
-                child: Container(
-                  width: 290,
-                  height: 290,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: accent.withValues(alpha: 0.12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: accent.withValues(alpha: 0.16),
-                        blurRadius: 90,
-                        spreadRadius: 24,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 39,
+                        height: 39,
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: const Color(0xFF0B0B0B),
+                          border: Border.all(
+                            color: const Color(0xFF393021),
+                            width: 1,
+                          ),
+                        ),
+                        child: SvgPicture.string(_huzurShareMarkSvg),
+                      ),
+                      const SizedBox(width: 10),
+                      const Flexible(
+                        child: Text(
+                          'Huzur App',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Color(0xFFF4F1EA),
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.15,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 5),
+                      SvgPicture.string(
+                        _huzurGoldVerifiedSvg,
+                        width: 17,
+                        height: 17,
+                      ),
+                      const Spacer(),
+                      SvgPicture.string(
+                        _huzurShareMarkSvg,
+                        width: 27,
+                        height: 27,
                       ),
                     ],
                   ),
-                ),
-              ),
-              Positioned(
-                bottom: -120,
-                left: -100,
-                child: Container(
-                  width: 300,
-                  height: 300,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: gold.withValues(alpha: 0.08),
-                    boxShadow: [
-                      BoxShadow(
-                        color: gold.withValues(alpha: 0.12),
-                        blurRadius: 90,
-                        spreadRadius: 25,
+                  const SizedBox(height: 27),
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Directionality(
+                        textDirection: isArabicFallback
+                            ? TextDirection.rtl
+                            : TextDirection.ltr,
+                        child: _StoryAutoFitText(
+                          text: displayText,
+                          textAlign: TextAlign.start,
+                          maxLines: 12,
+                          maxFontSize: 20.5,
+                          minFontSize: 13.5,
+                          style: const TextStyle(
+                            color: quote,
+                            height: 1.48,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.18,
+                          ),
+                        ),
                       ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(25, 25, 25, 20),
-                child: Column(
-                  children: [
+                  if (reference.isNotEmpty) ...[
+                    const SizedBox(height: 18),
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Container(
-                          width: 42,
-                          height: 42,
+                          width: 2,
+                          height: 18,
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(14),
-                            color: accent.withValues(alpha: 0.13),
-                            border: Border.all(
-                              color: accent.withValues(alpha: 0.45),
+                            color: gold,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                        const SizedBox(width: 9),
+                        Expanded(
+                          child: Text(
+                            reference,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: mutedGold,
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w600,
+                              height: 1.35,
+                              letterSpacing: 0.05,
                             ),
                           ),
-                          child: const Icon(
-                            Icons.menu_book_rounded,
-                            color: gold,
-                            size: 23,
-                          ),
-                        ),
-                        const SizedBox(width: 11),
-                        const Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'HUZUR',
-                                maxLines: 1,
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: 3,
-                                ),
-                              ),
-                              SizedBox(height: 3),
-                              Text(
-                                'KALBE DOKUNAN BİR MOLA',
-                                maxLines: 1,
-                                style: TextStyle(
-                                  color: Colors.white60,
-                                  fontSize: 8,
-                                  letterSpacing: 1.3,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const Icon(
-                          Icons.graphic_eq_rounded,
-                          color: accent,
-                          size: 23,
                         ),
                       ],
                     ),
-                    const SizedBox(height: 23),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 15,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: accent.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(30),
-                        border: Border.all(
-                          color: accent.withValues(alpha: 0.4),
-                        ),
-                      ),
-                      child: const Text(
-                        'KUR’ÂN-I KERÎM  •  TEFEKKÜR',
-                        maxLines: 1,
-                        style: TextStyle(
-                          color: accent,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 9,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Expanded(
-                      flex: 4,
-                      child: Center(
-                        child: Directionality(
-                          textDirection: TextDirection.rtl,
-                          child: _StoryAutoFitText(
-                            text: widget.arabic,
-                            textAlign: TextAlign.center,
-                            maxLines: 6,
-                            maxFontSize: 33,
-                            minFontSize: 18,
-                            style: const TextStyle(
-                              color: Color(0xFFFFF4DC),
-                              height: 1.9,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    Container(
-                      width: 58,
-                      height: 1,
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.transparent,
-                            gold,
-                            Colors.transparent,
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Expanded(
-                      flex: 3,
-                      child: Center(
-                        child: _StoryAutoFitText(
-                          text: widget.turkishText,
-                          textAlign: TextAlign.center,
-                          maxLines: 9,
-                          maxFontSize: 19,
-                          minFontSize: 12.5,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            height: 1.65,
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: 0.1,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      widget.reference,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: gold,
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 13),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.22),
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(
-                          color: accent.withValues(alpha: 0.32),
-                        ),
-                      ),
-                      child: Column(
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                width: 39,
-                                height: 39,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(10),
-                                  gradient: const LinearGradient(
-                                    colors: [
-                                      Color(0xFF176B55),
-                                      Color(0xFF0A302A),
-                                    ],
-                                  ),
-                                ),
-                                child: const Icon(
-                                  Icons.graphic_eq_rounded,
-                                  color: gold,
-                                  size: 22,
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              const Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'HUZUR • TİLAVET',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w900,
-                                        letterSpacing: 1,
-                                      ),
-                                    ),
-                                    SizedBox(height: 3),
-                                    Text(
-                                      'Kalbine iyi gelen ayetler',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        color: Colors.white60,
-                                        fontSize: 9,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const Icon(
-                                Icons.play_circle_fill_rounded,
-                                color: accent,
-                                size: 28,
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 7),
-                          SizedBox(
-                            height: 18,
-                            width: double.infinity,
-                            child: CustomPaint(
-                              painter: _StoryWavePainter(),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 13),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 13),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(15),
-                        gradient: const LinearGradient(
-                          colors: [
-                            Color(0xFF17634E),
-                            Color(0xFF0D3933),
-                          ],
-                        ),
-                        border: Border.all(
-                          color: accent.withValues(alpha: 0.6),
-                        ),
-                      ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'HUZUR’U KEŞFET',
-                            style: TextStyle(
-                              color: Color(0xFFB5FFEA),
-                              fontSize: 11,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 1.5,
-                            ),
-                          ),
-                          SizedBox(width: 9),
-                          Icon(
-                            Icons.arrow_forward_rounded,
-                            color: gold,
-                            size: 17,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    const Text(
-                      'HUZUR  •  MANEVİYATIN SADE HÂLİ',
-                      maxLines: 1,
-                      style: TextStyle(
-                        color: Colors.white54,
-                        fontSize: 7.5,
-                        letterSpacing: 1.4,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
                   ],
-                ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -757,68 +600,4 @@ class _StoryAutoFitText extends StatelessWidget {
       },
     );
   }
-}
-
-class _StoryWavePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    const heights = <double>[
-      5,
-      9,
-      13,
-      7,
-      16,
-      11,
-      6,
-      14,
-      18,
-      9,
-      5,
-      12,
-      17,
-      8,
-      14,
-      6,
-      18,
-      11,
-      7,
-      15,
-      9,
-      5,
-      13,
-      17,
-      8,
-      12,
-      6,
-      16,
-      10,
-      5,
-      14,
-      18,
-      9,
-      6,
-      12,
-      16,
-    ];
-    final paint = Paint()
-      ..color = const Color(0xFFFFA21A).withValues(alpha: 0.8)
-      ..strokeCap = StrokeCap.round;
-
-    const gap = 2.0;
-    final barWidth = (size.width - (heights.length - 1) * gap) / heights.length;
-
-    for (var i = 0; i < heights.length; i++) {
-      final h = heights[i].clamp(3.0, size.height);
-      final x = i * (barWidth + gap);
-      paint.strokeWidth = barWidth;
-      canvas.drawLine(
-        Offset(x + barWidth / 2, (size.height - h) / 2),
-        Offset(x + barWidth / 2, (size.height + h) / 2),
-        paint,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
