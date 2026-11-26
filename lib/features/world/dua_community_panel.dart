@@ -341,7 +341,10 @@ class _DuaCommunityPanelState extends ConsumerState<DuaCommunityPanel> {
 
     try {
       final result = await _api.amenDuaPost(postId);
-      final count = (result['amin_count'] as num?)?.toInt() ?? 0;
+      // Older API builds returned aminCount; current builds return amin_count.
+      final count = ((result['amin_count'] ?? result['aminCount']) as num?)
+              ?.toInt() ??
+          0;
 
       if (!mounted) return;
       setState(() {
@@ -357,12 +360,21 @@ class _DuaCommunityPanelState extends ConsumerState<DuaCommunityPanel> {
       });
 
       _message(
-        result['duplicate'] == true
+        result['duplicate'] == true || result['added'] == false
             ? 'Bu duaya daha önce Âmin demiştin.'
             : 'Âmin. Allah kabul etsin.',
       );
     } catch (error) {
-      _message('Âmin işlemi gerçekleştirilemedi.');
+      if (error is HuzurApiException &&
+          error.apiCode == 'cannot_amin_own_dua') {
+        _message('Kendi duana Âmin yerine başka dualara destek olabilirsin.');
+      } else if (error is HuzurApiException && error.statusCode == 429) {
+        _message('Çok sık Âmin işlemi yaptın. Biraz sonra tekrar dene.');
+      } else if (error is HuzurApiException && error.statusCode == 404) {
+        _message('Bu dua artık yayında değil. Duaları yenile.');
+      } else {
+        _message('Âmin işlemi gerçekleştirilemedi. Lütfen tekrar dene.');
+      }
       debugPrint('Huzur Âmin işlemi: $error');
     } finally {
       if (mounted) setState(() => _busyPosts.remove(postId));
@@ -896,22 +908,40 @@ class _DuaCommunityPanelState extends ConsumerState<DuaCommunityPanel> {
             ),
           ),
           const SizedBox(height: 12),
-          OutlinedButton.icon(
-            onPressed: _busyPosts.contains(id) ? null : () => _amen(id),
-            icon: const Icon(
-              Icons.favorite_rounded,
-              color: _gold,
-              size: 17,
-            ),
-            label: Text('Âmin  ·  $count'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: _gold,
-              side: BorderSide(color: _gold.withValues(alpha: 0.35)),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(11),
+          if (post['is_mine'] == true)
+            OutlinedButton.icon(
+              onPressed: null,
+              icon: const Icon(
+                Icons.favorite_rounded,
+                color: _gold,
+                size: 17,
+              ),
+              label: Text('Kendi duan  ·  $count'),
+              style: OutlinedButton.styleFrom(
+                disabledForegroundColor: _gold,
+                side: BorderSide(color: _gold.withValues(alpha: 0.25)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(11),
+                ),
+              ),
+            )
+          else
+            OutlinedButton.icon(
+              onPressed: _busyPosts.contains(id) ? null : () => _amen(id),
+              icon: const Icon(
+                Icons.favorite_rounded,
+                color: _gold,
+                size: 17,
+              ),
+              label: Text('Âmin  ·  $count'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: _gold,
+                side: BorderSide(color: _gold.withValues(alpha: 0.35)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(11),
+                ),
               ),
             ),
-          ),
         ],
       ),
     );

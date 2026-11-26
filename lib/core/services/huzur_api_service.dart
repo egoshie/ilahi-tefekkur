@@ -6,13 +6,21 @@ import "package:firebase_auth/firebase_auth.dart";
 import "package:http/http.dart" as http;
 
 class HuzurApiException implements Exception {
-  const HuzurApiException(this.message, {this.statusCode});
+  const HuzurApiException(
+    this.message, {
+    this.statusCode,
+    this.apiCode,
+    this.serverDetail,
+  });
 
   final String message;
   final int? statusCode;
+  final String? apiCode;
+  final String? serverDetail;
 
   @override
-  String toString() => "HuzurApiException: $message";
+  String toString() =>
+      "HuzurApiException: $message (HTTP $statusCode, $apiCode)";
 }
 
 class HuzurApiService {
@@ -283,10 +291,24 @@ class HuzurApiService {
         )
         .timeout(const Duration(seconds: 15));
 
-    if (response.statusCode != 200) {
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      String? apiCode;
+      String? serverDetail;
+      try {
+        final errorJson = jsonDecode(response.body);
+        if (errorJson is Map<String, dynamic>) {
+          apiCode = (errorJson['code'] ?? errorJson['error'])?.toString();
+          serverDetail =
+              (errorJson['detail'] ?? errorJson['message'])?.toString();
+        }
+      } catch (_) {
+        // Non-JSON API errors are kept generic for the user.
+      }
       throw HuzurApiException(
         "Dua işlemi tamamlanamadı.",
         statusCode: response.statusCode,
+        apiCode: apiCode,
+        serverDetail: serverDetail,
       );
     }
 
