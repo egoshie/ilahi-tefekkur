@@ -28,6 +28,8 @@ class _DuaCommunityPanelState extends ConsumerState<DuaCommunityPanel> {
   bool _loading = true;
   bool _sending = false;
   bool _checkingPremium = false;
+  bool _restrictionLoading = true;
+  Map<String, dynamic>? _communityRestriction;
   String? _error;
 
   bool get _signedIn => FirebaseAuth.instance.currentUser != null;
@@ -36,6 +38,7 @@ class _DuaCommunityPanelState extends ConsumerState<DuaCommunityPanel> {
   void initState() {
     super.initState();
     _loadPosts();
+    _loadCommunityRestriction();
   }
 
   Future<void> _loadPosts() async {
@@ -67,6 +70,44 @@ class _DuaCommunityPanelState extends ConsumerState<DuaCommunityPanel> {
     }
   }
 
+  Future<void> _loadCommunityRestriction() async {
+    if (!_signedIn) {
+      if (mounted) {
+        setState(() {
+          _communityRestriction = null;
+          _restrictionLoading = false;
+        });
+      }
+      return;
+    }
+
+    try {
+      final currentUser = await _api.getCurrentUser();
+      final raw = currentUser['community_restriction'];
+      final restriction = raw is Map
+          ? Map<String, dynamic>.from(raw)
+          : <String, dynamic>{'active': false};
+
+      if (!mounted) return;
+      setState(() {
+        _communityRestriction = restriction['active'] == true
+            ? restriction
+            : null;
+        _restrictionLoading = false;
+      });
+    } catch (error) {
+      if (mounted) setState(() => _restrictionLoading = false);
+      debugPrint('Huzur topluluk kısıtlaması kontrolü: $error');
+    }
+  }
+
+  Future<void> _refreshCommunityData() async {
+    await Future.wait<void>([
+      _loadPosts(),
+      _loadCommunityRestriction(),
+    ]);
+  }
+
   void _message(String value) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -82,6 +123,15 @@ class _DuaCommunityPanelState extends ConsumerState<DuaCommunityPanel> {
 
     if (!_signedIn) {
       _message('Dua bırakmak için önce Apple hesabınla giriş yapmalısın.');
+      return;
+    }
+
+    if (_restrictionLoading) {
+      await _loadCommunityRestriction();
+      if (!mounted) return;
+    }
+    if (_communityRestriction != null) {
+      _message('Topluluk erişimin kısıtlı. Gerekçe ve bitiş tarihi aşağıda gösteriliyor.');
       return;
     }
 
@@ -317,13 +367,20 @@ class _DuaCommunityPanelState extends ConsumerState<DuaCommunityPanel> {
       _message('Duan paylaşıldı.');
       await _loadPosts();
     } catch (error) {
-      _message(
-        error is HuzurApiException && error.statusCode == 429
-            ? 'Saatlik paylaşım sınırına ulaştın.'
-            : error is HuzurApiException && error.statusCode == 403
-                ? 'Dua paylaşımı için sunucu Premium erişimini doğrulamalı.'
-                : 'Dua paylaşılamadı. Tekrar deneyebilirsin.',
-      );
+      if (error is HuzurApiException &&
+          error.apiCode == 'community_restricted') {
+        await _loadCommunityRestriction();
+        if (sheetContext.mounted) Navigator.of(sheetContext).pop();
+        _message('Topluluk erişimin kısıtlandı. Gerekçe ve bitiş tarihi aşağıda gösteriliyor.');
+      } else {
+        _message(
+          error is HuzurApiException && error.statusCode == 429
+              ? 'Saatlik paylaşım sınırına ulaştın.'
+              : error is HuzurApiException && error.statusCode == 403
+                  ? 'Dua paylaşımı için Premium erişimi doğrulanamadı.'
+                  : 'Dua paylaşılamadı. Tekrar deneyebilirsin.',
+        );
+      }
       debugPrint('Huzur dua paylaşımı: $error');
     } finally {
       if (mounted) setState(() => _sending = false);
@@ -366,6 +423,10 @@ class _DuaCommunityPanelState extends ConsumerState<DuaCommunityPanel> {
       );
     } catch (error) {
       if (error is HuzurApiException &&
+          error.apiCode == 'community_restricted') {
+        await _loadCommunityRestriction();
+        _message('Âmin işlemi topluluk kısıtlaması nedeniyle kapalı. Gerekçe ve bitiş tarihi yukarıda gösteriliyor.');
+      } else if (error is HuzurApiException &&
           error.apiCode == 'cannot_amin_own_dua') {
         _message('Kendi duana Âmin yerine başka dualara destek olabilirsin.');
       } else if (error is HuzurApiException && error.statusCode == 429) {
@@ -577,6 +638,81 @@ class _DuaCommunityPanelState extends ConsumerState<DuaCommunityPanel> {
     }
   }
 
+  String _restrictionExpiryLabel(dynamic value) {
+    final date = DateTime.tryParse(value?.toString() ?? '');
+    if (date == null) return 'Bitiş zamanı alınamadı';
+
+    final local = date.toLocal();
+    final day = local.day.toString().padLeft(2, '0');
+    final month = local.month.toString().padLeft(2, '0');
+    final year = local.year.toString();
+    final hour = local.hour.toString().padLeft(2, '0');
+    final minute = local.minute.toString().padLeft(2, '0');
+    return 'Kısıtlama bitişi: $day.$month.$year $hour:$minute';
+  }
+
+  Widget _buildCommunityRestrictionNotice() {
+    final reason = _communityRestriction?['reason']?.toString().trim() ?? '';
+    final endsAt = _communityRestriction?['ends_at'];
+
+    return Container(
+      padding: const EdgeInsets.all(13),
+      decoration: BoxDecoration(
+        color: _gold.withValues(alpha: 0.075),
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: _gold.withValues(alpha: 0.25)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.info_outline_rounded,
+                  color: _gold.withValues(alpha: 0.88), size: 17),
+              const SizedBox(width: 7),
+              Text(
+                'TOPLULUK ERİŞİMİ KISITLI',
+                style: TextStyle(
+                  color: _gold.withValues(alpha: 0.9),
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.9,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            reason.isEmpty ? 'Kısıtlama gerekçesi sunucudan alınamadı.' : 'Gerekçe: $reason',
+            style: TextStyle(
+              color: _gold.withValues(alpha: 0.82),
+              fontSize: 11,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 7),
+          Text(
+            _restrictionExpiryLabel(endsAt),
+            style: TextStyle(
+              color: _gold.withValues(alpha: 0.78),
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            'İtiraz ve yeniden değerlendirme: halilibrahimcebeci0@icloud.com',
+            style: TextStyle(
+              color: _gold.withValues(alpha: 0.68),
+              fontSize: 9,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   String _timeLabel(dynamic value) {
     final date = DateTime.tryParse(value?.toString() ?? '');
     if (date == null) return '';
@@ -632,7 +768,7 @@ class _DuaCommunityPanelState extends ConsumerState<DuaCommunityPanel> {
                   ),
                 ),
               IconButton(
-                onPressed: _loading ? null : _loadPosts,
+                onPressed: _loading ? null : _refreshCommunityData,
                 tooltip: 'Duaları yenile',
                 icon: const Icon(
                   Icons.refresh_rounded,
@@ -693,9 +829,17 @@ class _DuaCommunityPanelState extends ConsumerState<DuaCommunityPanel> {
               ],
             ),
           ),
+          if (_communityRestriction != null) ...[
+            const SizedBox(height: 10),
+            _buildCommunityRestrictionNotice(),
+          ],
           const SizedBox(height: 10),
           FilledButton.icon(
-            onPressed: _checkingPremium ? null : _openDuaComposer,
+            onPressed: _checkingPremium ||
+                    (_signedIn && _restrictionLoading) ||
+                    _communityRestriction != null
+                ? null
+                : _openDuaComposer,
             icon: _checkingPremium
                 ? const SizedBox(
                     width: 17,
@@ -706,10 +850,17 @@ class _DuaCommunityPanelState extends ConsumerState<DuaCommunityPanel> {
                     ),
                   )
                 : const Icon(Icons.volunteer_activism_rounded, size: 17),
-            label:
-                Text(_checkingPremium ? 'Erişim doğrulanıyor...' : 'Dua bırak'),
+            label: Text(
+              _communityRestriction != null
+                  ? 'Topluluk erişimi kısıtlı'
+                  : _checkingPremium
+                      ? 'Erişim doğrulanıyor...'
+                      : 'Dua bırak',
+            ),
             style: FilledButton.styleFrom(
-              backgroundColor: _gold,
+              backgroundColor: _communityRestriction != null
+                  ? _gold.withValues(alpha: 0.42)
+                  : _gold,
               foregroundColor: const Color(0xFF17120A),
               minimumSize: const Size(double.infinity, 47),
               shape: RoundedRectangleBorder(
@@ -927,7 +1078,9 @@ class _DuaCommunityPanelState extends ConsumerState<DuaCommunityPanel> {
             )
           else
             OutlinedButton.icon(
-              onPressed: _busyPosts.contains(id) ? null : () => _amen(id),
+              onPressed: _communityRestriction != null || _busyPosts.contains(id)
+                  ? null
+                  : () => _amen(id),
               icon: const Icon(
                 Icons.favorite_rounded,
                 color: _gold,
