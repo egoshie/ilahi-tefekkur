@@ -26,11 +26,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+
       - name: Verify generated hourly verse catalogs
         run: |
           set -euo pipefail
           python3 tools/generate_hourly_verse_catalog.py --check
-
 
       - name: Check Xcode
         run: |
@@ -90,6 +90,7 @@ jobs:
 
           puts 'Runner + WidgetKit target, bundle ID, dependency ve embed dogrulandi.'
           RUBY
+
           ruby - <<'RUBY'
           require 'xcodeproj'
 
@@ -127,6 +128,7 @@ jobs:
             puts "Xcode targets: #{target_names.join(', ')}"
           end
           RUBY
+
           plutil -lint ios/Runner/Runner.entitlements
           plutil -lint ios/HuzurWidget/HuzurWidget.entitlements
           plutil -lint ios/HuzurWidget/Info.plist
@@ -203,12 +205,21 @@ jobs:
             test "$ACTUAL_NAME" = "$EXPECTED_NAME"
             test "$ACTUAL_APP_ID" = "$TEAM_ID.$EXPECTED_BUNDLE_ID"
             test "$ACTUAL_GROUP" = "$APP_GROUP_ID"
-          if [ "$EXPECTED_BUNDLE_ID" = "$APP_BUNDLE_ID" ]; then
-            ACTUAL_APS_ENV=$(/usr/libexec/PlistBuddy -c 'Print :Entitlements:aps-environment' "$PROFILE_PLIST")
-            test "$ACTUAL_APS_ENV" = "production"
-            ACTUAL_APP_LINK=$(/usr/libexec/PlistBuddy -c 'Print :Entitlements:com.apple.developer.associated-domains:0' "$PROFILE_PLIST")
-            test "$ACTUAL_APP_LINK" = "applinks:56.228.42.81.nip.io"
-          fi
+
+            if [ "$EXPECTED_BUNDLE_ID" = "$APP_BUNDLE_ID" ]; then
+              ACTUAL_APS_ENV=$(/usr/libexec/PlistBuddy -c 'Print :Entitlements:aps-environment' "$PROFILE_PLIST")
+              test "$ACTUAL_APS_ENV" = "production"
+
+              ACTUAL_APP_LINKS=$(/usr/libexec/PlistBuddy -c 'Print :Entitlements:com.apple.developer.associated-domains' "$PROFILE_PLIST")
+              if [ "$ACTUAL_APP_LINKS" = "*" ]; then
+                echo "Associated Domains: provisioning profile wildcard accepted."
+              elif printf '%s\n' "$ACTUAL_APP_LINKS" | grep -Fq 'applinks:56.228.42.81.nip.io'; then
+                echo "Associated Domains: explicit app link entitlement verified."
+              else
+                echo "ERROR: Associated Domains entitlement missing or incompatible." >&2
+                exit 1
+              fi
+            fi
 
             cp "$PROFILE_PATH" "$PROFILE_DIR/$ACTUAL_UUID.mobileprovision"
             echo "Installed profile: $ACTUAL_NAME"
@@ -348,7 +359,6 @@ jobs:
           path: ${{ runner.temp }}/Huzur-1.0.0-17.3.ipa.enc
           if-no-files-found: error
           retention-days: 7
-
 
       - name: Encrypt Dart obfuscation symbols
         env:
