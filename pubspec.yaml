@@ -32,14 +32,14 @@ dependencies:
   hijri: ^3.0.0
   in_app_purchase: ^3.2.0
   in_app_purchase_storekit: ^0.4.17
-  firebase_core: ^5.1.0
-  firebase_ai: ^5.1.0
-  firebase_app_check: ^0.5.1
+  firebase_core: ^5.2.0
+  firebase_ai: ^5.2.0
+  firebase_app_check: ^0.5.2
   firebase_messaging: ^17.1.0
   image_picker: ^1.1.2
-  firebase_auth: ^7.0.1
-  cloud_firestore: ^7.1.0
-  cloud_functions: ^7.0.1
+  firebase_auth: ^7.1.0
+  cloud_firestore: ^7.2.0
+  cloud_functions: ^7.1.0
   flutter_earth_globe: ^2.2.1
   material_ui: ^1.11.0
 
