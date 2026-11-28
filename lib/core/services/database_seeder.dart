@@ -1028,6 +1028,57 @@ class DatabaseService {
     return rows.map(TasbihRecord.fromMap).toList();
   }
 
+  /// Restores built-in counters only when the local table is empty.
+  /// Existing user counters and their values are never overwritten.
+  Future<void> ensureDefaultTasbihRecords() async {
+    final db = await database;
+
+    await db.transaction((txn) async {
+      final existing = await txn.query(
+        'tasbih_records',
+        columns: ['id'],
+        limit: 1,
+      );
+
+      if (existing.isNotEmpty) return;
+
+      const defaults = <Map<String, Object?>>[
+        {
+          'title': 'Sübhanallah',
+          'arabic': 'سُبْحَانَ ٱللَّهِ',
+          'count': 0,
+          'target': 33,
+          'is_custom': 0,
+        },
+        {
+          'title': 'Elhamdülillah',
+          'arabic': 'ٱلْحَمْدُ لِلَّهِ',
+          'count': 0,
+          'target': 33,
+          'is_custom': 0,
+        },
+        {
+          'title': 'Allahü Ekber',
+          'arabic': 'ٱللَّهُ أَكْبَرُ',
+          'count': 0,
+          'target': 33,
+          'is_custom': 0,
+        },
+        {
+          'title': 'Lâ ilâhe illallah',
+          'arabic': 'لَا إِلَـٰهَ إِلَّا ٱللَّهُ',
+          'count': 0,
+          'target': 100,
+          'is_custom': 0,
+        },
+      ];
+
+      for (final record in defaults) {
+        await txn.insert('tasbih_records', record);
+      }
+    });
+  }
+
   Future<void> updateTasbihCount(int id, int newCount) async {
     final db = await database;
     await db.update(

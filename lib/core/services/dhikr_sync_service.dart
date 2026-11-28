@@ -7,6 +7,7 @@ import "package:flutter/foundation.dart";
 import "package:shared_preferences/shared_preferences.dart";
 
 import "huzur_api_service.dart";
+import "app_startup_service.dart";
 import "user_progress_service.dart";
 
 class DhikrSyncService {
@@ -19,20 +20,50 @@ class DhikrSyncService {
   Future<void> _queueTail = Future<void>.value();
   Timer? _debounce;
   late final Timer _retryTimer;
-  late final StreamSubscription<User?> _authSubscription;
+  StreamSubscription<User?>? _authSubscription;
 
+  bool _authListenerStarting = false;
   bool _syncing = false;
   bool _disposed = false;
 
   DhikrSyncService() {
-    _authSubscription = FirebaseAuth.instance.authStateChanges().listen((_) {
-      unawaited(syncPending());
-    });
-
     _retryTimer = Timer.periodic(
       const Duration(seconds: 45),
-      (_) => unawaited(syncPending()),
+      (_) {
+        unawaited(_initializeAuthListener());
+        unawaited(syncPending());
+      },
     );
+
+    // Firebase is intentionally initialized after the first Flutter frame.
+    // Never touch FirebaseAuth synchronously from a provider constructor.
+    unawaited(_initializeAuthListener());
+  }
+
+  Future<void> _initializeAuthListener() async {
+    if (_disposed || _authSubscription != null || _authListenerStarting) {
+      return;
+    }
+
+    _authListenerStarting = true;
+    try {
+      await AppStartupService.ensureFirebaseReady();
+      if (_disposed) return;
+
+      _authSubscription = FirebaseAuth.instance.authStateChanges().listen(
+        (_) => unawaited(syncPending()),
+        onError: (Object error, StackTrace stackTrace) {
+          debugPrint('Huzur Firebase Auth listener hatası: $error');
+          debugPrintStack(stackTrace: stackTrace);
+        },
+      );
+      unawaited(syncPending());
+    } catch (error, stackTrace) {
+      debugPrint('Huzur zikir Auth bağlantısı beklemede: $error');
+      debugPrintStack(stackTrace: stackTrace);
+    } finally {
+      _authListenerStarting = false;
+    }
   }
 
   Future<T> _locked<T>(Future<T> Function() action) {
@@ -216,7 +247,10 @@ class DhikrSyncService {
     _disposed = true;
     _debounce?.cancel();
     _retryTimer.cancel();
-    unawaited(_authSubscription.cancel());
+    final subscription = _authSubscription;
+    if (subscription != null) {
+      unawaited(subscription.cancel());
+    }
     _api.close();
   }
 }

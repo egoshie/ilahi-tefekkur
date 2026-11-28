@@ -73,6 +73,8 @@ final class HuzurAppleWorldMapPlatformView: NSObject,
     )
     private var showRoute = false
     private weak var meccaAnnotationView: MKMarkerAnnotationView?
+    private var routeAnimationTimer: Timer?
+    private var routeDashPhase: CGFloat = 0
 
     private var countryMarkers: [[String: Any]] = []
 
@@ -246,6 +248,10 @@ final class HuzurAppleWorldMapPlatformView: NSObject,
     }
 
     private func rebuildMarkers() {
+        routeAnimationTimer?.invalidate()
+        routeAnimationTimer = nil
+        routeDashPhase = 0
+
         mapView.removeAnnotations(
             mapView.annotations.filter { !($0 is MKUserLocation) }
         )
@@ -428,8 +434,31 @@ final class HuzurAppleWorldMapPlatformView: NSObject,
             NSNumber(value: 3),
             NSNumber(value: 6)
         ]
+        startRouteDashAnimation(for: renderer)
 
         return renderer
+    }
+
+    private func startRouteDashAnimation(for renderer: MKPolylineRenderer) {
+        routeAnimationTimer?.invalidate()
+        routeDashPhase = 0
+
+        let timer = Timer(timeInterval: 1.0 / 30.0, repeats: true) { [weak self, weak renderer] _ in
+            guard let self = self, let renderer = renderer, self.showRoute else {
+                return
+            }
+
+            self.routeDashPhase =
+                (self.routeDashPhase + 0.8).truncatingRemainder(dividingBy: 9.0)
+            renderer.lineDashPhase = self.routeDashPhase
+            renderer.setNeedsDisplay()
+        }
+        routeAnimationTimer = timer
+        RunLoop.main.add(timer, forMode: .common)
+    }
+
+    deinit {
+        routeAnimationTimer?.invalidate()
     }
 }
 

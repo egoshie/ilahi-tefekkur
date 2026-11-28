@@ -40,6 +40,8 @@ class _HuzurWorldScreenState extends ConsumerState<HuzurWorldScreen> {
 
   String? _lastCityKey;
   bool? _routeVisible;
+  int _rankingRefreshToken = 0;
+  Timer? _rankingRefreshTimer;
 
   @override
   void initState() {
@@ -171,65 +173,107 @@ class _HuzurWorldScreenState extends ConsumerState<HuzurWorldScreen> {
     );
 
     if (showRoute) {
-      _globeController.addPointConnection(
-        PointConnection(
-          id: 'city-to-makkah',
-          start: cityCoordinates,
-          end: _mecca,
-          curveScale: 0.55,
-          isMoving: true,
-          style: const PointConnectionStyle(
-            type: PointConnectionType.dashed,
-            color: _gold,
-            lineWidth: 2.2,
-            dashSize: 5,
-            spacing: 6,
-            dashAnimateTime: 1600,
-            animateOnAdd: true,
-            growthAnimationDuration: 1400,
-          ),
-        ),
-      );
+      _addGlobeRoute(cityCoordinates);
     }
+  }
+
+  void _addGlobeRoute(GlobeCoordinates cityCoordinates) {
+    _globeController.addPointConnection(
+      PointConnection(
+        id: 'city-to-makkah',
+        start: cityCoordinates,
+        end: _mecca,
+        curveScale: 0.55,
+        isMoving: true,
+        style: const PointConnectionStyle(
+          type: PointConnectionType.dashed,
+          color: _gold,
+          lineWidth: 2.2,
+          dashSize: 5,
+          spacing: 6,
+          dashAnimateTime: 1600,
+          animateOnAdd: true,
+          growthAnimationDuration: 1400,
+        ),
+      ),
+    );
+  }
+
+  void _scheduleRankingRefresh() {
+    _rankingRefreshTimer?.cancel();
+    _rankingRefreshTimer = Timer(const Duration(seconds: 3), () {
+      if (!mounted) return;
+      setState(() => _rankingRefreshToken++);
+    });
+  }
+
+  Future<void> _animateWorldDhikr() async {
+    if (!mounted) return;
+
+    if (Platform.isIOS) {
+      try {
+        await _appleMapChannel?.invokeMethod<void>('animateDhikr');
+      } catch (error) {
+        debugPrint('Huzur Apple Maps zikir animasyonu: $error');
+      }
+      return;
+    }
+
+    final city = ref.read(prayerEngineProvider).selectedCity;
+    _globeController.removePointConnection('city-to-makkah');
+    _addGlobeRoute(GlobeCoordinates(city.latitude, city.longitude));
+    _routeVisible = true;
   }
 
   Future<void> _handleWorldDhikrTap() async {
     final session = ref.read(tasbihSessionProvider);
+    final notifier = ref.read(tasbihSessionProvider.notifier);
 
-    if (session.activeRecord == null) {
+    if (session.isLoading) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Zikir kayıtları hazırlanıyor.'),
+          content: Text('Zikir sayacı hazırlanıyor. Birazdan tekrar dene.'),
           behavior: SnackBarBehavior.floating,
         ),
       );
       return;
     }
 
-    final nextCount =
-        await ref.read(tasbihSessionProvider.notifier).incrementActive();
+    if (session.loadError != null || session.activeRecord == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(session.loadError ?? 'Zikir sayacı bulunamadı.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      unawaited(notifier.loadSession());
+      return;
+    }
 
-    if (!mounted || nextCount <= 0) return;
+    final nextCount = session.activeRecord!.count + 1;
+    // incrementActive updates Riverpod state synchronously before its queued
+    // persistence work; map feedback must not wait for SQLite/Firebase.
+    final persistence = notifier.incrementActive();
+    unawaited(_animateWorldDhikr());
+    _scheduleRankingRefresh();
 
     if (session.hapticEnabled) {
       if (nextCount % 100 == 0) {
-        await HapticFeedback.heavyImpact();
-        await Future.delayed(const Duration(milliseconds: 80));
-        if (mounted) await HapticFeedback.heavyImpact();
+        unawaited(_worldMilestoneHaptic());
       } else if (nextCount % 33 == 0) {
-        await HapticFeedback.mediumImpact();
+        unawaited(HapticFeedback.mediumImpact());
       } else {
-        await HapticFeedback.selectionClick();
+        unawaited(HapticFeedback.selectionClick());
       }
     }
 
-    if (Platform.isIOS && mounted) {
-      try {
-        await _appleMapChannel?.invokeMethod<void>('animateDhikr');
-      } catch (error) {
-        debugPrint('Huzur Mekke animasyonu: $error');
-      }
-    }
+    await persistence;
+  }
+
+  Future<void> _worldMilestoneHaptic() async {
+    await HapticFeedback.heavyImpact();
+    await Future<void>.delayed(const Duration(milliseconds: 80));
+    if (mounted) await HapticFeedback.heavyImpact();
   }
 
   Future<void> _openDuaCommunity() async {
@@ -242,6 +286,7 @@ class _HuzurWorldScreenState extends ConsumerState<HuzurWorldScreen> {
 
   @override
   void dispose() {
+    _rankingRefreshTimer?.cancel();
     _globeController.dispose();
     super.dispose();
   }
@@ -319,6 +364,7 @@ class _HuzurWorldScreenState extends ConsumerState<HuzurWorldScreen> {
                   top: 0,
                   child: Offstage(
                     child: WorldCountryPanel(
+                      refreshToken: _rankingRefreshToken,
                       onRankingChanged: _onCountryRankingChanged,
                     ),
                   ),

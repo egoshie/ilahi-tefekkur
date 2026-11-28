@@ -135,7 +135,8 @@ class _FluidTasbihScreenState extends ConsumerState<FluidTasbihScreen>
   Future<void> _moveRecord(int delta) async {
     final session = ref.read(tasbihSessionProvider);
     if (session.records.length < 2) return;
-    final next = (session.activeIndex + delta) % session.records.length;
+    final next = (session.activeIndex + delta + session.records.length) %
+        session.records.length;
     await ref.read(tasbihSessionProvider.notifier).selectIndex(next);
     await HapticFeedback.selectionClick();
   }
@@ -164,11 +165,46 @@ class _FluidTasbihScreenState extends ConsumerState<FluidTasbihScreen>
     final notifier = ref.read(tasbihSessionProvider.notifier);
     final activeTasbih = session.activeRecord;
 
-    if (activeTasbih == null) {
+    if (session.isLoading) {
       return const Center(
-        child: Text(
-          'Zikir kayıtları yükleniyor...',
-          style: TextStyle(color: Colors.white70),
+        child: CircularProgressIndicator(color: Color(0xFFFFC15A)),
+      );
+    }
+
+    if (activeTasbih == null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.self_improvement_rounded,
+                color: Color(0xFFFFC15A),
+                size: 42,
+              ),
+              const SizedBox(height: 14),
+              Text(
+                session.loadError ?? 'Zikir kayıtları bulunamadı.',
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.white70, fontSize: 14),
+              ),
+              const SizedBox(height: 16),
+              GlassContainer(
+                borderRadius: 18,
+                goldAccentBorder: true,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 13),
+                onTap: session.isLoading ? null : () => notifier.loadSession(),
+                child: const Text(
+                  'Yeniden dene',
+                  style: TextStyle(
+                    color: Color(0xFFFFC15A),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }

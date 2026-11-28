@@ -7,10 +7,12 @@ import '../../core/services/huzur_api_service.dart';
 
 class WorldCountryPanel extends StatefulWidget {
   final ValueChanged<List<Map<String, dynamic>>>? onRankingChanged;
+  final int refreshToken;
 
   const WorldCountryPanel({
     super.key,
     this.onRankingChanged,
+    this.refreshToken = 0,
   });
 
   @override
@@ -32,6 +34,7 @@ class _WorldCountryPanelState extends State<WorldCountryPanel> {
   int _totalCount = 0;
   bool _loading = true;
   String? _error;
+  int _loadGeneration = 0;
 
   @override
   void initState() {
@@ -39,7 +42,16 @@ class _WorldCountryPanelState extends State<WorldCountryPanel> {
     _loadData();
   }
 
+  @override
+  void didUpdateWidget(covariant WorldCountryPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.refreshToken != oldWidget.refreshToken) {
+      unawaited(_loadData());
+    }
+  }
+
   Future<void> _loadData() async {
+    final generation = ++_loadGeneration;
     try {
       final prefs = await SharedPreferences.getInstance();
       final savedCode = prefs.getString(_countryKey) ?? 'TR';
@@ -60,7 +72,7 @@ class _WorldCountryPanelState extends State<WorldCountryPanel> {
           .map((item) => Map<String, dynamic>.from(item as Map))
           .toList();
 
-      if (!mounted) return;
+      if (!mounted || generation != _loadGeneration) return;
 
       final availableCodes = countries
           .map((item) => item['country_code']?.toString())
@@ -103,7 +115,7 @@ class _WorldCountryPanelState extends State<WorldCountryPanel> {
         await prefs.setString(_countryKey, _selectedCode);
       }
     } catch (error) {
-      if (!mounted) return;
+      if (!mounted || generation != _loadGeneration) return;
       setState(() {
         _error = 'Dünya verileri şu anda yüklenemedi.';
         _loading = false;
