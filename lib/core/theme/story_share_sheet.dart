@@ -89,6 +89,7 @@ class _StoryShareSheetState extends State<StoryShareSheet> {
 
   static const MethodChannel _mediaChannel =
       MethodChannel('com.ilahi.tefekkur/media');
+  static const String _huzurOpenLink = 'https://56.228.42.81.nip.io/open';
 
   static const double _storyWidth = 360;
   static const double _storyHeight = 640;
@@ -152,7 +153,8 @@ class _StoryShareSheetState extends State<StoryShareSheet> {
           });
         }
       } else {
-        final caption = '${widget.turkishText}\n— ${widget.reference} • Huzur';
+        final caption = '${widget.turkishText}\n— ${widget.reference} • Huzur'
+            '\n\nHuzur’da aç: $_huzurOpenLink';
 
         await _mediaChannel.invokeMethod<bool>(
           'saveImageToGallery',
@@ -179,6 +181,16 @@ class _StoryShareSheetState extends State<StoryShareSheet> {
     } finally {
       if (mounted) setState(() => _isExporting = false);
     }
+  }
+
+  Future<void> _copyHuzurOpenLink() async {
+    await Clipboard.setData(const ClipboardData(text: _huzurOpenLink));
+    if (!mounted) return;
+    HapticFeedback.selectionClick();
+    setState(() {
+      _feedbackMessage =
+          'Huzur bağlantısı kopyalandı. Instagram’da Hikâye Link etiketiyle ekleyebilirsin.';
+    });
   }
 
   Future<void> _saveDirectlyToGallery() async {
@@ -493,7 +505,7 @@ class _StoryShareSheetState extends State<StoryShareSheet> {
                               : () => _shareToSocial(target: 'WhatsApp Durum'),
                           child: const Center(
                             child: Text(
-                              'WhatsApp',
+                              'WhatsApp Durum',
                               style: TextStyle(
                                 color: Color(0xFFFFE082),
                                 fontWeight: FontWeight.w800,
@@ -504,6 +516,28 @@ class _StoryShareSheetState extends State<StoryShareSheet> {
                         ),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 9),
+                  GlassContainer(
+                    borderRadius: 15,
+                    emeraldGlow: true,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    onTap: _isExporting ? null : _copyHuzurOpenLink,
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.link_rounded, color: Color(0xFFFFA21A), size: 17),
+                        SizedBox(width: 7),
+                        Text(
+                          'Huzur’da Aç Bağlantısını Kopyala',
+                          style: TextStyle(
+                            color: Color(0xFFFFE082),
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 9),
                   GlassContainer(
@@ -532,7 +566,7 @@ class _StoryShareSheetState extends State<StoryShareSheet> {
                   ),
                   const SizedBox(height: 6),
                   const Text(
-                    'Tıklanabilir yönlendirme için Instagram’da ayrıca Link sticker ekleyin.',
+                    'Instagram’da Link etiketi ekleyip kopyaladığın Huzur bağlantısını yapıştır. WhatsApp Durum açıklamasında bağlantı otomatik bulunur.',
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Colors.white38, fontSize: 9),
                   ),
@@ -546,6 +580,7 @@ class _StoryShareSheetState extends State<StoryShareSheet> {
   }
 }
 
+// HUZUR_17_3_STORY_LINK
 typedef HuzurStoryShareSheet = StoryShareSheet;
 
 class _StoryAutoFitText extends StatelessWidget {

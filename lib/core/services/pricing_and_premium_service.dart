@@ -11,6 +11,7 @@ import 'package:in_app_purchase_storekit/store_kit_2_wrappers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'huzur_api_service.dart';
+import 'app_startup_service.dart';
 
 class RegionalOffer {
   final String localeCode;
@@ -157,6 +158,18 @@ class PremiumServiceNotifier extends StateNotifier<PremiumState> {
 
   Future<bool> verifyPremiumWithServer({bool allowLegacyClaim = false}) async {
     if (!Platform.isIOS) return false;
+
+    try {
+      await AppStartupService.ensureFirebaseReady().timeout(
+        const Duration(seconds: 15),
+      );
+    } catch (_) {
+      state = state.copyWith(
+        isLoading: false,
+        statusMessage: 'Firebase bağlantısı henüz hazır değil.',
+      );
+      return false;
+    }
 
     if (FirebaseAuth.instance.currentUser == null) {
       state = state.copyWith(
@@ -336,8 +349,19 @@ class PremiumServiceNotifier extends StateNotifier<PremiumState> {
       );
     }
 
-    if (FirebaseAuth.instance.currentUser != null) {
-      await verifyPremiumWithServer();
+    try {
+      await AppStartupService.ensureFirebaseReady().timeout(
+        const Duration(seconds: 15),
+      );
+      if (FirebaseAuth.instance.currentUser != null) {
+        await verifyPremiumWithServer();
+      }
+    } catch (error) {
+      debugPrint('HUZUR_PREMIUM: Firebase startup deferred: ${error.runtimeType}');
+      state = state.copyWith(
+        isLoading: false,
+        statusMessage: 'Premium durumu bağlantı hazır olduğunda yeniden kontrol edilecek.',
+      );
     }
   }
 
@@ -499,6 +523,10 @@ class PremiumServiceNotifier extends StateNotifier<PremiumState> {
         );
         return;
       }
+
+      await AppStartupService.ensureFirebaseReady().timeout(
+        const Duration(seconds: 15),
+      );
 
       if (FirebaseAuth.instance.currentUser == null) {
         state = state.copyWith(

@@ -10,6 +10,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/services/pricing_and_premium_service.dart';
+import '../../core/services/app_startup_service.dart';
 import '../../core/theme/glass_container.dart';
 import '../paywall/liquid_glass_paywall.dart';
 import 'ai_privacy_consent.dart';
@@ -205,6 +206,19 @@ class _AiHuzurScreenState extends ConsumerState<AiHuzurScreen> {
       _showMessage('Sorun en fazla $_maxQuestionLength karakter olabilir.');
       return;
     }
+
+    // Firebase is initialized in the background after the first frame.
+    try {
+      await AppStartupService.ensureFirebaseReady().timeout(
+        const Duration(seconds: 15),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      _showMessage('Huzur güvenli bağlantısı henüz hazır değil. Tekrar dene.');
+      return;
+    }
+
+    if (!mounted) return;
 
     // Apple ile giriş zorunluluğu korunuyor.
     final signedInUser = FirebaseAuth.instance.currentUser;

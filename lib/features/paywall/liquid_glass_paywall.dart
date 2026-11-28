@@ -47,6 +47,7 @@ class _LiquidGlassPaywallSheetState
     } catch (_) {}
   }
 
+  // HUZUR_17_3_PAYWALL
   @override
   Widget build(BuildContext context) {
     final premium = ref.watch(premiumServiceProvider);
@@ -73,309 +74,449 @@ class _LiquidGlassPaywallSheetState
                     : 'Huzur Özel';
 
     return DraggableScrollableSheet(
-      initialChildSize: 0.88,
-      minChildSize: 0.65,
-      maxChildSize: 0.95,
+      initialChildSize: 0.92,
+      minChildSize: 0.68,
+      maxChildSize: 0.97,
       builder: (context, scrollController) {
         return GlassContainer(
-          borderRadius: 34,
+          borderRadius: 32,
           enableBlur: true,
-          blurSigma: 26,
+          blurSigma: 24,
           goldAccentBorder: true,
-          padding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 18,
-          ),
-          child: ListView(
-            controller: scrollController,
-            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            physics: const BouncingScrollPhysics(),
-            children: [
-              Center(
-                child: Container(
-                  width: 48,
-                  height: 4,
+          padding: const EdgeInsets.fromLTRB(18, 14, 18, 12),
+          child: SafeArea(
+            top: false,
+            child: ListView(
+              controller: scrollController,
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.only(bottom: 22),
+              children: [
+                Center(
+                  child: Container(
+                    width: 46,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.34),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.35),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 18),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const BespokeVectorIcon(
-                    type: BespokeIconType.crownGem,
-                    color: Color(0xFFFFE082),
-                    size: 26,
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    "Huzur Özel",
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFFFFE082),
-                        ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              const Text(
-                "Sıfır Reklam • Tüm İlahi Kitaplar • Karşılaştırmalı Tefekkür",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 13,
-                ),
-              ),
-              const SizedBox(height: 14),
-              const HuzurDeveloperStoryButton(),
-              const SizedBox(height: 18),
-              _buildFeatureRow(
-                "Tevrat (39 Kitap) ve İncil (27 Kitap) Canlı Türkçe Külliyat",
-              ),
-              _buildFeatureRow(
-                "15 Büyük Kıssada 3'lü Karşılaştırmalı İnceleme",
-              ),
-              _buildFeatureRow(
-                "Sınırsız Kur'ân Ayeti Dinleme • Arka Plan Tilaveti & Dynamic Island Medya",
-              ),
-              _buildFeatureRow(
-                "Kilit Ekranı Saatlik Ayet Widget'ı & Hikâye Stüdyosu",
-              ),
-              _buildFeatureRow(
-                "Sınırsız Zikirmatik & 99 Esmaül Hüsna Rehberi",
-              ),
-              const SizedBox(height: 18),
-              _buildPlanCard(
-                id: 'monthly',
-                title: "Aylık Plan",
-                price: offer.monthlyPrice,
-                subtitle: "Esnek aylık abonelik",
-                badge: null,
-              ),
-              const SizedBox(height: 12),
-              _buildPlanCard(
-                id: 'annual',
-                title: "Yıllık Huzur Planı",
-                price: offer.annualPrice,
-                subtitle: "${offer.annualMonthlyEquivalent} • Yıllık Abonelik",
-                badge: "EN ÇOK TERCİH EDİLEN",
-              ),
-              const SizedBox(height: 12),
-              _buildPlanCard(
-                id: 'lifetime',
-                title: "Ömür Boyu Tam Erişim",
-                price: offer.lifetimePrice,
-                subtitle: "Tek seferlik ödeme • Süresiz kullanım",
-                badge: "SINIRSIZ ERİŞİM",
-              ),
-              const SizedBox(height: 16),
-              if (premium.statusMessage != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Text(
-                    premium.statusMessage!,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFFFFA21A),
+                    borderRadius: BorderRadius.circular(26),
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color(0xFF153B3B),
+                        Color(0xFF0A1D2A),
+                        Color(0xFF211A12),
+                      ],
                     ),
-                  ),
-                ),
-              if (premium.isPremium)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Text(
-                    'Apple hesabınızda etkin plan: $activePlanName',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFFFFA21A),
-                      fontWeight: FontWeight.w600,
+                    border: Border.all(
+                      color: const Color(0xFFFFD98A).withValues(alpha: 0.38),
                     ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF16A58B).withValues(alpha: 0.12),
+                        blurRadius: 28,
+                        offset: const Offset(0, 12),
+                      ),
+                    ],
                   ),
-                ),
-              GlassContainer(
-                goldAccentBorder: true,
-                emeraldGlow: true,
-                borderRadius: 22,
-                padding: const EdgeInsets.symmetric(vertical: 15),
-                onTap: () async {
-                  if (!selectedPlanAlreadyActive) {
-                    await notifier.activatePlan(_selectedTier);
-                  }
-                },
-                child: Center(
-                  child: premium.isLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Color(0xFFFFE082),
-                          ),
-                        )
-                      : Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const BespokeVectorIcon(
-                              type: BespokeIconType.checkBadge,
-                              color: Color(0xFFFFA21A),
-                              size: 20,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 46,
+                            height: 46,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFE082).withValues(alpha: 0.13),
+                              borderRadius: BorderRadius.circular(15),
+                              border: Border.all(
+                                color: const Color(0xFFFFE082).withValues(alpha: 0.36),
+                              ),
                             ),
-                            const SizedBox(width: 8),
+                            child: const Icon(
+                              Icons.auto_awesome_rounded,
+                              color: Color(0xFFFFE082),
+                              size: 25,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'HUZUR ÖZEL',
+                                  style: TextStyle(
+                                    color: Color(0xFFFFE082),
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 2.0,
+                                  ),
+                                ),
+                                SizedBox(height: 3),
+                                Text(
+                                  'Huzur’un bütün imkânları',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 19,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: -0.35,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            tooltip: 'Kapat',
+                            onPressed: () => Navigator.of(context).maybePop(),
+                            icon: const Icon(Icons.close_rounded, color: Colors.white70),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 17),
+                      const Text(
+                        'Daha derin keşfet. Daha özgür dinle. Huzur’un tüm özel araçlarını tek üyelikte kullan.',
+                        style: TextStyle(
+                          color: Color(0xDDEEEEEE),
+                          fontSize: 13,
+                          height: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 15),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          _buildHeroPill(Icons.block_rounded, 'Reklamsız deneyim'),
+                          _buildHeroPill(Icons.all_inclusive_rounded, 'Sınırsız erişim'),
+                          _buildHeroPill(Icons.lock_rounded, 'Apple üzerinden güvenli ödeme'),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Container(
+                  padding: const EdgeInsets.all(15),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF14283A).withValues(alpha: 0.82),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: const Color(0xFFFFD98A).withValues(alpha: 0.22),
+                    ),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.auto_awesome, color: Color(0xFFFFD77A), size: 25),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
                             Text(
-                              premium.isPremium
-                                  ? (selectedPlanAlreadyActive
-                                      ? (premium.activePlanId ==
-                                              PremiumServiceNotifier.kLifetimeId
-                                          ? "Ömür Boyu Erişim Etkin"
-                                          : "Bu Plan Zaten Etkin")
-                                      : "Aktif Planı Değiştir")
-                                  : "App Store ile Güvenle Abone Ol",
-                              style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFFFFE082),
+                              'Huzur Dini Asistanı',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 14,
+                              ),
+                            ),
+                            SizedBox(height: 3),
+                            Text(
+                              '3 ücretsiz soru. Huzur Özel ile sınırsız soru ve görsel inceleme.',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 11.5,
+                                height: 1.4,
                               ),
                             ),
                           ],
                         ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              GlassContainer(
-                borderRadius: 16,
-                padding: const EdgeInsets.symmetric(vertical: 11),
-                onTap: () => notifier.restorePurchases(),
-                child: const Center(
-                  child: Text(
-                    "Satın Alımları Geri Yükle (Restore Purchases)",
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white70,
-                    ),
+                      ),
+                      Icon(Icons.check_circle_rounded, color: Color(0xFF63D6B4), size: 20),
+                    ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: GlassContainer(
-                      borderRadius: 16,
-                      emeraldGlow: true,
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 12,
-                        horizontal: 10,
+                const SizedBox(height: 22),
+                const Text(
+                  'HUZUR ÖZEL İLE AÇILANLAR',
+                  style: TextStyle(
+                    color: Color(0xFFFFD77A),
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.45,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                _buildBenefitCard(
+                  Icons.menu_book_rounded,
+                  'İlahi kitaplar ve karşılaştırmalı tefekkür',
+                  'Tevrat’ın 39, İncil’in 27 kitabı ve 15 büyük kıssada üçlü karşılaştırmalı inceleme.',
+                ),
+                _buildBenefitCard(
+                  Icons.headphones_rounded,
+                  'Sınırsız Kur’an tilaveti',
+                  'İlk 3 sure ücretsiz dinlenebilir; Huzur Özel ile diğer surelerde de sınırsız dinleme.',
+                ),
+                _buildBenefitCard(
+                  Icons.graphic_eq_rounded,
+                  'Arka plan sesi ve Dynamic Island',
+                  'Tilaveti arka planda sürdür; kilit ekranı ve Dynamic Island medya kontrollerini kullan.',
+                ),
+                _buildBenefitCard(
+                  Icons.repeat_rounded,
+                  'Kişisel zikir sayaçları',
+                  'Ücretsiz planda 3 özel sayaç; Huzur Özel ile sınırsız özel zikir sayacı.',
+                ),
+                const SizedBox(height: 18),
+                const Text(
+                  'HUZUR’DA HERKES İÇİN ÜCRETSİZ',
+                  style: TextStyle(
+                    color: Color(0xFF8EDFCB),
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.35,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                _buildBenefitCard(
+                  Icons.auto_stories_rounded,
+                  'Huzur Story Stüdyosu',
+                  'Ayet ve manevi içeriklerini 9:16 hikâye tasarımıyla hazırla, kaydet ve paylaş.',
+                ),
+                _buildBenefitCard(
+                  Icons.widgets_rounded,
+                  'Kilit ekranı ayet widget’ı',
+                  'Saatlik ayeti veya seçtiğin ayeti kilit ekranında takip et.',
+                ),
+                _buildBenefitCard(
+                  Icons.spa_rounded,
+                  '99 Esmaül Hüsna rehberi',
+                  'Esmaül Hüsna içeriklerini tek bir sakin ve düzenli deneyimde keşfet.',
+                ),
+                const SizedBox(height: 18),
+                const Text(
+                  'SANA UYGUN PLANI SEÇ',
+                  style: TextStyle(
+                    color: Color(0xFFFFD77A),
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.45,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                _buildPlanCard(
+                  id: 'monthly',
+                  title: 'Aylık Huzur Özel',
+                  price: offer.monthlyPrice,
+                  subtitle: 'Aylık yenilenir • Dilediğinde yönet',
+                  badge: null,
+                ),
+                const SizedBox(height: 9),
+                _buildPlanCard(
+                  id: 'annual',
+                  title: 'Yıllık Huzur Özel',
+                  price: offer.annualPrice,
+                  subtitle: '${offer.annualMonthlyEquivalent} • Yıllık abonelik',
+                  badge: 'ÖNERİLEN PLAN',
+                ),
+                const SizedBox(height: 9),
+                _buildPlanCard(
+                  id: 'lifetime',
+                  title: 'Ömür Boyu Tam Erişim',
+                  price: offer.lifetimePrice,
+                  subtitle: 'Tek seferlik ödeme • Süresiz erişim',
+                  badge: 'TEK SEFERLİK',
+                ),
+                const SizedBox(height: 14),
+                if (premium.statusMessage != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Text(
+                      premium.statusMessage!,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Color(0xFFFFD77A),
+                        fontSize: 11.5,
+                        height: 1.4,
                       ),
-                      onTap: () => _showLegalModal(
-                        context,
-                        isPrivacy: true,
+                    ),
+                  ),
+                if (premium.isPremium)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Text(
+                      'Apple hesabında etkin plan: $activePlanName',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Color(0xFF70DDB9),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
                       ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          BespokeVectorIcon(
-                            type: BespokeIconType.lockShield,
-                            color: Color(0xFFFFA21A),
-                            size: 16,
-                          ),
-                          SizedBox(width: 7),
-                          Flexible(
-                            child: Text(
-                              "Gizlilik Politikası",
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFFFFA21A),
-                              ),
+                    ),
+                  ),
+                GlassContainer(
+                  goldAccentBorder: true,
+                  emeraldGlow: true,
+                  borderRadius: 20,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  onTap: premium.isLoading
+                      ? null
+                      : () async {
+                          if (!selectedPlanAlreadyActive) {
+                            await notifier.activatePlan(_selectedTier);
+                          }
+                        },
+                  child: Center(
+                    child: premium.isLoading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Color(0xFFFFE082),
+                            ),
+                          )
+                        : Text(
+                            premium.isPremium
+                                ? (selectedPlanAlreadyActive
+                                    ? 'Bu plan hesabında etkin'
+                                    : 'Planı değiştir')
+                                : 'Huzur Özel’e Geç',
+                            style: const TextStyle(
+                              color: Color(0xFFFFE082),
+                              fontSize: 15,
+                              fontWeight: FontWeight.w900,
                             ),
                           ),
-                        ],
-                      ),
-                    ),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: GlassContainer(
-                      borderRadius: 16,
-                      goldAccentBorder: true,
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 12,
-                        horizontal: 10,
-                      ),
-                      onTap: () => _showLegalModal(
-                        context,
-                        isPrivacy: false,
-                      ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          BespokeVectorIcon(
-                            type: BespokeIconType.sacredScroll,
-                            color: Color(0xFFFFE082),
-                            size: 16,
-                          ),
-                          SizedBox(width: 7),
-                          Flexible(
-                            child: Text(
-                              "Kullanım Koşulları (EULA)",
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFFFFE082),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                "114 Sure Kur'ân-ı Kerîm, sesli tilavet, ezan vakitleri ve kıble pusulası herkes için sonsuza dek ücretsizdir.",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Colors.white54,
                 ),
-              ),
-            ],
+                const SizedBox(height: 9),
+                GlassContainer(
+                  borderRadius: 16,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  onTap: premium.isLoading ? null : () => notifier.restorePurchases(),
+                  child: const Center(
+                    child: Text(
+                      'Satın Alımları Geri Yükle',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: GlassContainer(
+                        borderRadius: 14,
+                        emeraldGlow: true,
+                        padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 8),
+                        onTap: () => _showLegalModal(context, isPrivacy: true),
+                        child: const Center(
+                          child: Text(
+                            'Gizlilik Politikası',
+                            style: TextStyle(color: Color(0xFFFFD77A), fontSize: 11, fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 9),
+                    Expanded(
+                      child: GlassContainer(
+                        borderRadius: 14,
+                        goldAccentBorder: true,
+                        padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 8),
+                        onTap: () => _showLegalModal(context, isPrivacy: false),
+                        child: const Center(
+                          child: Text(
+                            'Kullanım Koşulları',
+                            style: TextStyle(color: Color(0xFFFFE082), fontSize: 11, fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                const Text(
+                  '114 sure Kur’an okuma, ezan vakitleri ve kıble araçları ücretsizdir. Aylık ve yıllık planlar App Store üzerinden otomatik yenilenebilir; ömür boyu plan tek seferliktir. Fiyat, ödeme onayından önce App Store’da gösterilir.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.white54, fontSize: 10.5, height: 1.5),
+                ),
+              ],
+            ),
           ),
         );
       },
     );
   }
 
-  Widget _buildFeatureRow(String text) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5),
+  Widget _buildHeroPill(IconData icon, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+      ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          const BespokeVectorIcon(
-            type: BespokeIconType.checkBadge,
-            color: Color(0xFFFFA21A),
-            size: 16,
+          Icon(icon, color: const Color(0xFFFFE082), size: 13),
+          const SizedBox(width: 5),
+          Text(label, style: const TextStyle(color: Colors.white70, fontSize: 9.5, fontWeight: FontWeight.w700)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBenefitCard(IconData icon, String title, String description) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0B1A29).withValues(alpha: 0.78),
+        borderRadius: BorderRadius.circular(17),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.09)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 37,
+            height: 37,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFD77A).withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: const Color(0xFFFFD77A), size: 19),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 11),
           Expanded(
-            child: Text(
-              text,
-              style: const TextStyle(
-                fontSize: 13,
-                color: Colors.white,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w800)),
+                const SizedBox(height: 3),
+                Text(description, style: const TextStyle(color: Colors.white60, fontSize: 10.8, height: 1.4)),
+              ],
             ),
           ),
+          const SizedBox(width: 7),
+          const Icon(Icons.check_circle_rounded, color: Color(0xFF64D6B3), size: 17),
         ],
       ),
     );

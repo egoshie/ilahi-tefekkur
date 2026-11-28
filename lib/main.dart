@@ -1,12 +1,9 @@
+import 'dart:async';
 import 'dart:ui';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_app_check/firebase_app_check.dart';
-import 'firebase_options.dart';
-import 'core/services/notification_service.dart';
-import 'core/services/community_push_service.dart';
+import 'core/services/app_startup_service.dart';
 import 'core/services/app_theme_service.dart';
 import 'core/services/prayer_service.dart';
 import 'core/services/quran_background_audio_service.dart';
@@ -20,7 +17,8 @@ import 'features/sacred_texts/sacred_texts_screen.dart';
 import 'features/sacred_texts/quran_audio_player_sheet.dart';
 import 'features/tasbih/fluid_tasbih_screen.dart';
 
-void main() async {
+// HUZUR_17_3_STARTUP: draw the first frame before network/plugin setup.
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
@@ -28,15 +26,12 @@ void main() async {
       statusBarIconBrightness: Brightness.light,
     ),
   );
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  await FirebaseAppCheck.instance.activate(
-    providerApple: const AppleDeviceCheckProvider(),
-  );
-  await NotificationAndWidgetService.instance.initialize();
-  await CommunityPushService.instance.initialize();
+
   runApp(const ProviderScope(child: HuzurApp()));
+
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    unawaited(AppStartupService.initializeBackgroundServices());
+  });
 }
 
 class HuzurApp extends ConsumerWidget {
