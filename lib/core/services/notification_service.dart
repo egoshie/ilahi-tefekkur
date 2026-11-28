@@ -246,6 +246,40 @@ class NotificationAndWidgetService {
     _initialized = true;
   }
 
+  Future<void> showCommunityNotification({
+    required int id,
+    required String title,
+    required String body,
+    String? payload,
+  }) async {
+    await initialize();
+
+    const androidDetails = AndroidNotificationDetails(
+      'huzur_community_milestones',
+      'Topluluk Bildirimleri',
+      channelDescription: 'Dua paylaşımlarına gelen Âmin eşik bildirimleri.',
+      importance: Importance.max,
+      priority: Priority.high,
+      playSound: true,
+    );
+    const iosDetails = DarwinNotificationDetails(
+      presentBanner: true,
+      presentList: true,
+      presentSound: true,
+    );
+
+    await _notifications.show(
+      id: id,
+      title: title,
+      body: body,
+      notificationDetails: const NotificationDetails(
+        android: androidDetails,
+        iOS: iosDetails,
+      ),
+      payload: payload,
+    );
+  }
+
   static String smartSplitTurkishSentence(String raw) {
     final clean = raw.replaceAll(RegExp(r'\s+'), ' ').trim();
     if (clean.isEmpty) return clean;

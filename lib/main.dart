@@ -6,6 +6,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'firebase_options.dart';
 import 'core/services/notification_service.dart';
+import 'core/services/community_push_service.dart';
 import 'core/services/app_theme_service.dart';
 import 'core/services/prayer_service.dart';
 import 'core/services/quran_background_audio_service.dart';
@@ -34,6 +35,7 @@ void main() async {
     providerApple: const AppleDeviceCheckProvider(),
   );
   await NotificationAndWidgetService.instance.initialize();
+  await CommunityPushService.instance.initialize();
   runApp(const ProviderScope(child: HuzurApp()));
 }
 

@@ -368,6 +368,16 @@ class HuzurApiService {
     return _duaAuthenticatedPost("/v1/dua/posts/$postId/amin");
   }
 
+  Future<Map<String, dynamic>> registerFcmToken({
+    required String token,
+    required String platform,
+  }) {
+    return _duaAuthenticatedPost(
+      "/v1/me/fcm-token",
+      body: {"token": token, "platform": platform},
+    );
+  }
+
   Future<Map<String, dynamic>> reportDuaPost({
     required String postId,
     required String reason,

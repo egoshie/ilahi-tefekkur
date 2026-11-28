@@ -701,7 +701,7 @@ class _DuaCommunityPanelState extends ConsumerState<DuaCommunityPanel> {
           ),
           const SizedBox(height: 5),
           Text(
-            'İtiraz ve yeniden değerlendirme: halilibrahimcebeci0@icloud.com',
+            'İtiraz ve yeniden değerlendirme: huzurapp@outlook.com',
             style: TextStyle(
               color: _gold.withValues(alpha: 0.68),
               fontSize: 9,
